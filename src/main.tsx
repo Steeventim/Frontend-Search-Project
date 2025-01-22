@@ -3,9 +3,9 @@ import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
 
-// Import mock API in development
+// Import  API in development
 if (import.meta.env.DEV) {
-  import('./services/mockApi');
+  import('./services/api');
 }
 
 createRoot(document.getElementById('root')!).render(
