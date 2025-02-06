@@ -1,22 +1,29 @@
 import axios, { AxiosError } from "axios";
 
+// Créer une instance d'axios
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://10.100.213.23:3003",
+  baseURL: "http://10.42.0.160:3003", // Remplacez par l'URL de votre API
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-// Request interceptor for adding auth token
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+// Intercepteur de requête pour ajouter le token d'authentification
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    // Gérer les erreurs de requête
+    return Promise.reject(error);
   }
-  return config;
-});
+);
 
-// Response interceptor for handling errors
+// Intercepteur de réponse pour gérer les erreurs
 api.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
@@ -32,13 +39,11 @@ api.interceptors.response.use(
         case 404:
           console.error("Ressource non trouvée");
           break;
-        // Ajoutez d'autres cas si nécessaire
         default:
-          console.error("Erreur de l'API:", error.response.data);
-          break;
+          console.error("Erreur inconnue");
       }
     } else {
-      console.error("Erreur de réseau:", error.message);
+      console.error("Erreur réseau ou serveur");
     }
     return Promise.reject(error);
   }

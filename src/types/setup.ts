@@ -7,7 +7,6 @@ export interface Project {
   id: string;
   name: string;
   description: string;
-  type: 'standard' | 'complex' | 'simple';
 }
 
 export interface ProcessStep {
@@ -24,6 +23,8 @@ export interface User {
   lastName: string;
   email: string;
   position: string;
+  password: string; // Ajout du mot de passe
+  phoneNumber: string; // Ajout du numéro de téléphone
 }
 
 export interface Role {

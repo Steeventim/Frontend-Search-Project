@@ -1,29 +1,65 @@
-import React from 'react';
-import { FileText, Plus, Trash2 } from 'lucide-react';
-import { Button } from '../../common/Button';
-import type { Project } from '../../../types/setup';
+import React, { useState } from "react";
+import { FileText, Plus, Trash2 } from "lucide-react";
+import { Button } from "../../common/Button";
+import api from "../../../services/api";
+import type { Project } from "../../../types/setup";
 
 interface ProjectSetupProps {
-  projects: Project[];
   onUpdate: (projects: Project[]) => void;
 }
 
-export const ProjectSetup: React.FC<ProjectSetupProps> = ({ projects, onUpdate }) => {
-  const addProject = () => {
-    onUpdate([
-      ...projects,
-      { id: Date.now().toString(), name: '', description: '', type: 'standard' }
-    ]);
+export const ProjectSetup: React.FC<ProjectSetupProps> = ({ onUpdate }) => {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
+  const addProject = async () => {
+    const newProject: Project = {
+      id: Date.now().toString(),
+      name: "",
+      description: "",
+    };
+
+    try {
+      const response = await api.post("/projets", newProject);
+      const updatedProjects = [...projects, response.data];
+      setProjects(updatedProjects);
+      onUpdate(updatedProjects);
+    } catch {
+      setError("Failed to add project");
+    }
   };
 
-  const removeProject = (id: string) => {
-    onUpdate(projects.filter(p => p.id !== id));
+  const updateProject = async (
+    index: number,
+    key: keyof Project,
+    value: string
+  ) => {
+    const updatedProjects = [...projects];
+    updatedProjects[index] = { ...updatedProjects[index], [key]: value };
+
+    try {
+      await api.put(
+        `/projects/${updatedProjects[index].id}`,
+        updatedProjects[index]
+      );
+      setProjects(updatedProjects);
+      onUpdate(updatedProjects);
+    } catch {
+      setError("Failed to update project");
+    }
   };
 
-  const updateProject = (id: string, field: keyof Project, value: string) => {
-    onUpdate(
-      projects.map(p => p.id === id ? { ...p, [field]: value } : p)
-    );
+  const removeProject = async (index: number) => {
+    const projectId = projects[index].id;
+    const updatedProjects = projects.filter((_, i) => i !== index);
+
+    try {
+      await api.delete(`/projects/${projectId}`);
+      setProjects(updatedProjects);
+      onUpdate(updatedProjects);
+    } catch {
+      setError("Failed to remove project");
+    }
   };
 
   return (
@@ -33,62 +69,43 @@ export const ProjectSetup: React.FC<ProjectSetupProps> = ({ projects, onUpdate }
           <div className="p-2 bg-blue-100 rounded-lg">
             <FileText className="h-6 w-6 text-blue-600" />
           </div>
-          <h3 className="text-lg font-medium text-gray-900">
-            Types de projets
-          </h3>
+          <h3 className="text-lg font-medium text-gray-900">Projets</h3>
         </div>
-        <Button
-          variant="secondary"
-          size="sm"
-          icon={Plus}
-          onClick={addProject}
-        >
-          Ajouter un type
+        <Button variant="secondary" size="sm" icon={Plus} onClick={addProject}>
+          Ajouter un projet
         </Button>
       </div>
-
-      <div className="space-y-4">
-        {projects.map((project) => (
-          <div
-            key={project.id}
-            className="p-4 bg-white rounded-lg border border-gray-200"
-          >
-            <div className="flex items-start space-x-4">
-              <div className="flex-grow space-y-4">
-                <input
-                  type="text"
-                  value={project.name}
-                  onChange={(e) => updateProject(project.id, 'name', e.target.value)}
-                  placeholder="Nom du type de projet"
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                />
-                <textarea
-                  value={project.description}
-                  onChange={(e) => updateProject(project.id, 'description', e.target.value)}
-                  placeholder="Description"
-                  rows={2}
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                />
-                <select
-                  value={project.type}
-                  onChange={(e) => updateProject(project.id, 'type', e.target.value)}
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                >
-                  <option value="standard">Standard</option>
-                  <option value="complex">Complexe</option>
-                  <option value="simple">Simple</option>
-                </select>
-              </div>
-              <button
-                onClick={() => removeProject(project.id)}
-                className="text-red-600 hover:text-red-700"
-              >
-                <Trash2 className="h-5 w-5" />
-              </button>
-            </div>
+      {projects.map((project, index) => (
+        <div key={project.id} className="mb-4 p-4 border rounded-lg">
+          <div className="flex items-center mb-2">
+            <input
+              type="text"
+              placeholder="Nom du projet"
+              value={project.name}
+              onChange={(e) => updateProject(index, "name", e.target.value)}
+              className="mr-2 p-2 border rounded"
+            />
           </div>
-        ))}
-      </div>
+          <div className="flex items-center mb-2">
+            <textarea
+              placeholder="Description"
+              value={project.description}
+              onChange={(e) =>
+                updateProject(index, "description", e.target.value)
+              }
+              className="mr-2 p-2 border rounded w-full"
+              rows={4}
+            />
+          </div>
+          <Button
+            onClick={() => removeProject(index)}
+            className="bg-red-500 text-white"
+          >
+            <Trash2 className="mr-2" /> Supprimer
+          </Button>
+        </div>
+      ))}
+      {error && <p className="text-red-500">{error}</p>}
     </div>
   );
 };

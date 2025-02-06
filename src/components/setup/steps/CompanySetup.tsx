@@ -1,14 +1,24 @@
-import React from 'react';
-import { Building } from 'lucide-react';
-import { TextArea } from '../../common/form/TextArea';
-import type { Company } from '../../../types/setup';
+import React, { useState } from "react";
+import { Building } from "lucide-react";
+import type { Company } from "../../../types/setup";
 
 interface CompanySetupProps {
   data: Company;
   onUpdate: (data: Company) => void;
 }
 
-export const CompanySetup: React.FC<CompanySetupProps> = ({ data, onUpdate }) => {
+export const CompanySetup: React.FC<CompanySetupProps> = ({
+  data,
+  onUpdate,
+}) => {
+  const [companyData, setCompanyData] = useState<Company>(data);
+
+  const handleUpdate = (key: keyof Company, value: string) => {
+    const updatedData = { ...companyData, [key]: value };
+    setCompanyData(updatedData);
+    onUpdate(updatedData);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center space-x-3">
@@ -16,30 +26,27 @@ export const CompanySetup: React.FC<CompanySetupProps> = ({ data, onUpdate }) =>
           <Building className="h-6 w-6 text-blue-600" />
         </div>
         <h3 className="text-lg font-medium text-gray-900">
-          Informations de l'entreprise
+          Informations del'entreprise
         </h3>
       </div>
-
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Nom de l'entreprise
-          </label>
-          <input
-            type="text"
-            value={data.name}
-            onChange={(e) => onUpdate({ ...data, name: e.target.value })}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-            required
-          />
-        </div>
-
-        <TextArea
-          label="Description"
-          value={data.description}
-          onChange={(e) => onUpdate({ ...data, description: e.target.value })}
-          rows={4}
-          placeholder="Décrivez brièvement votre entreprise..."
+      <div>
+        <label className="block text-gray-700">Nom de l'entreprise</label>
+        <input
+          type="text"
+          value={companyData.name}
+          onChange={(e) => handleUpdate("name", e.target.value)}
+          className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+        />
+      </div>
+      <div>
+        <label className="block text-gray-700">
+          Description de l'entreprise
+        </label>
+        <textarea
+          value={companyData.description}
+          onChange={(e) => handleUpdate("description", e.target.value)}
+          className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+          rows={6} // Ajustez le nombre de lignes pour rendre la zone de texte plus large
         />
       </div>
     </div>
