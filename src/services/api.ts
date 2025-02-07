@@ -2,7 +2,7 @@ import axios, { AxiosError } from "axios";
 
 // Créer une instance d'axios
 const api = axios.create({
-  baseURL: "http://10.42.0.160:3003", // Remplacez par l'URL de votre API
+  baseURL: "http://10.100.213.65:3003", // Remplacez par l'URL de votre API
   headers: {
     "Content-Type": "application/json",
   },

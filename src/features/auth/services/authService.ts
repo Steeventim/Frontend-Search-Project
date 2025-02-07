@@ -50,7 +50,7 @@ export const authService = {
       await api.post("/users/logout");
       localStorage.removeItem("token");
       console.log("User logged out successfully");
-    } catch (error) {
+    } catch {
       throw new Error("An error occurred during logout");
     }
   },

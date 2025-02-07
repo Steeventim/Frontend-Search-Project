@@ -1,40 +1,86 @@
-import React, { useState } from 'react';
-import { ProcessList } from '../process/ProcessList';
-import { ProcessDetails } from '../process/ProcessDetails';
-import type { Process } from '../../types';
+import React, { useState } from "react";
+import { ProcessList } from "../process/ProcessList";
+import { ProcessDetails } from "../process/ProcessDetails";
+import type { Process } from "../../types";
 
 // Exemple de données (à remplacer par vos données réelles)
 const mockProcesses: Process[] = [
   {
-    id: '1',
-    title: 'Demande de congés',
-    description: 'Validation de la demande de congés pour la période estivale',
+    id: "1",
+    title: "Demande de congés",
+    description: "Validation de la demande de congés pour la période estivale",
     currentStep: 0,
-    status: 'pending',
+    status: "pending",
     createdAt: new Date(),
     updatedAt: new Date(),
-    initiatedBy: 'Jean Dupont',
+    initiatedBy: "Jean Dupont",
     steps: [
       {
-        id: 's1',
-        name: 'Validation du responsable direct',
+        id: "s1",
+        name: "Validation du responsable direct",
         order: 1,
-        assignedTo: 'Marie Martin',
-        status: 'pending',
+        assignedTo: "Marie Martin",
+        status: "pending",
         comments: [],
-        requiredLevel: 1
+        requiredLevel: 1,
+        attachments: [
+          {
+            id: "a1",
+            name: "Justificatif.pdf",
+            url: "https://example.com/justificatif.pdf",
+          },
+        ],
       },
       {
-        id: 's2',
-        name: 'Validation des RH',
+        id: "s2",
+        name: "Validation des RH",
         order: 2,
-        assignedTo: 'Service RH',
-        status: 'pending',
+        assignedTo: "Service RH",
+        status: "pending",
         comments: [],
-        requiredLevel: 2
-      }
-    ]
-  }
+        requiredLevel: 2,
+        attachments: [],
+      },
+    ],
+  },
+  {
+    id: "2",
+    title: "Demande de matériel",
+    description: "Validation de la demande de matériel informatique",
+    currentStep: 1,
+    status: "in_progress",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    initiatedBy: "Alice Dupont",
+    steps: [
+      {
+        id: "s1",
+        name: "Validation du responsable direct",
+        order: 1,
+        assignedTo: "Paul Martin",
+        status: "approved",
+        comments: [],
+        requiredLevel: 1,
+        attachments: [
+          {
+            id: "a2",
+            name: "Devis.pdf",
+            url: "https://example.com/devis.pdf",
+          },
+        ],
+      },
+      {
+        id: "s2",
+        name: "Validation des achats",
+        order: 2,
+        assignedTo: "Service Achats",
+        status: "pending",
+        comments: [],
+        requiredLevel: 2,
+        attachments: [],
+      },
+    ],
+  },
 ];
 
 export const Dashboard: React.FC = () => {
@@ -43,12 +89,12 @@ export const Dashboard: React.FC = () => {
 
   const handleApprove = (stepId: string, comment: string) => {
     // Implémenter la logique d'approbation
-    console.log('Approved:', stepId, comment);
+    console.log("Approved:", stepId, comment);
   };
 
   const handleReject = (stepId: string, comment: string) => {
     // Implémenter la logique de rejet
-    console.log('Rejected:', stepId, comment);
+    console.log("Rejected:", stepId, comment);
   };
 
   return (

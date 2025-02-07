@@ -1,6 +1,6 @@
-import { ProcessStep } from './step';
+import { ProcessStep } from "../step";
 
-export type ProcessStatus = 'pending' | 'approved' | 'rejected' | 'in_progress';
+export type ProcessStatus = "pending" | "approved" | "rejected" | "in_progress";
 
 export interface Attachment {
   id: string;

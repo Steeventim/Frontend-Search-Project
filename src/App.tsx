@@ -2,7 +2,7 @@ import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ROUTES } from "./constants/routes";
 import LoginForm from "./components/auth/LoginForm";
-import { RegisterForm } from "./components/auth/RegisterForm";
+import RegisterForm from "./components/auth/RegisterForm";
 import { SetupWizard } from "./components/setup/SetupWizard";
 import { AdminLayout } from "./components/layout/AdminLayout";
 import { UserLayout } from "./components/layout/UserLayout";
@@ -17,6 +17,7 @@ import { ProcessDetails } from "./components/process/ProcessDetails";
 import { NewProcess } from "./components/process/NewProcess";
 import { UserProfile } from "./components/user/UserProfile";
 import { UserSettings } from "./components/user/UserSettings";
+import CreateAdminForm from "./components/admin/CreateAdminForm";
 
 function App() {
   return (
@@ -26,7 +27,6 @@ function App() {
         <Route path={ROUTES.AUTH.LOGIN} element={<LoginForm />} />
         <Route path={ROUTES.AUTH.REGISTER} element={<RegisterForm />} />
         <Route path={ROUTES.AUTH.SETUP} element={<SetupWizard />} />
-
         {/* Admin Routes */}
         <Route path={ROUTES.ADMIN.ROOT} element={<AdminLayout />}>
           <Route path={ROUTES.ADMIN.DASHBOARD} element={<AdminDashboard />} />
@@ -41,6 +41,7 @@ function App() {
           />
           <Route path={ROUTES.ADMIN.SETTINGS} element={<Settings />} />
         </Route>
+        <Route path={ROUTES.ADMIN.CREATE_ADMIN} element={<CreateAdminForm />} />
 
         {/* User Routes */}
         <Route path={ROUTES.USER.ROOT} element={<UserLayout />}>
@@ -54,8 +55,8 @@ function App() {
           <Route path={ROUTES.USER.PROFILE} element={<UserProfile />} />
           <Route path={ROUTES.USER.SETTINGS} element={<UserSettings />} />
           <Route
-            index
-            element={<Navigate to={ROUTES.USER.DASHBOARD} replace />}
+            path="*"
+            element={<Navigate to={ROUTES.AUTH.LOGIN} replace />}
           />
         </Route>
       </Routes>
