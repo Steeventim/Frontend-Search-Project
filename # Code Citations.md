@@ -52,3 +52,21 @@ https://github.com/madhusudan-kulkarni/meetup-app/tree/d8f23dbe218485a0334444200
                 value={email}
                 onChange={(e) => setEmail(e.target.
 ```
+
+# Code Citations
+
+## License: inconnu
+
+https://github.com/terry-goldenowl/personal-finance-manager-fe/tree/6dc46e0eb529b6eee293f3fa4adb7df5aad24788/src/config/axiosConfig.js
+
+```
+.interceptors.request.use(
+  (config) => {
+    const token = Cookies.get("token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) =>
+```

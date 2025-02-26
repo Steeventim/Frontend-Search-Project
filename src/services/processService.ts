@@ -1,9 +1,26 @@
-import api from './api';
-import type { Process } from '../types/process';
+import api from "./api";
+import type { Process } from "../types/process";
 
 export const processService = {
+  searchDocuments: async (
+    documentName: string,
+    searchTerm: string,
+    etapeName?: string
+  ): Promise<Blob> => {
+    if (!documentName || !searchTerm) {
+      throw new Error("Document name and search term are required");
+    }
+
+    const params = etapeName ? { etapeName } : {};
+    const { data } = await api.get(`/documents/${documentName}/${searchTerm}`, {
+      params,
+      responseType: "blob",
+    });
+    return data;
+  },
+
   getProcesses: async (): Promise<Process[]> => {
-    const { data } = await api.get('/processes');
+    const { data } = await api.get("/processes");
     return data;
   },
 
@@ -13,11 +30,14 @@ export const processService = {
   },
 
   createProcess: async (processData: Partial<Process>): Promise<Process> => {
-    const { data } = await api.post('/processes', processData);
+    const { data } = await api.post("/processes", processData);
     return data;
   },
 
-  updateProcess: async (id: string, processData: Partial<Process>): Promise<Process> => {
+  updateProcess: async (
+    id: string,
+    processData: Partial<Process>
+  ): Promise<Process> => {
     const { data } = await api.put(`/processes/${id}`, processData);
     return data;
   },
@@ -26,31 +46,45 @@ export const processService = {
     await api.delete(`/processes/${id}`);
   },
 
-  approveStep: async (processId: string, stepId: string, comment: string, attachments: File[]): Promise<void> => {
+  approveStep: async (
+    processId: string,
+    stepId: string,
+    comment: string,
+    attachments: File[]
+  ): Promise<void> => {
     const formData = new FormData();
-    formData.append('comment', comment);
-    attachments.forEach(file => {
-      formData.append('attachments', file);
+    formData.append("comment", comment);
+    attachments.forEach((file) => {
+      formData.append("attachments", file);
     });
 
-    await api.post(`/processes/${processId}/steps/${stepId}/approve`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    await api.post(
+      `/processes/${processId}/steps/${stepId}/approve`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
   },
 
-  rejectStep: async (processId: string, stepId: string, comment: string, attachments: File[]): Promise<void> => {
+  rejectStep: async (
+    processId: string,
+    stepId: string,
+    comment: string,
+    attachments: File[]
+  ): Promise<void> => {
     const formData = new FormData();
-    formData.append('comment', comment);
-    attachments.forEach(file => {
-      formData.append('attachments', file);
+    formData.append("comment", comment);
+    attachments.forEach((file) => {
+      formData.append("attachments", file);
     });
 
     await api.post(`/processes/${processId}/steps/${stepId}/reject`, formData, {
       headers: {
-        'Content-Type': 'multipart/form-data',
+        "Content-Type": "multipart/form-data",
       },
     });
-  }
+  },
 };

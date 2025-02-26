@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 interface CardProps {
   title?: string;
@@ -6,7 +6,11 @@ interface CardProps {
   className?: string;
 }
 
-export const Card: React.FC<CardProps> = ({ title, children, className = '' }) => {
+export const Card: React.FC<CardProps> = ({
+  title,
+  children,
+  className = "",
+}) => {
   return (
     <div className={`bg-white rounded-lg shadow overflow-hidden ${className}`}>
       {title && (
@@ -17,4 +21,16 @@ export const Card: React.FC<CardProps> = ({ title, children, className = '' }) =
       <div className="px-4 py-5 sm:p-6">{children}</div>
     </div>
   );
+};
+
+interface CardContentProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+export const CardContent: React.FC<CardContentProps> = ({
+  children,
+  className = "",
+}) => {
+  return <div className={`px-4 py-5 sm:p-6 ${className}`}>{children}</div>;
 };

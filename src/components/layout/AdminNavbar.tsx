@@ -1,25 +1,37 @@
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Menu, Transition } from '@headlessui/react';
+import React from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Menu, Transition } from "@headlessui/react";
 import {
-  Users,
+  Building,
   Settings,
   LogOut,
   LayoutDashboard,
   FileText,
-  Building,
+  ListOrdered,
+  Shield,
+  Users,
   User,
-} from 'lucide-react';
+} from "lucide-react";
 
 export const AdminNavbar: React.FC = () => {
   const navigate = useNavigate();
 
   const menuItems = [
-    { icon: LayoutDashboard, label: 'Tableau de bord', path: '/admin/dashboard' },
-    { icon: Users, label: 'Utilisateurs', path: '/admin/users' },
-    { icon: Building, label: 'Départements', path: '/admin/departments' },
-    { icon: FileText, label: 'Processus', path: '/admin/processes' },
-    { icon: Settings, label: 'Paramètres', path: '/admin/settings' },
+    {
+      icon: LayoutDashboard,
+      label: "Tableau de bord",
+      path: "/admin/dashboard",
+    },
+    { icon: Building, label: "Entreprise", path: "/admin/company" },
+    { icon: FileText, label: "Projets", path: "/admin/projects" },
+    {
+      icon: ListOrdered,
+      label: "Étapes des Projets",
+      path: "/admin/process-steps",
+    },
+    { icon: Shield, label: "Rôles et permissions", path: "/admin/roles" },
+    { icon: Users, label: "Utilisateurs", path: "/admin/users" },
+    { icon: Settings, label: "Paramètres", path: "/admin/settings" },
   ];
 
   return (
@@ -28,7 +40,10 @@ export const AdminNavbar: React.FC = () => {
         <div className="flex justify-between h-16">
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
-              <Link to="/admin/dashboard" className="text-xl font-bold text-blue-600">
+              <Link
+                to="/admin/dashboard"
+                className="text-xl font-bold text-blue-600"
+              >
                 ProcessFlow Admin
               </Link>
             </div>
@@ -67,9 +82,9 @@ export const AdminNavbar: React.FC = () => {
                   <Menu.Item>
                     {({ active }) => (
                       <button
-                        onClick={() => navigate('/login')}
+                        onClick={() => navigate("/login")}
                         className={`${
-                          active ? 'bg-gray-100' : ''
+                          active ? "bg-gray-100" : ""
                         } flex w-full px-4 py-2 text-sm text-gray-700`}
                       >
                         <LogOut className="h-5 w-5 mr-2" />

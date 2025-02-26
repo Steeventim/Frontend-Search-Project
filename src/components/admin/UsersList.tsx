@@ -1,31 +1,38 @@
-import React, { useState, useEffect } from 'react';
-import { User, Trash2, Edit, Plus } from 'lucide-react';
-import { Card } from '../common/Card';
-import { Button } from '../common/Button';
-import { UserFormModal } from './modals/UserFormModal';
-import { DeleteUserModal } from './modals/DeleteUserModal';
-import { userService } from '../../services/userService';
+import React, { useState, useEffect } from "react";
+import { Trash2, Edit, Plus, User as UserIcon } from "lucide-react";
+import { Card } from "../common/Card";
+import { Button } from "../common/Button";
+import { UserFormModal } from "./modals/UserFormModal";
+import { DeleteUserModal } from "./modals/DeleteUserModal";
+import { userService } from "../../services/userService";
+import { User } from "../../types/auth"; // Assurez-vous que ce type est défini correctement
 
 export const UsersList: React.FC = () => {
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   useEffect(() => {
     loadUsers();
   }, []);
 
   const loadUsers = async () => {
+    setLoading(true);
     try {
-      const data = await userService.getUsers();
+      const data: User[] = await userService.getUsers();
+      console.log("Données récupérées :", data); // Vérifiez les données ici
       setUsers(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Une erreur est survenue');
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Une erreur est survenue lors du chargement des utilisateurs."
+      );
     } finally {
       setLoading(false);
     }
@@ -49,12 +56,14 @@ export const UsersList: React.FC = () => {
   };
 
   if (loading) return <div>Chargement...</div>;
-  if (error) return <div>{error}</div>;
+  if (error) return <div className="text-red-500">{error}</div>;
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Gestion des utilisateurs</h1>
+        <h1 className="text-2xl font-bold text-gray-900">
+          Gestion des utilisateurs
+        </h1>
         <Button
           variant="primary"
           icon={Plus}
@@ -89,20 +98,20 @@ export const UsersList: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                        <User className="h-5 w-5 text-gray-500" />
+                        <UserIcon className="h-5 w-5 text-gray-500" />
                       </div>
                       <div className="ml-4">
                         <div className="text-sm font-medium text-gray-900">
-                          {user.firstName} {user.lastName}
+                          {user.Prenom} {user.Nom}
                         </div>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {user.email}
+                    {user.Email}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {user.phone}
+                    {user.Telephone}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button
@@ -145,7 +154,7 @@ export const UsersList: React.FC = () => {
           setSelectedUser(null);
         }}
         onSubmit={handleUpdateUser}
-        initialData={selectedUser}
+        initialData={selectedUser ? { ...selectedUser } : undefined} // Ajustez ici
         title="Modifier l'utilisateur"
       />
 
@@ -156,7 +165,9 @@ export const UsersList: React.FC = () => {
           setSelectedUser(null);
         }}
         onConfirm={handleDeleteUser}
-        userName={selectedUser ? `${selectedUser.firstName} ${selectedUser.lastName}` : ''}
+        userName={
+          selectedUser ? `${selectedUser.Prenom} ${selectedUser.Nom}` : ""
+        }
       />
     </div>
   );

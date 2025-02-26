@@ -1,13 +1,14 @@
-import React from 'react';
-import { X } from 'lucide-react';
-import { Button } from '../../common/Button';
+import React from "react";
+import { X } from "lucide-react";
+import { Button } from "../../common/Button";
 
 interface UserFormData {
-  firstName: string;
-  lastName: string;
-  email: string;
-  password: string;
-  phone: string;
+  id?: string;
+  Nom: string;
+  Prenom: string;
+  Email: string;
+  Telephone: string;
+  IsActive: boolean;
 }
 
 interface UserFormModalProps {
@@ -23,14 +24,15 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
   onClose,
   onSubmit,
   initialData,
-  title
+  title,
 }) => {
   const [formData, setFormData] = React.useState<UserFormData>({
-    firstName: initialData?.firstName || '',
-    lastName: initialData?.lastName || '',
-    email: initialData?.email || '',
-    password: initialData?.password || '',
-    phone: initialData?.phone || ''
+    id: initialData?.id || "",
+    Nom: initialData?.Nom || "",
+    Prenom: initialData?.Prenom || "",
+    Email: initialData?.Email || "",
+    Telephone: initialData?.Telephone || "",
+    IsActive: initialData?.IsActive || false,
   });
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -45,7 +47,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
       await onSubmit(formData);
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Une erreur est survenue');
+      setError(err instanceof Error ? err.message : "Une erreur est survenue");
     } finally {
       setLoading(false);
     }
@@ -55,7 +57,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex min-h-screen items-center justify-center p-4">
         <div className="fixed inset-0 bg-black opacity-30"></div>
-        
+
         <div className="relative w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
@@ -74,8 +76,10 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
               </label>
               <input
                 type="text"
-                value={formData.lastName}
-                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                value={formData.Nom}
+                onChange={(e) =>
+                  setFormData({ ...formData, Nom: e.target.value })
+                }
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                 required
               />
@@ -87,8 +91,10 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
               </label>
               <input
                 type="text"
-                value={formData.firstName}
-                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                value={formData.Prenom}
+                onChange={(e) =>
+                  setFormData({ ...formData, Prenom: e.target.value })
+                }
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                 required
               />
@@ -100,23 +106,12 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
               </label>
               <input
                 type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                value={formData.Email}
+                onChange={(e) =>
+                  setFormData({ ...formData, Email: e.target.value })
+                }
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                 required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Mot de passe
-              </label>
-              <input
-                type="password"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                required={!initialData}
               />
             </div>
 
@@ -126,31 +121,23 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
               </label>
               <input
                 type="tel"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                value={formData.Telephone}
+                onChange={(e) =>
+                  setFormData({ ...formData, Telephone: e.target.value })
+                }
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                 required
               />
             </div>
 
-            {error && (
-              <p className="text-sm text-red-600">{error}</p>
-            )}
+            {error && <p className="text-sm text-red-600">{error}</p>}
 
             <div className="flex justify-end space-x-3">
-              <Button
-                variant="secondary"
-                onClick={onClose}
-                type="button"
-              >
+              <Button variant="secondary" onClick={onClose} type="button">
                 Annuler
               </Button>
-              <Button
-                variant="primary"
-                type="submit"
-                loading={loading}
-              >
-                {initialData ? 'Modifier' : 'Créer'}
+              <Button variant="primary" type="submit" loading={loading}>
+                {initialData ? "Modifier" : "Créer"}
               </Button>
             </div>
           </form>

@@ -1,6 +1,6 @@
-import React from 'react';
-import { Outlet } from 'react-router-dom';
-import { UserNavbar } from './UserNavbar';
+import React from "react";
+import { Outlet } from "react-router-dom";
+import { UserNavbar } from "./UserNavbar";
 
 export const UserLayout: React.FC = () => {
   return (

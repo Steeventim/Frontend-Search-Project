@@ -1,6 +1,6 @@
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Menu, Transition } from '@headlessui/react';
+import React from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Menu, Transition } from "@headlessui/react";
 import {
   LayoutDashboard,
   FileText,
@@ -9,15 +9,17 @@ import {
   User,
   LogOut,
   Settings,
-} from 'lucide-react';
+  Search,
+} from "lucide-react";
 
 export const UserNavbar: React.FC = () => {
   const navigate = useNavigate();
 
   const menuItems = [
-    { icon: LayoutDashboard, label: 'Tableau de bord', path: '/dashboard' },
-    { icon: FileText, label: 'Mes processus', path: '/processes' },
-    { icon: PlusCircle, label: 'Nouveau processus', path: '/processes/new' },
+    { icon: LayoutDashboard, label: "Tableau de bord", path: "/dashboard" },
+    { icon: FileText, label: "Mes Etapes", path: "/processes" },
+    { icon: PlusCircle, label: "Nouvelle Etape", path: "/processes/new" },
+    { icon: Search, label: "Recherche", path: "/search" },
   ];
 
   return (
@@ -75,7 +77,7 @@ export const UserNavbar: React.FC = () => {
                       <Link
                         to="/profile"
                         className={`${
-                          active ? 'bg-gray-100' : ''
+                          active ? "bg-gray-100" : ""
                         } flex px-4 py-2 text-sm text-gray-700`}
                       >
                         <User className="h-5 w-5 mr-2" />
@@ -88,7 +90,7 @@ export const UserNavbar: React.FC = () => {
                       <Link
                         to="/settings"
                         className={`${
-                          active ? 'bg-gray-100' : ''
+                          active ? "bg-gray-100" : ""
                         } flex px-4 py-2 text-sm text-gray-700`}
                       >
                         <Settings className="h-5 w-5 mr-2" />
@@ -99,9 +101,9 @@ export const UserNavbar: React.FC = () => {
                   <Menu.Item>
                     {({ active }) => (
                       <button
-                        onClick={() => navigate('/login')}
+                        onClick={() => navigate("/login")}
                         className={`${
-                          active ? 'bg-gray-100' : ''
+                          active ? "bg-gray-100" : ""
                         } flex w-full px-4 py-2 text-sm text-gray-700`}
                       >
                         <LogOut className="h-5 w-5 mr-2" />

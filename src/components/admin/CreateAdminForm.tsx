@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ROUTES } from "../../constants/routes";
 import api from "../../services/api";
+import Cookies from "js-cookie";
 import LoadingSpinner from "../common/LoadingSpinner";
 import axios from "axios";
 
@@ -17,7 +18,7 @@ const CreateAdminForm: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const role = localStorage.getItem("role");
+    const role = Cookies.get("role");
     if (role !== "superadmin") {
       navigate(ROUTES.AUTH.LOGIN);
     }
@@ -37,6 +38,10 @@ const CreateAdminForm: React.FC = () => {
         prenomUser,
         telephone,
       });
+
+      // Utiliser la réponse ici, par exemple, rediriger ou afficher des données
+      console.log(response.data); // Affichez les données de la réponse si nécessaire
+
       setSuccess("Administrateur créé avec succès");
       setEmail("");
       setPassword("");

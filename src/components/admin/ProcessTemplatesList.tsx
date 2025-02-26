@@ -1,31 +1,35 @@
-import React from 'react';
-import { FileText, Trash2, Edit } from 'lucide-react';
-import { Card } from '../common/Card';
-import { Button } from '../common/Button';
+import React from "react";
+import { FileText, Trash2, Edit } from "lucide-react";
+import { Card } from "../common/Card";
+import { Button } from "../common/Button";
 
 export const ProcessTemplatesList: React.FC = () => {
   const templates = [
-    { 
-      id: '1', 
-      name: 'Demande de congés', 
-      description: 'Processus de validation des congés',
+    {
+      id: "1",
+      name: "Demande de congés",
+      description: "Etapes de validation des congés",
       steps: 3,
-      departments: ['RH', 'Management']
+      departments: ["RH", "Management"],
     },
-    { 
-      id: '2', 
-      name: 'Note de frais', 
-      description: 'Validation des notes de frais',
+    {
+      id: "2",
+      name: "Note de frais",
+      description: "Validation des notes de frais",
       steps: 4,
-      departments: ['Comptabilité', 'Management']
+      departments: ["Comptabilité", "Management"],
     },
   ];
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Modèles de processus</h1>
-        <Button variant="primary" icon={FileText}>Ajouter un modèle</Button>
+        <h1 className="text-2xl font-bold text-gray-900">
+          Modèles de processus
+        </h1>
+        <Button variant="primary" icon={FileText}>
+          Ajouter un modèle
+        </Button>
       </div>
 
       <Card>
@@ -34,7 +38,7 @@ export const ProcessTemplatesList: React.FC = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Processus
+                  Etapes
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Description
@@ -59,7 +63,9 @@ export const ProcessTemplatesList: React.FC = () => {
                         <FileText className="h-5 w-5 text-blue-600" />
                       </div>
                       <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">{template.name}</div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {template.name}
+                        </div>
                       </div>
                     </div>
                   </td>
@@ -70,7 +76,7 @@ export const ProcessTemplatesList: React.FC = () => {
                     {template.steps}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {template.departments.join(', ')}
+                    {template.departments.join(", ")}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button className="text-blue-600 hover:text-blue-900 mr-4">

@@ -1,11 +1,11 @@
+// src/types/auth.ts
 export interface User {
   id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  role: 'admin' | 'manager' | 'user';
-  department?: string;
-  position?: string;
+  Nom: string;
+  Prenom: string;
+  Email: string;
+  Telephone: string;
+  IsActive: boolean;
 }
 
 export interface LoginCredentials {

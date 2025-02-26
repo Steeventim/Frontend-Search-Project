@@ -120,8 +120,7 @@ src/
 │   │   │   ├── ProjectSetup.tsx    # Configuration du projet
 │   │   │   ├── RolesSetup.tsx      # Configuration des rôles
 │   │   │   ├── UsersSetup.tsx      # Configuration des utilisateurs
-│   │   │   ├── DepartmentSetup.tsx # Configuration des départements
-│   │   │   ├── ProcessTemplateSetup.tsx # Configuration des modèles de processus
+│   │   ├── ProcessTemplateSetup.tsx # Configuration des modèles de processus
 │   │   ├── SetupWizard.tsx         # Assistant de configuration
 │   ├── user/                       # Interface utilisateur
 │   │   ├── UserProfile.tsx         # Profil utilisateur

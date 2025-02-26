@@ -1,8 +1,9 @@
 import axios, { AxiosError } from "axios";
+import Cookies from "js-cookie";
 
 // Créer une instance d'axios
 const api = axios.create({
-  baseURL: "http://10.100.213.65:3003", // Remplacez par l'URL de votre API
+  baseURL: "http://10.100.213.80:3003", // Remplacez par l'URL de votre API
   headers: {
     "Content-Type": "application/json",
   },
@@ -11,7 +12,7 @@ const api = axios.create({
 // Intercepteur de requête pour ajouter le token d'authentification
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("token");
+    const token = Cookies.get("token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -23,16 +24,55 @@ api.interceptors.request.use(
   }
 );
 
+// Fonction pour rafraîchir le token
+const refreshToken = async () => {
+  try {
+    const refreshToken = Cookies.get("refreshToken");
+
+    const response = await api.post("/auth/refresh-token", {
+      refreshToken,
+    });
+
+    const { token, refreshToken: newRefreshToken } = response.data;
+
+    Cookies.set("token", token, { expires: 1 / 24 }); // 1 heures
+
+    Cookies.set("refreshToken", newRefreshToken, { expires: 7 }); // 7 jours
+
+    return token;
+  } catch (error) {
+    console.error("Erreur lors du rafraîchissement du token:", error);
+
+    Cookies.remove("token");
+
+    Cookies.remove("refreshToken");
+
+    window.location.href = "/login";
+
+    return null;
+  }
+};
+
 // Intercepteur de réponse pour gérer les erreurs
 api.interceptors.response.use(
   (response) => response,
-  (error: AxiosError) => {
+  async (error: AxiosError) => {
     if (error.response) {
       switch (error.response.status) {
-        case 401:
-          localStorage.removeItem("token");
-          window.location.href = "/login";
+        case 401: {
+          // Essayer de rafraîchir le token
+          const newToken = await refreshToken();
+          if (newToken) {
+            // Réessayer la requête initiale avec le nouveau token
+            if (error.config && error.config.headers) {
+              error.config.headers.Authorization = `Bearer ${newToken}`;
+            }
+            if (error.config) {
+              return axios.request(error.config);
+            }
+          }
           break;
+        }
         case 403:
           console.error("Accès interdit");
           break;
