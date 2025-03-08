@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
-import type { Process } from '../types';
-import { mockProcesses } from '../data/mockData';
+import { useState, useEffect } from "react";
+import type { Process } from "../types";
+import api from "../services/api";
 
 export const useProcessData = (processId?: string) => {
-  const [process, setProcess] = useState<Process | Process[] | null>(null);
+  const [process, setProcess] = useState<Process | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -11,20 +11,17 @@ export const useProcessData = (processId?: string) => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        // Si un processId est fourni, on récupère un processus spécifique
         if (processId) {
-          const foundProcess = mockProcesses.find(p => p.id === processId);
-          if (foundProcess) {
-            setProcess(foundProcess);
-          } else {
-            setError('Processus non trouvé');
-          }
+          // Si un processId est fourni, on récupère un processus spécifique
+          const { data } = await api.get(`/etapes/${processId}`);
+          setProcess(data.data);
         } else {
           // Sinon, on récupère tous les processus
-          setProcess(mockProcesses);
+          const { data } = await api.get("/etapes/all");
+          setProcess(data.data);
         }
-      } catch (err) {
-        setError('Erreur lors du chargement des processus');
+      } catch {
+        setError("Erreur lors du chargement des processus");
       } finally {
         setLoading(false);
       }

@@ -1,4 +1,4 @@
-import React from "react";
+// import React from "react";
 import {
   BrowserRouter,
   Routes,
@@ -30,6 +30,7 @@ import { ProcessStepsManagement } from "./components/admin/ProcessStepsManagemen
 import { RolesManagement } from "./components/admin/RolesManagement";
 import { UsersList } from "./components/admin/UsersList";
 import SearchInterface from "./components/process/SearchInterface";
+import { ErrorBoundary } from "./components/error/ErrorBoundary";
 
 const ProtectedRoute = ({ roles }: { roles: string[] }) => {
   const token = Cookies.get("token");
@@ -48,62 +49,70 @@ const ProtectedRoute = ({ roles }: { roles: string[] }) => {
 
 const App = () => {
   return (
-    <BrowserRouter>
-      <Routes>
-        {/* Redirection de la racine vers la page de connexion si non authentifié */}
-        <Route path="/" element={<Navigate to={ROUTES.AUTH.LOGIN} />} />
+    <ErrorBoundary>
+      <BrowserRouter>
+        <Routes>
+          {/* Redirection de la racine vers la page de connexion si non authentifié */}
+          <Route path="/" element={<Navigate to={ROUTES.AUTH.LOGIN} />} />
 
-        {/* Auth Routes */}
-        <Route path={ROUTES.AUTH.LOGIN} element={<LoginForm />} />
-        {/* <Route path={ROUTES.AUTH.REGISTER} element={<RegisterForm />} /> */}
-        <Route path={ROUTES.AUTH.SETUP} element={<SetupWizard />} />
+          {/* Auth Routes */}
+          <Route path={ROUTES.AUTH.LOGIN} element={<LoginForm />} />
+          {/* <Route path={ROUTES.AUTH.REGISTER} element={<RegisterForm />} /> */}
+          <Route path={ROUTES.AUTH.SETUP} element={<SetupWizard />} />
 
-        {/* Admin Routes */}
-        <Route element={<ProtectedRoute roles={["admin", "superadmin"]} />}>
-          <Route path={ROUTES.ADMIN.ROOT} element={<AdminLayout />}>
-            <Route path={ROUTES.ADMIN.DASHBOARD} element={<AdminDashboard />} />
-            <Route
-              path={ROUTES.ADMIN.CREATE_ADMIN}
-              element={<CreateAdminForm />}
-            />
-            <Route
-              path={ROUTES.ADMIN.COMPANY}
-              element={<CompanyManagement />}
-            />
-            <Route
-              path={ROUTES.ADMIN.PROJECTS}
-              element={<ProjectsManagement />}
-            />
-            <Route
-              path={ROUTES.ADMIN.PROCESS_STEPS}
-              element={<ProcessStepsManagement />}
-            />
-            <Route path={ROUTES.ADMIN.ROLES} element={<RolesManagement />} />
-            <Route path={ROUTES.ADMIN.USERS} element={<UsersList />} />
-            <Route path={ROUTES.ADMIN.SETTINGS} element={<Settings />} />
+          {/* Admin Routes */}
+          <Route element={<ProtectedRoute roles={["admin", "superadmin"]} />}>
+            <Route path={ROUTES.ADMIN.ROOT} element={<AdminLayout />}>
+              <Route
+                path={ROUTES.ADMIN.DASHBOARD}
+                element={<AdminDashboard />}
+              />
+              <Route
+                path={ROUTES.ADMIN.CREATE_ADMIN}
+                element={<CreateAdminForm />}
+              />
+              <Route
+                path={ROUTES.ADMIN.COMPANY}
+                element={<CompanyManagement />}
+              />
+              <Route
+                path={ROUTES.ADMIN.PROJECTS}
+                element={<ProjectsManagement />}
+              />
+              <Route
+                path={ROUTES.ADMIN.PROCESS_STEPS}
+                element={<ProcessStepsManagement />}
+              />
+              <Route path={ROUTES.ADMIN.ROLES} element={<RolesManagement />} />
+              <Route path={ROUTES.ADMIN.USERS} element={<UsersList />} />
+              <Route path={ROUTES.ADMIN.SETTINGS} element={<Settings />} />
+            </Route>
           </Route>
-        </Route>
 
-        {/* User Routes */}
-        <Route
-          element={<ProtectedRoute roles={["user", "admin", "superadmin"]} />}
-        >
-          <Route path={ROUTES.USER.ROOT} element={<UserLayout />}>
-            <Route path={ROUTES.USER.DASHBOARD} element={<Dashboard />} />
-            <Route path={ROUTES.USER.PROCESSES} element={<ProcessList />} />
-            <Route path={ROUTES.USER.NEW_PROCESS} element={<NewProcess />} />
-            <Route path={ROUTES.USER.SEARCH} element={<SearchInterface />} />
-            <Route
-              path={ROUTES.USER.PROCESS_DETAILS}
-              element={<ProcessDetails />}
-            />
-            <Route path={ROUTES.USER.PROFILE} element={<UserProfile />} />
-            <Route path={ROUTES.USER.SETTINGS} element={<UserSettings />} />
+          {/* User Routes */}
+          <Route
+            element={<ProtectedRoute roles={["user", "admin", "superadmin"]} />}
+          >
+            <Route path={ROUTES.USER.ROOT} element={<UserLayout />}>
+              <Route path={ROUTES.USER.DASHBOARD} element={<Dashboard />} />
+              <Route path={ROUTES.USER.PROCESSES} element={<ProcessList />} />
+              <Route path={ROUTES.USER.NEW_PROCESS} element={<NewProcess />} />
+              <Route path={ROUTES.USER.SEARCH} element={<SearchInterface />} />
+              <Route
+                path={ROUTES.USER.PROCESS_DETAILS}
+                element={<ProcessDetails />}
+              />
+              <Route path={ROUTES.USER.PROFILE} element={<UserProfile />} />
+              <Route path={ROUTES.USER.SETTINGS} element={<UserSettings />} />
+            </Route>
           </Route>
-        </Route>
-        <Route path="*" element={<Navigate to={ROUTES.AUTH.LOGIN} replace />} />
-      </Routes>
-    </BrowserRouter>
+          <Route
+            path="*"
+            element={<Navigate to={ROUTES.AUTH.LOGIN} replace />}
+          />
+        </Routes>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 };
 

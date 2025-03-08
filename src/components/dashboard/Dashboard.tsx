@@ -1,89 +1,272 @@
-import React, { useState } from "react";
-import { ProcessList } from "../process/ProcessList";
-import { ProcessDetails } from "../process/ProcessDetails";
-import type { Process } from "../../types";
-
-// Exemple de données (à remplacer par vos données réelles)
-const mockProcesses: Process[] = [
-  {
-    id: "1",
-    title: "Demande de congés",
-    description: "Validation de la demande de congés pour la période estivale",
-    currentStep: 0,
-    status: "pending",
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    initiatedBy: "Jean Dupont",
-    steps: [
-      {
-        id: "s1",
-        name: "Validation du responsable direct",
-        order: 1,
-        assignedTo: "Marie Martin",
-        status: "pending",
-        comments: [],
-        requiredLevel: 1,
-      },
-      {
-        id: "s2",
-        name: "Validation des RH",
-        order: 2,
-        assignedTo: "Service RH",
-        status: "pending",
-        comments: [],
-        requiredLevel: 2,
-      },
-    ],
-  },
-];
+import React, { useEffect, useState } from "react";
+import {
+  Clock,
+  CheckCircle2,
+  XCircle,
+  FileText,
+  ChevronRight,
+} from "lucide-react";
+import { Card } from "../common/Card";
+import { Button } from "../common/Button";
+import { useNavigate } from "react-router-dom";
+import { ROUTES } from "../../constants/routes";
+import { processService } from "../../services/processService";
+import type { ProcessStep, Process } from "../../types/process";
 
 export const Dashboard: React.FC = () => {
-  const [processes] = useState<Process[]>(mockProcesses);
-  const [selectedProcess, setSelectedProcess] = useState<Process | null>(null);
+  const navigate = useNavigate();
+  const [myTasks, setMyTasks] = useState<ProcessStep[]>([]);
+  const [myProcesses, setMyProcesses] = useState<Process[]>([]);
+  const [loadingTasks, setLoadingTasks] = useState<boolean>(true);
+  const [loadingProcesses, setLoadingProcesses] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleApprove = (stepId: string, comment: string) => {
-    // Implémenter la logique d'approbation
-    console.log("Approved:", stepId, comment);
+  useEffect(() => {
+    const fetchTasks = async () => {
+      try {
+        const tasks = await processService.getMyTasks();
+        setMyTasks(tasks);
+      } catch {
+        setError("Erreur lors de la récupération des tâches.");
+      } finally {
+        setLoadingTasks(false);
+      }
+    };
+
+    const fetchProcesses = async () => {
+      try {
+        const processes = await processService.getMyProcesses();
+        setMyProcesses(processes);
+      } catch {
+        setError("Erreur lors de la récupération des processus.");
+      } finally {
+        setLoadingProcesses(false);
+      }
+    };
+
+    fetchTasks();
+    fetchProcesses();
+  }, []);
+
+  const handleTaskClick = (taskId: string) => {
+    const process = myProcesses.find((p) => p.id === taskId);
+    if (process) {
+      navigate(`${ROUTES.USER.PROCESSES}/${taskId}`, { state: { process } });
+    }
   };
 
-  const handleReject = (stepId: string, comment: string) => {
-    // Implémenter la logique de rejet
-    console.log("Rejected:", stepId, comment);
+  const getStatusIcon = (status: ProcessStep["status"]) => {
+    switch (status) {
+      case "approved":
+        return <CheckCircle2 className="h-5 w-5 text-green-500" />;
+      case "rejected":
+        return <XCircle className="h-5 w-5 text-red-500" />;
+      case "in_progress":
+        return <Clock className="h-5 w-5 text-blue-500" />;
+      default:
+        return <Clock className="h-5 w-5 text-yellow-500" />;
+    }
+  };
+
+  const getPriorityBadgeColor = (priority: ProcessStep["priority"]) => {
+    switch (priority) {
+      case "urgent":
+        return "bg-red-100 text-red-800";
+      case "high":
+        return "bg-orange-100 text-orange-800";
+      case "normal":
+        return "bg-blue-100 text-blue-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto py-6 px-4">
-          <h1 className="text-3xl font-bold text-gray-900">
-            Suivi des Processus
-          </h1>
-        </div>
-      </header>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-gray-900">
+          Mon tableau de bord
+        </h1>
+        <Button
+          variant="primary"
+          icon={FileText}
+          onClick={() => navigate(ROUTES.USER.NEW_PROCESS)}
+        >
+          Nouveau processus
+        </Button>
+      </div>
 
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-1">
-            <ProcessList
-              processes={processes}
-              onProcessSelect={setSelectedProcess}
-            />
+      {error && <p className="text-red-500">{error}</p>}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Tâches à traiter */}
+        <Card>
+          <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
+            <h3 className="text-lg font-medium text-gray-900">
+              Mes tâches à traiter
+            </h3>
           </div>
-          <div className="lg:col-span-2">
-            {selectedProcess ? (
-              <ProcessDetails
-                process={selectedProcess}
-                onApprove={handleApprove}
-                onReject={handleReject}
-              />
+          <div className="divide-y divide-gray-200">
+            {loadingTasks ? (
+              <div className="p-4 text-center text-gray-500">
+                Chargement des tâches...
+              </div>
             ) : (
-              <div className="bg-white rounded-lg shadow p-6 text-center text-gray-500">
-                Sélectionnez un processus pour voir les détails
+              myTasks.map((task) => (
+                <div
+                  key={task.id}
+                  className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                  onClick={() => handleTaskClick(task.id)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      {getStatusIcon(task.status)}
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-900">
+                          {task.processName}
+                        </h4>
+                        <p className="text-sm text-gray-500">{task.stepName}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPriorityBadgeColor(
+                          task.priority
+                        )}`}
+                      >
+                        {task.priority.charAt(0).toUpperCase() +
+                          task.priority.slice(1)}
+                      </span>
+                      <ChevronRight className="h-5 w-5 text-gray-400" />
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+            {myTasks.length === 0 && !loadingTasks && (
+              <div className="p-4 text-center text-gray-500">
+                Aucune tâche en attente
               </div>
             )}
           </div>
+        </Card>
+
+        {/* Mes processus en cours */}
+        <Card>
+          <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
+            <h3 className="text-lg font-medium text-gray-900">
+              Mes processus en cours
+            </h3>
+          </div>
+          <div className="divide-y divide-gray-200">
+            {loadingProcesses ? (
+              <div className="p-4 text-center text-gray-500">
+                Chargement des processus...
+              </div>
+            ) : (
+              myProcesses.map((process) => (
+                <div
+                  key={process.id}
+                  className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-900">
+                        {process.title}
+                      </h4>
+                      <div className="mt-1 flex items-center text-sm text-gray-500">
+                        <Clock className="h-4 w-4 mr-1.5" />
+                        Étape {process.currentStep}/{process.totalSteps}
+                      </div>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <div className="mt-2">
+                    <div className="relative pt-1">
+                      <div className="overflow-hidden h-2 text-xs flex rounded bg-gray-100">
+                        <div
+                          style={{
+                            width: `${
+                              (process.currentStep / process.totalSteps) * 100
+                            }%`,
+                          }}
+                          className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+            {myProcesses.length === 0 && !loadingProcesses && (
+              <div className="p-4 text-center text-gray-500">
+                Aucun processus en cours
+              </div>
+            )}
+          </div>
+        </Card>
+      </div>
+
+      {/* Actions rapides */}
+      <Card>
+        <div className="px-4 py-5 sm:px-6">
+          <h3 className="text-lg font-medium text-gray-900">Actions rapides</h3>
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <button
+              onClick={() => navigate(ROUTES.USER.NEW_PROCESS)}
+              className="relative rounded-lg p-4 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+            >
+              <div className="flex items-center space-x-3">
+                <div className="flex-shrink-0">
+                  <FileText className="h-6 w-6 text-blue-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900">
+                    Nouveau Processus
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    Créer un nouveau processus
+                  </p>
+                </div>
+              </div>
+            </button>
+            <button
+              onClick={() => navigate(ROUTES.USER.NEW_PROCESS)}
+              className="relative rounded-lg p-4 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+            >
+              <div className="flex items-center space-x-3">
+                <div className="flex-shrink-0">
+                  <FileText className="h-6 w-6 text-blue-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900">
+                    Soumettre un Document
+                  </p>
+                  <p className="text-sm text-gray-500">Soumettre un Document</p>
+                </div>
+              </div>
+            </button>
+            <button
+              onClick={() => navigate(ROUTES.USER.SEARCH)}
+              className="relative rounded-lg p-4 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+            >
+              <div className="flex items-center space-x-3">
+                <div className="flex-shrink-0">
+                  <FileText className="h-6 w-6 text-blue-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900">
+                    Rechercher
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    Consulter les Archives
+                  </p>
+                </div>
+              </div>
+            </button>
+          </div>
         </div>
-      </main>
+      </Card>
     </div>
   );
 };

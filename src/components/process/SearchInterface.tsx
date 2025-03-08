@@ -29,14 +29,23 @@ const SearchInterface: React.FC = () => {
   useEffect(() => {
     const fetchEtapes = async () => {
       try {
-        const response = await api.get<Etape[]>("/etapes/all");
-        const libelleEtapes = response.data
-          .map((etape: Etape) => etape.LibelleEtape)
-          .filter(Boolean);
-        setEtapes(libelleEtapes);
+        const response = await api.get<{
+          success: boolean;
+          count: number;
+          data: Etape[];
+        }>("/etapes/all");
+        console.log("Réponse du serveur:", response.data); // Pour déboguer
+        if (response.data.success) {
+          const libelleEtapes = response.data.data
+            .map((etape: Etape) => etape.LibelleEtape)
+            .filter(Boolean);
+          setEtapes(libelleEtapes);
+        } else {
+          setError("Erreur lors de la récupération des étapes");
+        }
       } catch (err) {
         console.error("Erreur lors de la récupération des étapes", err);
-        setError("Erreur lors de la récupération des étapes");
+        setError(err instanceof Error ? err.message : "Erreur inconnue");
       }
     };
     fetchEtapes();
@@ -49,8 +58,15 @@ const SearchInterface: React.FC = () => {
     setError(null);
     try {
       const response: SearchResponse = await searchService.search(searchQuery);
-      if (response.success && response.total > 0) {
-        setResults(response.hits);
+      console.log("Réponse de l'API:", response); // Ajoutez cette ligne pour déboguer
+
+      // Vérifiez si la réponse est conforme à ce que vous attendez
+      if (
+        response.success &&
+        response.data.hits &&
+        response.data.hits.total.value > 0
+      ) {
+        setResults(response.data.hits.hits); // Accédez à la bonne structure
       } else {
         setResults([]);
       }
@@ -80,14 +96,22 @@ const SearchInterface: React.FC = () => {
     setAssignLoading(true);
     try {
       await api.post("/etapes/affect", {
-        document: selectedDocument?._source.file.filename,
-        etape: selectedEtape,
+        documentName: selectedDocument?._source.file.filename, // Mettez à jour pour accéder à la bonne propriété
+        etapeName: selectedEtape,
       });
       setConfirmationMessage("Document affecté avec succès.");
       setShowDialog(false);
+      // Réinitialiser le message de confirmation après 3 secondes
+      setTimeout(() => {
+        setConfirmationMessage(null);
+      }, 3000);
     } catch (err) {
       console.error("Erreur lors de l'affectation du document", err);
       setError("Erreur lors de l'affectation du document");
+      // Réinitialiser le message d'erreur après 3 secondes
+      setTimeout(() => {
+        setError(null);
+      }, 3000);
     } finally {
       setAssignLoading(false);
     }
@@ -164,13 +188,19 @@ const SearchInterface: React.FC = () => {
                           {hit._source.file.filename} (
                           {hit._source.file.extension})
                         </p>
-                        <p
-                          className="text-sm text-gray-700 mt-1"
-                          dangerouslySetInnerHTML={{
-                            __html:
-                              hit.highlight?.content || hit._source.content,
-                          }}
-                        />
+                        <div className="text-sm text-gray-700 mt-1">
+                          {hit.highlight?.content &&
+                          hit.highlight.content.length > 0 ? (
+                            hit.highlight.content.map((highlight, index) => (
+                              <p
+                                key={index}
+                                dangerouslySetInnerHTML={{ __html: highlight }}
+                              />
+                            ))
+                          ) : (
+                            <p>{hit._source.content}</p> // Affichez le contenu par défaut si aucun highlight
+                          )}
+                        </div>
                       </div>
                     </div>
                     <Button
@@ -189,6 +219,7 @@ const SearchInterface: React.FC = () => {
           </div>
         )}
       </Card>
+
       {showDialog && (
         <Dialog onClose={() => setShowDialog(false)}>
           <h3 className="text-lg font-semibold">Affecter un document</h3>

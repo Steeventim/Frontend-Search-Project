@@ -95,63 +95,66 @@ export const ProcessStepsManagement: React.FC = () => {
           {error}
         </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-white">
-            <thead>
-              <tr>
-                <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm font-semibold text-gray-700">
-                  Nom
-                </th>
-                <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm font-semibold text-gray-700">
-                  Description
-                </th>
-                <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm font-semibold text-gray-700">
-                  Ordre
-                </th>
-                <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm font-semibold text-gray-700">
-                  Rôle requis
-                </th>
-                <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm font-semibold text-gray-700">
-                  Type de projet
-                </th>
-                <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm font-semibold text-gray-700">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {steps.map((step) => (
-                <tr key={step.idEtape} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 border-b border-gray-200 text-sm text-gray-900">
-                    {step.LibelleEtape}
-                  </td>
-                  <td className="px-6 py-4 border-b border-gray-200 text-sm text-gray-900">
-                    {step.Description}
-                  </td>
-                  <td className="px-6 py-4 border-b border-gray-200 text-sm text-gray-900">
-                    {step.sequenceNumber}
-                  </td>
-                  <td className="px-6 py-4 border-b border-gray-200 text-sm text-gray-900">
-                    {step.roleId || "N/A"}
-                  </td>
-                  <td className="px-6 py-4 border-b border-gray-200 text-sm text-gray-900">
-                    {step.TypeProjets.map((type) => type.Libelle).join(", ") ||
-                      "Aucun"}
-                  </td>
-                  <td className="px-6 py-4 border-b border-gray-200 text-sm text-gray-900">
-                    <button
-                      type="button"
-                      onClick={() => removeStep(step.idEtape)}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      <Trash2 className="h-5 w-5" />
-                    </button>
-                  </td>
+        Array.isArray(steps) && (
+          <div className="overflow-x-auto">
+            <table className="min-w-full bg-white">
+              <thead>
+                <tr>
+                  <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm font-semibold text-gray-700">
+                    Nom
+                  </th>
+                  <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm font-semibold text-gray-700">
+                    Description
+                  </th>
+                  <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm font-semibold text-gray-700">
+                    Ordre
+                  </th>
+                  <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm font-semibold text-gray-700">
+                    Rôle requis
+                  </th>
+                  <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm font-semibold text-gray-700">
+                    Type de projet
+                  </th>
+                  <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm font-semibold text-gray-700">
+                    Actions
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {steps.map((step) => (
+                  <tr key={step.idEtape} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 border-b border-gray-200 text-sm text-gray-900">
+                      {step.LibelleEtape}
+                    </td>
+                    <td className="px-6 py-4 border-b border-gray-200 text-sm text-gray-900">
+                      {step.Description}
+                    </td>
+                    <td className="px-6 py-4 border-b border-gray-200 text-sm text-gray-900">
+                      {step.sequenceNumber}
+                    </td>
+                    <td className="px-6 py-4 border-b border-gray-200 text-sm text-gray-900">
+                      {step.roleId || "N/A"}
+                    </td>
+                    <td className="px-6 py-4 border-b border-gray-200 text-sm text-gray-900">
+                      {step.TypeProjets.map((type) => type.Libelle).join(
+                        ", "
+                      ) || "Aucun"}
+                    </td>
+                    <td className="px-6 py-4 border-b border-gray-200 text-sm text-gray-900">
+                      <button
+                        type="button"
+                        onClick={() => removeStep(step.idEtape)}
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        <Trash2 className="h-5 w-5" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )
       )}
 
       <form onSubmit={handleSubmit}>

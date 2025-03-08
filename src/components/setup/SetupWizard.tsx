@@ -168,22 +168,30 @@ const SetupWizard = () => {
     },
     {
       title: "Configuration des étapes de processus",
+
       description: "Définissez les étapes pour chaque type de projet",
+
       icon: Settings,
+
       content: (
         <div className="space-y-4">
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-medium">Étapes de processus</h3>
+
             <Button
               variant="secondary"
               size="sm"
               onClick={() =>
                 setProcessSteps([
                   ...processSteps,
+
                   {
                     projectId: "",
+
                     stepName: "",
+
                     stepDescription: "",
+
                     validation: "Validation par le chef de projet", // Valeur par défaut pour validation
                   },
                 ])
@@ -193,32 +201,42 @@ const SetupWizard = () => {
               Ajouter une étape
             </Button>
           </div>
+
           {projects.map((project, projectIndex) => (
             <div key={projectIndex} className="border rounded-lg p-4">
               <h4 className="font-medium">{project.Libelle}</h4>
+
               {processSteps
+
                 .filter((step) => step.projectId === project.Libelle) // Utiliser Libelle pour lier les étapes au projet
+
                 .map((step, index) => (
                   <div key={index} className="space-y-2">
                     <InputField
                       value={step.stepName}
                       onChange={(e) => {
                         const newSteps = [...processSteps];
+
                         newSteps[index].stepName = e.target.value;
+
                         setProcessSteps(newSteps);
                       }}
                       placeholder="Nom de l'étape"
                     />
+
                     <TextArea
                       value={step.stepDescription}
                       onChange={(e) => {
                         const newSteps = [...processSteps];
+
                         newSteps[index].stepDescription = e.target.value;
+
                         setProcessSteps(newSteps);
                       }}
                       placeholder="Description de l'étape"
                       rows={2}
                     />
+
                     <Button
                       variant="danger"
                       size="sm"
@@ -227,6 +245,7 @@ const SetupWizard = () => {
                         const newSteps = processSteps.filter(
                           (_, i) => i !== index
                         );
+
                         setProcessSteps(newSteps);
                       }}
                     >
@@ -234,16 +253,21 @@ const SetupWizard = () => {
                     </Button>
                   </div>
                 ))}
+
               <Button
                 variant="secondary"
                 size="sm"
                 onClick={() =>
                   setProcessSteps([
                     ...processSteps,
+
                     {
                       projectId: project.Libelle,
+
                       stepName: "",
+
                       stepDescription: "",
+
                       validation: "Validation par le chef de projet", // Valeur par défaut pour validation
                     },
                   ])
@@ -256,6 +280,7 @@ const SetupWizard = () => {
           ))}
         </div>
       ),
+
       apiEndpoint: "/etapes",
     },
     {
@@ -278,7 +303,7 @@ const SetupWizard = () => {
                     description: "",
                     isSystemRole: false,
                     etapeName: "",
-                    permissions: ["create", "read", "update", "delete"],
+                    permissions: [], // Initialiser avec un tableau vide
                   },
                 ])
               }
@@ -357,24 +382,45 @@ const SetupWizard = () => {
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
+
+                  {/* Permissions Section */}
+                  <div className="mt-3">
+                    <h4 className="text-sm font-medium mb-2">Permissions</h4>
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        "projects.view",
+                        "projects.create",
+                        "projects.edit",
+                        "users.view",
+                      ].map((perm) => (
+                        <div key={perm} className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            checked={role.permissions.includes(perm)} // Vérifie si la permission est incluse
+                            onChange={() => {
+                              const newRoles = [...roles];
+                              const permissions = newRoles[index].permissions;
+
+                              if (permissions.includes(perm)) {
+                                // Si la permission est déjà incluse, la retirer
+                                newRoles[index].permissions =
+                                  permissions.filter((p) => p !== perm);
+                              } else {
+                                // Sinon, l'ajouter
+                                newRoles[index].permissions.push(perm);
+                              }
+
+                              setRoles(newRoles);
+                            }}
+                            className="rounded"
+                          />
+                          <label className="text-sm">{perm}</label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               ))}
-            </div>
-            <div className="mt-3">
-              <h4 className="text-sm font-medium mb-2">Permissions</h4>
-              <div className="grid grid-cols-2 gap-2">
-                {[
-                  "projects.view",
-                  "projects.create",
-                  "projects.edit",
-                  "users.view",
-                ].map((perm) => (
-                  <div key={perm} className="flex items-center space-x-2">
-                    <InputField type="checkbox" className="rounded" />
-                    <label className="text-sm">{perm}</label>
-                  </div>
-                ))}
-              </div>
             </div>
           </div>
         </div>
@@ -558,18 +604,13 @@ const SetupWizard = () => {
               );
             }
           }
-
-          {
-            // Préparer les données à envoyer
-            const firstStep = processSteps[0]; // Récupérer la première étape
-            dataToSave = {
-              LibelleEtape: firstStep.stepName, // Changer Libelle en LibelleEtape
-              Description: firstStep.stepDescription,
-              Validation: firstStep.validation, // Assurez-vous que c'est une chaîne de caractères
-              typeProjetLibelle: firstStep.projectId, // Utiliser le projectId de l'étape
-            };
-          }
-
+          // Préparer les données à envoyer
+          dataToSave = processSteps.map((step) => ({
+            LibelleEtape: step.stepName, // Changer Libelle en LibelleEtape
+            Description: step.stepDescription,
+            Validation: step.validation, // Assurez-vous que c'est une chaîne de caractères
+            typeProjetLibelle: step.projectId, // Utiliser le projectId de l'étape
+          }));
           break;
 
         case 3: {
@@ -577,12 +618,10 @@ const SetupWizard = () => {
 
           if (roles.length === 0) {
             setErrors({ roles: "Au moins un rôle doit être défini" });
-
             return;
           }
 
           // Validate required fields
-
           const roleErrors = [];
 
           for (const [index, role] of roles.entries()) {
@@ -603,19 +642,17 @@ const SetupWizard = () => {
 
           if (roleErrors.length > 0) {
             setErrors({ roles: roleErrors.join(", ") });
-
             return;
           }
 
-          // Send only the first role instead of the entire array
-          const firstRole = roles[0];
-          dataToSave = {
-            name: firstRole.name,
-            description: firstRole.description,
-            isSystemRole: firstRole.isSystemRole,
-            etapeName: firstRole.etapeName,
-            permissions: firstRole.permissions,
-          };
+          // Préparer les données à envoyer
+          dataToSave = roles.map((role) => ({
+            name: role.name,
+            description: role.description,
+            isSystemRole: role.isSystemRole,
+            etapeName: role.etapeName,
+            permissions: role.permissions,
+          }));
 
           break;
         }

@@ -3,7 +3,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
 import LoadingSpinner from "../common/LoadingSpinner";
-import { Twitter, Github } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react"; // Importer les icônes
 import { ROUTES } from "../../constants/routes";
 import Cookies from "js-cookie";
 
@@ -12,6 +12,7 @@ const AuthForm: React.FC = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false); // État pour le toggle du mot de passe
   const navigate = useNavigate();
 
   const handleSubmit = useCallback(
@@ -26,9 +27,7 @@ const AuthForm: React.FC = () => {
           Password: password,
         });
         const { token, user } = response.data;
-        // avec le refreshToken :         const { token, refreshToken, user } = response.data;
         Cookies.set("token", token, { expires: 3 / 24 }); // 1 heure
-        // Cookies.set("refreshToken", refreshToken, { expires: 7 }); // 7 jours
 
         if (!user.roles || user.roles.length === 0) {
           throw new Error("Le rôle de l'utilisateur est indéfini.");
@@ -103,13 +102,27 @@ const AuthForm: React.FC = () => {
             </div>
             <div className="mb-4">
               <label className="block text-gray-700">Mot de passe</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"} // Toggle entre texte et mot de passe
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)} // Toggle de l'état showPassword
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500"
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}{" "}
+                  {/* Icône pour afficher/masquer */}
+                </button>
+              </div>
             </div>
             {error && <p className="text-red-500 mb-4">{error}</p>}
             <button
@@ -120,16 +133,7 @@ const AuthForm: React.FC = () => {
               {loading ? <LoadingSpinner /> : "Se connecter"}
             </button>
           </form>
-          <div className="mt-4 flex justify-between">
-            <button className="flex items-center space-x-2">
-              <Twitter className="w-5 h-5" />
-              <span>Twitter</span>
-            </button>
-            <button className="flex items-center space-x-2">
-              <Github className="w-5 h-5" />
-              <span>Github</span>
-            </button>
-          </div>
+          {/* Suppression de la section des icônes de réseaux sociaux */}
         </div>
       </div>
     </div>
