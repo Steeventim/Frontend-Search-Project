@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import {
   Clock,
@@ -9,19 +9,42 @@ import {
   MessageSquare,
   Paperclip,
   AlertTriangle,
+  Navigation,
 } from "lucide-react";
 import { Button } from "../common/Button";
 import { useProcessData } from "../../hooks/useProcessData";
-import { useProcessActions } from "./hooks/useProcessActions";
+import { userService } from "../../services/userService";
 import { formatDateTime } from "../../utils/date";
+import api from "../../services/api"; // Importez votre service API
 
 export const ProcessDetails: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams<{ id: string }>(); // Utilisez l'idDocument passé via la navigation
   const { process, loading, error } = useProcessData(id);
-  const { handleApprove } = useProcessActions();
-  const [comment, setComment] = React.useState("");
-  const [attachments, setAttachments] = React.useState<File[]>([]);
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [comment, setComment] = useState("");
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [initiatorName, setInitiatorName] = useState<string>("");
+  const [initiatorId, setInitiatorId] = useState<string>("");
+
+  // Récupérer l'idDocument depuis localStorage
+  const idDocument = localStorage.getItem("idDocument");
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const userData = await userService.getUserById("me");
+        setInitiatorName(userData.Nom);
+        setInitiatorId(userData.id);
+      } catch (error) {
+        console.error(
+          "Erreur lors du chargement des informations utilisateur:",
+          error
+        );
+      }
+    };
+
+    fetchUser();
+  }, []);
 
   if (loading) {
     return (
@@ -49,7 +72,6 @@ export const ProcessDetails: React.FC = () => {
     );
   }
 
-  // Utilisez le premier projet et son étape
   const firstTypeProjet = process.typeProjets[0];
   const etapeTypeProjet = firstTypeProjet.EtapeTypeProjet;
 
@@ -63,20 +85,51 @@ export const ProcessDetails: React.FC = () => {
     setAttachments((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleApproveClick = () => {
-    const step = {
-      id: etapeTypeProjet.etapeId,
-      documentId: process.id, // Assuming 'id' is a valid property of 'Process'
-      userId: process.initiatedBy, // Assuming 'initiatedBy' is the correct property
-      UserDestinatorName: etapeTypeProjet.UserDestinatorName,
-      nextEtapeName: etapeTypeProjet.nextEtapeName,
-      name: etapeTypeProjet.name,
-      order: etapeTypeProjet.order,
-      assignedTo: etapeTypeProjet.assignedTo,
-      status: etapeTypeProjet.status,
-    };
+  const handleApproveClick = async () => {
+    try {
+      const response = await api.post("/approve-document", {
+        documentId: idDocument, // Utilisez l'idDocument ici
+        userId: initiatorId,
+        etapeId: etapeTypeProjet.etapeId,
+        comments: [{ content: comment }],
+        files: attachments,
+      });
 
-    handleApprove(step, comment, attachments);
+      if (response.data.success) {
+        console.log("Document approuvé avec succès", response.data);
+        // Mettez à jour l'état ou affichez un message de succès si nécessaire
+      } else {
+        console.error(
+          "Erreur lors de l'approbation du document",
+          response.data
+        );
+      }
+    } catch (error) {
+      console.error("Erreur lors de l'approbation du document", error);
+    }
+  };
+
+  const handleTransferClick = async () => {
+    try {
+      const response = await api.post("/forward-to-next-etape", {
+        documentId: idDocument, // Utilisez l'idDocument ici
+        userId: initiatorId,
+        comments: [{ content: comment }],
+        files: attachments,
+        etapeId: etapeTypeProjet.etapeId,
+        UserDestinatorName: etapeTypeProjet.UserDestinatorName,
+        nextEtapeName: etapeTypeProjet.nextEtapeName,
+      });
+
+      if (response.data.success) {
+        console.log("Processus transféré avec succès", response.data);
+        // Mettez à jour l'état ou affichez un message de succès si nécessaire
+      } else {
+        console.error("Erreur lors du transfert du processus", response.data);
+      }
+    } catch (error) {
+      console.error("Erreur lors du transfert du processus", error);
+    }
   };
 
   return (
@@ -117,15 +170,11 @@ export const ProcessDetails: React.FC = () => {
           <div className="mt-6 flex items-center space-x-6 text-sm text-gray-500">
             <div className="flex items-center">
               <User className="h-4 w-4 mr-2" />
-              {process.initiatedBy}
+              {initiatorName}
             </div>
             <div className="flex items-center">
               <Calendar className="h-4 w-4 mr-2" />
               {formatDateTime(process.createdAt)}
-            </div>
-            <div className="flex items-center">
-              <Clock className="h-4 w-4 mr-2" />
-              Étape {process.sequenceNumber}
             </div>
           </div>
 
@@ -142,7 +191,7 @@ export const ProcessDetails: React.FC = () => {
                   <div
                     key={typeProjet.idType}
                     className={`flex flex-col items-center ${
-                      index === 0 // Utilisez 0 pour le premier projet
+                      index === 0
                         ? "text-blue-600"
                         : typeProjet.EtapeTypeProjet.status === "approved"
                         ? "text-green-600"
@@ -253,7 +302,41 @@ export const ProcessDetails: React.FC = () => {
                 <Button variant="danger" icon={XCircle}>
                   Rejeter
                 </Button>
+                <Button
+                  variant="secondary"
+                  icon={Navigation}
+                  onClick={handleTransferClick}
+                >
+                  Transférer
+                </Button>
               </div>
+
+              {/* Prévisualisation des fichiers joints */}
+              {attachments.length > 0 && (
+                <div className="mt-4">
+                  <h3 className="text-sm font-semibold text-gray-700">
+                    Prévisualisation des fichiers
+                  </h3>
+                  <div className="mt-2 space-y-2">
+                    {attachments.map((file, index) => (
+                      <div key={index} className="p-2 bg-gray-100 rounded-md">
+                        <p className="text-gray-600">{file.name}</p>
+                        <p className="text-xs text-gray-500">
+                          Taille : {(file.size / 1024).toFixed(1)} KB
+                        </p>
+                        {/* Affichage d'une prévisualisation si le fichier est une image */}
+                        {file.type.startsWith("image/") && (
+                          <img
+                            src={URL.createObjectURL(file)}
+                            alt={file.name}
+                            className="mt-2 max-h-40"
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -3,9 +3,8 @@ export interface User {
   id: string;
   Nom: string;
   Prenom: string;
-  Email: string;
-  Telephone: string;
-  IsActive: boolean;
+  email: string;
+  roles: string[];
 }
 
 export interface LoginCredentials {

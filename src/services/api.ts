@@ -3,7 +3,7 @@ import Cookies from "js-cookie";
 
 // Créer une instance d'axios
 const api = axios.create({
-  baseURL: "http://127.0.0.1:3003", // Remplacez par l'URL de votre API
+  baseURL: "http://192.168.50.109:3003", // Remplacez par l'URL de votre API
   headers: {
     "Content-Type": "application/json",
   },

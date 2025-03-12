@@ -25,29 +25,32 @@ export interface ProcessStep {
   // Ajoutez d'autres propriétés si nécessaire
 }
 
+export interface TypeProjet {
+  idType: string;
+  Libelle: string;
+  Description: string;
+  EtapeTypeProjet: {
+    id: string;
+    etapeId: string;
+    idType: string;
+    createdAt: string; // Date au format string
+    updatedAt: string; // Date au format string
+  };
+}
+
 // Interface pour un processus
 export interface Process {
-  LibelleEtape: ReactNode; // Titre de l'étape, peut contenir du JSX
-  Description: ReactNode; // Description, peut contenir du JSX
-  Validation: ProcessStatus; // Utilisation de ProcessStatus pour la validation
-  sequenceNumber: number; // Changement de type pour un numéro de séquence
-  typeProjets: {
-    idType: string;
-    Libelle: string;
-    Description: string;
-    EtapeTypeProjet: {
-      etapeId(etapeId: string, comment: string, attachments: File[]): void;
-      status: ProcessStatus;
-      comments: Comment[];
-    };
-  }[]; // Remplacement par le type approprié
-  id: string;
-  title: string;
-  description: string;
-  currentStep: number; // Indice de l'étape actuelle
-  status: ProcessStatus; // Utilisation de ProcessStatus ici pour la cohérence
-  createdAt: string; // Utilisez string si vous ne parsez pas en Date
-  updatedAt: string; // Utilisez string si vous ne parsez pas en Date
-  initiatedBy: string; // Utilisateur qui a initié le processus
-  steps: ProcessStep[]; // Utilisation de ProcessStep pour les étapes
+  idEtape: string; // Identifiant de l'étape
+  LibelleEtape: string; // Titre de l'étape
+  Description: string; // Description de l'étape
+  Validation: string; // Validation par le chef de projet
+  sequenceNumber: number; // Numéro de séquence
+  createdAt: string; // Date de création
+  updatedAt: string; // Date de mise à jour
+  documents: Document[]; // Remplacez par le type approprié si nécessaire
+  typeProjets: TypeProjet[]; // Liste des types de projets
+  nextEtape: {
+    idEtape: string; // Identifiant de la prochaine étape
+    LibelleEtape: string; // Titre de la prochaine étape
+  };
 }

@@ -387,36 +387,36 @@ const SetupWizard = () => {
                   <div className="mt-3">
                     <h4 className="text-sm font-medium mb-2">Permissions</h4>
                     <div className="grid grid-cols-2 gap-2">
-                      {[
-                        "projects.view",
-                        "projects.create",
-                        "projects.edit",
-                        "users.view",
-                      ].map((perm) => (
-                        <div key={perm} className="flex items-center space-x-2">
-                          <input
-                            type="checkbox"
-                            checked={role.permissions.includes(perm)} // Vérifie si la permission est incluse
-                            onChange={() => {
-                              const newRoles = [...roles];
-                              const permissions = newRoles[index].permissions;
+                      {["Valider", "Rechercher", "transferer", "Rejetter"].map(
+                        (perm) => (
+                          <div
+                            key={perm}
+                            className="flex items-center space-x-2"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={role.permissions.includes(perm)} // Vérifie si la permission est incluse
+                              onChange={() => {
+                                const newRoles = [...roles];
+                                const permissions = newRoles[index].permissions;
 
-                              if (permissions.includes(perm)) {
-                                // Si la permission est déjà incluse, la retirer
-                                newRoles[index].permissions =
-                                  permissions.filter((p) => p !== perm);
-                              } else {
-                                // Sinon, l'ajouter
-                                newRoles[index].permissions.push(perm);
-                              }
+                                if (permissions.includes(perm)) {
+                                  // Si la permission est déjà incluse, la retirer
+                                  newRoles[index].permissions =
+                                    permissions.filter((p) => p !== perm);
+                                } else {
+                                  // Sinon, l'ajouter
+                                  newRoles[index].permissions.push(perm);
+                                }
 
-                              setRoles(newRoles);
-                            }}
-                            className="rounded"
-                          />
-                          <label className="text-sm">{perm}</label>
-                        </div>
-                      ))}
+                                setRoles(newRoles);
+                              }}
+                              className="rounded"
+                            />
+                            <label className="text-sm">{perm}</label>
+                          </div>
+                        )
+                      )}
                     </div>
                   </div>
                 </div>
@@ -699,17 +699,17 @@ const SetupWizard = () => {
             return;
           }
 
-          // Send only the first user instead of the entire array
-          const firstUser = users[0];
-          dataToSave = {
-            NomUser: firstUser.NomUser,
-            PrenomUser: firstUser.PrenomUser,
-            Email: firstUser.Email,
-            Password: firstUser.Password,
-            Telephone: firstUser.Telephone,
-            IsActive: firstUser.IsActive,
-            roleNames: firstUser.roleNames,
-          };
+          // Send all users instead of just the first one
+          dataToSave = users.map((user) => ({
+            Nom: user.NomUser,
+            Prenom: user.PrenomUser,
+            Email: user.Email,
+            Password: user.Password,
+            Telephone: user.Telephone,
+            IsActive: user.IsActive,
+            roleNames: user.roleNames,
+          }));
+
           break;
         }
 

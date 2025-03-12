@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { FileText, Plus, Trash2, Save, Loader2 } from "lucide-react";
-import { Card } from "../common/Card";
+import { Plus, Trash2, Loader2, Edit } from "lucide-react";
+// import { Card } from "../common/Card";
 import { Button } from "../common/Button";
 import api from "../../services/api";
 
 interface Project {
-  id: string;
-  name: string;
-  description: string;
-  type: "standard" | "complex" | "simple";
+  idType: string;
+  Libelle: string;
+  Description: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export const ProjectsManagement: React.FC = () => {
@@ -19,7 +20,7 @@ export const ProjectsManagement: React.FC = () => {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const response = await api.get("/projets/all"); // Remplacez par l'URL correcte
+        const response = await api.get("/projets/all");
         setProjects(response.data);
       } catch (err) {
         setError("Erreur lors du chargement des projets");
@@ -36,28 +37,50 @@ export const ProjectsManagement: React.FC = () => {
     setProjects([
       ...projects,
       {
-        id: Date.now().toString(),
-        name: "",
-        description: "",
-        type: "standard",
+        idType: Date.now().toString(),
+        Libelle: "",
+        Description: "",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       },
     ]);
   };
 
-  const removeProject = (id: string) => {
-    setProjects(projects.filter((p) => p.id !== id));
+  const removeProject = async (idType: string) => {
+    try {
+      await api.delete(`/projets/${idType}`);
+      setProjects(projects.filter((p) => p.idType !== idType));
+    } catch (err) {
+      console.error("Erreur lors de la suppression du projet", err);
+    }
   };
 
-  const updateProject = (id: string, field: keyof Project, value: string) => {
-    setProjects(
-      projects.map((p) => (p.id === id ? { ...p, [field]: value } : p))
+  const updateProject = async (project: Project) => {
+    try {
+      await api.put(`/projets/${project.idType}`, project);
+      setProjects(
+        projects.map((p) => (p.idType === project.idType ? project : p))
+      );
+    } catch (err) {
+      console.error("Erreur lors de la mise à jour du projet", err);
+    }
+  };
+
+  const handleUpdateClick = (project: Project) => {
+    const updatedLibelle = prompt("Nom du projet:", project.Libelle);
+    const updatedDescription = prompt(
+      "Description du projet:",
+      project.Description
     );
-  };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    // TODO: Implement projects update
-    console.log("Projects:", projects);
+    if (updatedLibelle !== null && updatedDescription !== null) {
+      updateProject({
+        ...project,
+        Libelle: updatedLibelle,
+        Description: updatedDescription,
+        updatedAt: new Date().toISOString(),
+      });
+    }
   };
 
   return (
@@ -91,29 +114,30 @@ export const ProjectsManagement: React.FC = () => {
                   Description
                 </th>
                 <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm font-semibold text-gray-700">
-                  Type
-                </th>
-                <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm font-semibold text-gray-700">
                   Actions
                 </th>
               </tr>
             </thead>
             <tbody>
               {projects.map((project) => (
-                <tr key={project.id} className="hover:bg-gray-50">
+                <tr key={project.idType} className="hover:bg-gray-50">
                   <td className="px-6 py-4 border-b border-gray-200 text-sm text-gray-900">
-                    {project.name}
+                    {project.Libelle}
                   </td>
                   <td className="px-6 py-4 border-b border-gray-200 text-sm text-gray-900">
-                    {project.description}
-                  </td>
-                  <td className="px-6 py-4 border-b border-gray-200 text-sm text-gray-900">
-                    {project.type}
+                    {project.Description}
                   </td>
                   <td className="px-6 py-4 border-b border-gray-200 text-sm text-gray-900">
                     <button
                       type="button"
-                      onClick={() => removeProject(project.id)}
+                      onClick={() => handleUpdateClick(project)}
+                      className="text-blue-600 hover:text-blue-700 mr-4"
+                    >
+                      <Edit className="h-5 w-5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removeProject(project.idType)}
                       className="text-red-600 hover:text-red-700"
                     >
                       <Trash2 className="h-5 w-5" />
@@ -125,91 +149,6 @@ export const ProjectsManagement: React.FC = () => {
           </table>
         </div>
       )}
-
-      <form onSubmit={handleSubmit}>
-        <div className="space-y-4">
-          {projects.map((project) => (
-            <Card key={project.id}>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-blue-100 rounded-lg">
-                      <FileText className="h-5 w-5 text-blue-600" />
-                    </div>
-                    <h3 className="text-lg font-medium text-gray-900">
-                      {project.name || "Nouveau projet"}
-                    </h3>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => removeProject(project.id)}
-                    className="text-red-600 hover:text-red-700"
-                  >
-                    <Trash2 className="h-5 w-5" />
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Nom du projet
-                    </label>
-                    <input
-                      type="text"
-                      value={project.name}
-                      onChange={(e) =>
-                        updateProject(project.id, "name", e.target.value)
-                      }
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Type
-                    </label>
-                    <select
-                      value={project.type}
-                      onChange={(e) =>
-                        updateProject(project.id, "type", e.target.value)
-                      }
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                    >
-                      <option value="standard">Standard</option>
-                      <option value="complex">Complexe</option>
-                      <option value="simple">Simple</option>
-                    </select>
-                  </div>
-
-                  <div className="sm:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Description
-                    </label>
-                    <textarea
-                      value={project.description}
-                      onChange={(e) =>
-                        updateProject(project.id, "description", e.target.value)
-                      }
-                      rows={3}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                      required
-                    />
-                  </div>
-                </div>
-              </div>
-            </Card>
-          ))}
-
-          {projects.length > 0 && (
-            <div className="mt-6 flex justify-end">
-              <Button type="submit" variant="primary" icon={Save}>
-                Enregistrer les modifications
-              </Button>
-            </div>
-          )}
-        </div>
-      </form>
     </div>
   );
 };

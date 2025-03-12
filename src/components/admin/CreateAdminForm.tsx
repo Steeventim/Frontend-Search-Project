@@ -167,7 +167,7 @@ const CreateAdminForm = () => {
             type="text"
             value={nomUser}
             onChange={(e) => setNomUser(e.target.value)}
-            placeholder="Dupont"
+            placeholder="Timnou Tchuinte"
             required
             className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
           />
@@ -179,7 +179,7 @@ const CreateAdminForm = () => {
             type="text"
             value={prenomUser}
             onChange={(e) => setPrenomUser(e.target.value)}
-            placeholder="Jean"
+            placeholder="Yvan Steeve"
             required
             className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
           />

@@ -27,6 +27,7 @@ import CreateAdminForm from "./components/admin/CreateAdminForm";
 import { CompanyManagement } from "./components/admin/CompanyManagement";
 import { ProjectsManagement } from "./components/admin/ProjectsManagement";
 import { ProcessStepsManagement } from "./components/admin/ProcessStepsManagement";
+import { ProcessTemplatesList } from "./components/admin/ProcessTemplatesList";
 import { RolesManagement } from "./components/admin/RolesManagement";
 import { UsersList } from "./components/admin/UsersList";
 import SearchInterface from "./components/process/SearchInterface";
@@ -74,6 +75,10 @@ const App = () => {
               <Route
                 path={ROUTES.ADMIN.COMPANY}
                 element={<CompanyManagement />}
+              />
+              <Route
+                path={ROUTES.ADMIN.PROCESS_STEPS}
+                element={<ProcessTemplatesList />}
               />
               <Route
                 path={ROUTES.ADMIN.PROJECTS}

@@ -6,6 +6,7 @@ import { searchService } from "../../services/searchService";
 import { SearchResponse, Hit } from "../../types/search";
 import api from "../../services/api";
 import { Dialog } from "../common/Dialog";
+// import { useNavigate } from "react-router-dom";
 
 // Define the interface for the etape object
 interface Etape {
@@ -25,6 +26,8 @@ const SearchInterface: React.FC = () => {
     null
   );
   const [assignLoading, setAssignLoading] = useState(false);
+
+  // const navigate = useNavigate();
 
   useEffect(() => {
     const fetchEtapes = async () => {
@@ -95,10 +98,12 @@ const SearchInterface: React.FC = () => {
     if (!selectedEtape) return;
     setAssignLoading(true);
     try {
-      await api.post("/etapes/affect", {
+      const response = await api.post("/etapes/affect", {
         documentName: selectedDocument?._source.file.filename, // Mettez à jour pour accéder à la bonne propriété
         etapeName: selectedEtape,
       });
+      const idDocument = response.data.data.idDocument; // Récupérer l'idDocument
+      localStorage.setItem("idDocument", idDocument); // Stocker l'idDocument dans localStorage
       setConfirmationMessage("Document affecté avec succès.");
       setShowDialog(false);
       // Réinitialiser le message de confirmation après 3 secondes
@@ -111,7 +116,7 @@ const SearchInterface: React.FC = () => {
       // Réinitialiser le message d'erreur après 3 secondes
       setTimeout(() => {
         setError(null);
-      }, 3000);
+      }, 9000);
     } finally {
       setAssignLoading(false);
     }

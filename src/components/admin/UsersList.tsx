@@ -38,20 +38,20 @@ export const UsersList: React.FC = () => {
     }
   };
 
-  const handleCreateUser = async (data: any) => {
+  const handleCreateUser = async (data: CreateUserData) => {
     await userService.createUser(data);
     await loadUsers();
   };
 
-  const handleUpdateUser = async (data: any) => {
+  const handleUpdateUser = async (data: Partial<User>) => {
     if (!selectedUser) return;
-    await userService.updateUser(selectedUser.id, data);
+    await userService.updateUser(selectedUser.idUser, data);
     await loadUsers();
   };
 
   const handleDeleteUser = async () => {
     if (!selectedUser) return;
-    await userService.deleteUser(selectedUser.id);
+    await userService.deleteUser(selectedUser.idUser);
     await loadUsers();
   };
 
@@ -94,7 +94,7 @@ export const UsersList: React.FC = () => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {users.map((user) => (
-                <tr key={user.id}>
+                <tr key={user.idUser}>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
@@ -102,7 +102,7 @@ export const UsersList: React.FC = () => {
                       </div>
                       <div className="ml-4">
                         <div className="text-sm font-medium text-gray-900">
-                          {user.Prenom} {user.Nom}
+                          {user.PrenomUser} {user.NomUser}
                         </div>
                       </div>
                     </div>
@@ -166,7 +166,9 @@ export const UsersList: React.FC = () => {
         }}
         onConfirm={handleDeleteUser}
         userName={
-          selectedUser ? `${selectedUser.Prenom} ${selectedUser.Nom}` : ""
+          selectedUser
+            ? `${selectedUser.PrenomUser} ${selectedUser.NomUser}`
+            : ""
         }
       />
     </div>
