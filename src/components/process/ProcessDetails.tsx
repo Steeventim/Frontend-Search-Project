@@ -118,7 +118,7 @@ export const ProcessDetails: React.FC = () => {
         files: attachments,
         etapeId: etapeTypeProjet.etapeId,
         UserDestinatorName: etapeTypeProjet.UserDestinatorName,
-        nextEtapeName: etapeTypeProjet.nextEtapeName,
+        nextEtapeName: process.nextEtape.LibelleEtape,
       });
 
       if (response.data.success) {
@@ -193,9 +193,9 @@ export const ProcessDetails: React.FC = () => {
                     className={`flex flex-col items-center ${
                       index === 0
                         ? "text-blue-600"
-                        : typeProjet.EtapeTypeProjet.status === "approved"
+                        : process.Validation === "approved"
                         ? "text-green-600"
-                        : typeProjet.EtapeTypeProjet.status === "rejected"
+                        : process.Validation === "rejected"
                         ? "text-red-600"
                         : "text-gray-400"
                     }`}
@@ -204,16 +204,16 @@ export const ProcessDetails: React.FC = () => {
                       className={`relative flex h-12 w-12 items-center justify-center rounded-full border-2 bg-white ${
                         index === 0
                           ? "border-blue-600"
-                          : typeProjet.EtapeTypeProjet.status === "approved"
+                          : process.Validation === "approved"
                           ? "border-green-600"
-                          : typeProjet.EtapeTypeProjet.status === "rejected"
+                          : process.Validation === "rejected"
                           ? "border-red-600"
                           : "border-gray-200"
                       }`}
                     >
-                      {typeProjet.EtapeTypeProjet.status === "approved" ? (
+                      {process.Validation === "approved" ? (
                         <CheckCircle2 className="h-6 w-6" />
-                      ) : typeProjet.EtapeTypeProjet.status === "rejected" ? (
+                      ) : status === "rejected" ? (
                         <XCircle className="h-6 w-6" />
                       ) : (
                         <span className="text-sm font-medium">{index + 1}</span>

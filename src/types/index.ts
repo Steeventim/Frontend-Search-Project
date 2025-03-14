@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+// import { ReactNode } from "react";
 
 // Définition des statuts possibles pour un processus
 export type ProcessStatus = "pending" | "approved" | "rejected" | "in_progress";
@@ -19,7 +19,7 @@ export interface ProcessStep {
   order: number;
   assignedTo: string;
   status: ProcessStatus;
-  comments: Comment[];
+  comments: Comment;
   requiredLevel: number;
   description: string; // Ajout de la propriété description
   // Ajoutez d'autres propriétés si nécessaire
@@ -30,6 +30,7 @@ export interface TypeProjet {
   Libelle: string;
   Description: string;
   EtapeTypeProjet: {
+    comments: Comment[];
     id: string;
     etapeId: string;
     idType: string;

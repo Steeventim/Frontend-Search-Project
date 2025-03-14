@@ -3,8 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { Menu, Transition } from "@headlessui/react";
 import {
   LayoutDashboard,
-  FileText,
-  PlusCircle,
+  // FileText,
+  // PlusCircle,
   Bell,
   User,
   LogOut,
@@ -43,8 +43,7 @@ export const UserNavbar: React.FC = () => {
           {
             id: "2",
             title: "Rappel: Action requise",
-            message:
-              'Une action est requise sur le processus "Demande de congés"',
+            message: 'Une action est requise sur le processus "precedant"',
             processId: "2",
             timestamp: new Date(Date.now() - 86400000), // 1 jour avant
             read: true,
@@ -67,8 +66,8 @@ export const UserNavbar: React.FC = () => {
 
   const menuItems = [
     { icon: LayoutDashboard, label: "Tableau de bord", path: "/dashboard" },
-    { icon: FileText, label: "Mes processus", path: "/processes" },
-    { icon: PlusCircle, label: "Nouveau processus", path: "/processes/new" },
+    // { icon: FileText, label: "Mes processus", path: "/processes" },
+    // { icon: PlusCircle, label: "Nouveau processus", path: "/processes/new" },
     { icon: Search, label: "Recherche", path: "/search" },
   ];
 
@@ -84,7 +83,7 @@ export const UserNavbar: React.FC = () => {
       );
 
       // Rediriger vers le processus
-      navigate(`/processes/${notification.processId}`);
+      // navigate(`/processes/#`);
     } catch (err) {
       console.error("Erreur lors du marquage de la notification:", err);
     }

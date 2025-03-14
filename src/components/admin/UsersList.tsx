@@ -45,13 +45,13 @@ export const UsersList: React.FC = () => {
 
   const handleUpdateUser = async (data: Partial<User>) => {
     if (!selectedUser) return;
-    await userService.updateUser(selectedUser.idUser, data);
+    await userService.updateUser(selectedUser.id, data);
     await loadUsers();
   };
 
   const handleDeleteUser = async () => {
     if (!selectedUser) return;
-    await userService.deleteUser(selectedUser.idUser);
+    await userService.deleteUser(selectedUser.id);
     await loadUsers();
   };
 
@@ -94,7 +94,7 @@ export const UsersList: React.FC = () => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {users.map((user) => (
-                <tr key={user.idUser}>
+                <tr key={user.id}>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
@@ -102,16 +102,16 @@ export const UsersList: React.FC = () => {
                       </div>
                       <div className="ml-4">
                         <div className="text-sm font-medium text-gray-900">
-                          {user.PrenomUser} {user.NomUser}
+                          {user.Prenom} {user.Nom}
                         </div>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {user.Email}
+                    {user.email}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {user.Telephone}
+                    {user.roles}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button
@@ -166,9 +166,7 @@ export const UsersList: React.FC = () => {
         }}
         onConfirm={handleDeleteUser}
         userName={
-          selectedUser
-            ? `${selectedUser.PrenomUser} ${selectedUser.NomUser}`
-            : ""
+          selectedUser ? `${selectedUser.Prenom} ${selectedUser.Nom}` : ""
         }
       />
     </div>

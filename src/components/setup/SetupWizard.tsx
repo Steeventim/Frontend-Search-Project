@@ -177,22 +177,18 @@ const SetupWizard = () => {
         <div className="space-y-4">
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-medium">Étapes de processus</h3>
-
             <Button
               variant="secondary"
               size="sm"
               onClick={() =>
                 setProcessSteps([
                   ...processSteps,
-
                   {
-                    projectId: "",
-
+                    projectId: "", // Laissez vide pour une nouvelle étape
                     stepName: "",
-
                     stepDescription: "",
-
                     validation: "Validation par le chef de projet", // Valeur par défaut pour validation
+                    id: Date.now(), // Ajout d'un identifiant unique pour chaque étape
                   },
                 ])
               }
@@ -207,45 +203,48 @@ const SetupWizard = () => {
               <h4 className="font-medium">{project.Libelle}</h4>
 
               {processSteps
-
-                .filter((step) => step.projectId === project.Libelle) // Utiliser Libelle pour lier les étapes au projet
-
-                .map((step, index) => (
-                  <div key={index} className="space-y-2">
+                .filter((step) => step.projectId === project.Libelle) // Lier les étapes au projet
+                .map((step) => (
+                  <div key={step.id} className="space-y-2">
+                    {" "}
+                    {/* Utilisation de l'id unique */}
                     <InputField
                       value={step.stepName}
                       onChange={(e) => {
-                        const newSteps = [...processSteps];
-
-                        newSteps[index].stepName = e.target.value;
-
+                        const newSteps = processSteps.map((s) => {
+                          if (s.id === step.id) {
+                            // Vérification par id unique
+                            return { ...s, stepName: e.target.value };
+                          }
+                          return s; // Retourne l'étape inchangée
+                        });
                         setProcessSteps(newSteps);
                       }}
                       placeholder="Nom de l'étape"
                     />
-
                     <TextArea
                       value={step.stepDescription}
                       onChange={(e) => {
-                        const newSteps = [...processSteps];
-
-                        newSteps[index].stepDescription = e.target.value;
-
+                        const newSteps = processSteps.map((s) => {
+                          if (s.id === step.id) {
+                            // Vérification par id unique
+                            return { ...s, stepDescription: e.target.value };
+                          }
+                          return s; // Retourne l'étape inchangée
+                        });
                         setProcessSteps(newSteps);
                       }}
                       placeholder="Description de l'étape"
                       rows={2}
                     />
-
                     <Button
                       variant="danger"
                       size="sm"
                       className="text-red-500"
                       onClick={() => {
                         const newSteps = processSteps.filter(
-                          (_, i) => i !== index
+                          (s) => s.id !== step.id // Suppression par id unique
                         );
-
                         setProcessSteps(newSteps);
                       }}
                     >
@@ -260,15 +259,12 @@ const SetupWizard = () => {
                 onClick={() =>
                   setProcessSteps([
                     ...processSteps,
-
                     {
                       projectId: project.Libelle,
-
                       stepName: "",
-
                       stepDescription: "",
-
                       validation: "Validation par le chef de projet", // Valeur par défaut pour validation
+                      id: Date.now(), // Ajout d'un identifiant unique pour chaque étape
                     },
                   ])
                 }
@@ -701,8 +697,8 @@ const SetupWizard = () => {
 
           // Send all users instead of just the first one
           dataToSave = users.map((user) => ({
-            Nom: user.NomUser,
-            Prenom: user.PrenomUser,
+            NomUser: user.NomUser,
+            PrenomUser: user.PrenomUser,
             Email: user.Email,
             Password: user.Password,
             Telephone: user.Telephone,
