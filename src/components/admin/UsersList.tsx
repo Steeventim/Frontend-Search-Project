@@ -9,8 +9,10 @@ import { User } from "../../types/auth"; // Assurez-vous que ce type est défini
 
 export const UsersList: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [confirmationMessage, setConfirmationMessage] = useState<string | null>(
+    null
+  );
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -22,7 +24,6 @@ export const UsersList: React.FC = () => {
   }, []);
 
   const loadUsers = async () => {
-    setLoading(true);
     try {
       const data: User[] = await userService.getUsers();
       console.log("Données récupérées :", data); // Vérifiez les données ici
@@ -33,33 +34,47 @@ export const UsersList: React.FC = () => {
           ? err.message
           : "Une erreur est survenue lors du chargement des utilisateurs."
       );
-    } finally {
-      setLoading(false);
     }
   };
 
   const handleCreateUser = async (data: CreateUserData) => {
-    await userService.createUser(data);
+    await userService.createUser({
+      firstName: data.Prenom,
+      lastName: data.Nom,
+      email: data.email,
+      password: data.password, // Ensure this is provided in the form
+    });
+    setConfirmationMessage("Utilisateur créé avec succès !");
     await loadUsers();
   };
 
-  const handleUpdateUser = async (data: Partial<User>) => {
-    if (!selectedUser) return;
-    await userService.updateUser(selectedUser.id, data);
+  const handleUpdateUser = async (data: User) => {
+    await userService.updateUser(selectedUser.id, {
+      firstName: data.Prenom,
+      lastName: data.Nom,
+      email: data.email,
+      // Include other fields as necessary
+    });
+    setConfirmationMessage("Utilisateur modifié avec succès !");
     await loadUsers();
   };
 
   const handleDeleteUser = async () => {
-    if (!selectedUser) return;
+    if (!selectedUser) {
+      return;
+    }
     await userService.deleteUser(selectedUser.id);
+    setConfirmationMessage("Utilisateur supprimé avec succès !");
     await loadUsers();
   };
 
-  if (loading) return <div>Chargement...</div>;
-  if (error) return <div className="text-red-500">{error}</div>;
-
   return (
     <div className="space-y-6">
+      {confirmationMessage && (
+        <div className="text-green-500">{confirmationMessage}</div>
+      )}
+      {error && <div className="text-red-500">{error}</div>}
+
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900">
           Gestion des utilisateurs

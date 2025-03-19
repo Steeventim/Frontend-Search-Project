@@ -19,7 +19,7 @@ export const ErrorPage: React.FC<ErrorPageProps> = ({ error, resetError }) => {
             <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100">
               <AlertTriangle className="h-10 w-10 text-red-600" />
             </div>
-            <h1 className="mt-5 text-2xl font-bold text-gray-900">
+            <h1 className="mt-5 text-2xl font-bold text-gray-900" role="alert">
               Une erreur est survenue
             </h1>
             <p className="mt-3 text-gray-600 text-sm">
@@ -29,7 +29,10 @@ export const ErrorPage: React.FC<ErrorPageProps> = ({ error, resetError }) => {
 
             {error && (
               <div className="mt-4 p-4 bg-red-50 rounded-md">
-                <pre className="text-xs text-red-700 overflow-auto">
+                <pre
+                  className="text-xs text-red-700 overflow-auto"
+                  aria-hidden={!error?.stack}
+                >
                   {error.stack}
                 </pre>
               </div>

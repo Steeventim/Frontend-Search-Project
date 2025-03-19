@@ -27,14 +27,16 @@ const AuthForm: React.FC = () => {
           Password: password,
         });
         const { token, user } = response.data;
-        Cookies.set("token", token, { expires: 3 / 24 }); // 1 heure
+        Cookies.set("token", token, { expires: 3 / 24 }); // 3 heures
 
         if (!user.roles || user.roles.length === 0) {
-          throw new Error("Le rôle de l'utilisateur est indéfini.");
+          // Redirection pour les utilisateurs sans rôle
+          navigate(ROUTES.ERROR);
+          return;
         }
 
-        const userRole = user.roles[0].name;
-        Cookies.set("role", userRole, { expires: 7 });
+        const userRole = user.roles[0].name; // On prend le premier rôle
+        Cookies.set("roleName", userRole, { expires: 7 }); // Stocker le rôle dans les cookies
 
         // Redirection en fonction du rôle de l'utilisateur
         console.log("Redirection en cours...", { userRole });
@@ -45,8 +47,8 @@ const AuthForm: React.FC = () => {
           console.log("Redirection vers:", ROUTES.AUTH.SETUP);
           navigate(ROUTES.AUTH.SETUP);
         } else {
-          console.log("Redirection vers:", ROUTES.USER.DASHBOARD);
-          navigate(ROUTES.USER.DASHBOARD);
+          console.log("Redirection vers le tableau de bord utilisateur");
+          navigate(ROUTES.USER.DASHBOARD); // Remplacez par la route appropriée pour le tableau de bord utilisateur
         }
         console.log("Redirection effectuée");
       } catch (err) {
@@ -133,7 +135,6 @@ const AuthForm: React.FC = () => {
               {loading ? <LoadingSpinner /> : "Se connecter"}
             </button>
           </form>
-          {/* Suppression de la section des icônes de réseaux sociaux */}
         </div>
       </div>
     </div>

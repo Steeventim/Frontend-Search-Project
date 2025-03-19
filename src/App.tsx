@@ -18,7 +18,7 @@ import { AdminDashboard } from "./components/admin/AdminDashboard";
 // import { DepartmentsList } from "./components/admin/DepartmentsList";
 // import { ProcessTemplatesList } from "./components/admin/ProcessTemplatesList";
 import { Settings } from "./components/admin/Settings";
-import { ProcessList } from "./components/process/ProcessList";
+// import { ProcessList } from "./components/process/ProcessList";
 import { ProcessDetails } from "./components/process/ProcessDetails";
 import { NewProcess } from "./components/process/NewProcess";
 import { UserProfile } from "./components/user/UserProfile";
@@ -33,18 +33,20 @@ import { UsersList } from "./components/admin/UsersList";
 import SearchInterface from "./components/process/SearchInterface";
 import { ErrorBoundary } from "./components/error/ErrorBoundary";
 
-const ProtectedRoute = ({ roles }: { roles: string[] }) => {
+const ProtectedRoute = ({ roles }: { roles?: string[] }) => {
   const token = Cookies.get("token");
-  const userRole = Cookies.get("role");
+
+  // Vérifiez si l'utilisateur est authentifié
 
   if (!token) {
     return <Navigate to={ROUTES.AUTH.LOGIN} />;
   }
 
-  if (roles && !roles.includes(userRole || "")) {
+  // Si des rôles sont spécifiés, vous pouvez les vérifier ici
+
+  if (roles && !roles.includes(Cookies.get("role") || "")) {
     return <Navigate to={ROUTES.AUTH.LOGIN} />;
   }
-
   return <Outlet />;
 };
 
@@ -94,13 +96,12 @@ const App = () => {
             </Route>
           </Route>
 
-          {/* User Routes */}
-          <Route
-            element={<ProtectedRoute roles={["user", "admin", "superadmin"]} />}
-          >
+          {/* User Routes - Allow any authenticated user */}
+
+          <Route element={<ProtectedRoute />}>
             <Route path={ROUTES.USER.ROOT} element={<UserLayout />}>
               <Route path={ROUTES.USER.DASHBOARD} element={<Dashboard />} />
-              <Route path={ROUTES.USER.PROCESSES} element={<ProcessList />} />
+              {/* <Route path={ROUTES.USER.PROCESSES} element={<ProcessList />} /> */}
               <Route path={ROUTES.USER.NEW_PROCESS} element={<NewProcess />} />
               <Route path={ROUTES.USER.SEARCH} element={<SearchInterface />} />
               <Route

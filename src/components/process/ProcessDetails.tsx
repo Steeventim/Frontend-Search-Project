@@ -33,7 +33,7 @@ export const ProcessDetails: React.FC = () => {
     const fetchUser = async () => {
       try {
         const userData = await userService.getUserById("me");
-        setInitiatorName(userData.Nom);
+        setInitiatorName(userData.Nom && userData.Prenom);
         setInitiatorId(userData.id);
       } catch (error) {
         console.error(
@@ -111,24 +111,60 @@ export const ProcessDetails: React.FC = () => {
 
   const handleTransferClick = async () => {
     try {
-      const response = await api.post("/forward-to-next-etape", {
-        documentId: idDocument, // Utilisez l'idDocument ici
-        userId: initiatorId,
-        comments: [{ content: comment }],
-        files: attachments,
-        etapeId: etapeTypeProjet.etapeId,
-        UserDestinatorName: etapeTypeProjet.UserDestinatorName,
-        nextEtapeName: process.nextEtape.LibelleEtape,
-      });
+      if (
+        process.nextEtape &&
+        process.nextEtape.users &&
+        process.nextEtape.users.length > 0
+      ) {
+        const nextUser = process.nextEtape.users[0]; // Récupérer le premier utilisateur de l'étape suivante
+        const response = await api.post("/forward-to-next-etape", {
+          documentId: idDocument,
+          userId: initiatorId,
+          comments: [{ content: comment }],
+          files: attachments,
+          etapeId: etapeTypeProjet.etapeId,
+          UserDestinatorName: nextUser.name, // Utiliser le nom de l'utilisateur récupéré
+          nextEtapeName: process.nextEtape.name, // Utiliser le nom de l'étape suivante
+        });
 
-      if (response.data.success) {
-        console.log("Processus transféré avec succès", response.data);
-        // Mettez à jour l'état ou affichez un message de succès si nécessaire
+        if (response.data.success) {
+          console.log("Processus transféré avec succès", response.data);
+        } else {
+          console.error("Erreur lors du transfert du processus", response.data);
+        }
       } else {
-        console.error("Erreur lors du transfert du processus", response.data);
+        console.error("Aucun utilisateur disponible pour l'étape suivante.");
       }
     } catch (error) {
       console.error("Erreur lors du transfert du processus", error);
+    }
+  };
+
+  const handleRejectClick = async () => {
+    try {
+      const comments = [{ content: comment }];
+
+      // Appel à l'API pour rejeter le document
+      const response = await api.post(`/documents/${idDocument}/reject`, {
+        documentId: idDocument,
+        userId: initiatorId,
+        comments,
+      });
+
+      if (response.data.success) {
+        console.log("Document rejeté avec succès", response.data);
+
+        // Mettez à jour l'état ou affichez un message de succès si nécessaire
+        // Par exemple, vous pourriez réinitialiser le commentaire ou afficher une notification
+        setComment(""); // Réinitialiser le champ de commentaire
+      } else {
+        console.error(
+          "Erreur lors du rejet du document",
+          response.data.message
+        );
+      }
+    } catch (error) {
+      console.error("Erreur lors du rejet du document", error);
     }
   };
 
@@ -147,11 +183,11 @@ export const ProcessDetails: React.FC = () => {
             </div>
             <span
               className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                process.Validation === "approved"
+                status === "approved"
                   ? "bg-green-100 text-green-800"
-                  : process.Validation === "rejected"
+                  : status === "rejected"
                   ? "bg-red-100 text-red-800"
-                  : process.Validation === "in_progress"
+                  : status === "in_progress"
                   ? "bg-blue-100 text-blue-800"
                   : "bg-yellow-100 text-yellow-800"
               }`}
@@ -216,7 +252,9 @@ export const ProcessDetails: React.FC = () => {
                       ) : status === "rejected" ? (
                         <XCircle className="h-6 w-6" />
                       ) : (
-                        <span className="text-sm font-medium">{index + 1}</span>
+                        <span className="text-sm font-medium">
+                          {process.sequenceNumber}
+                        </span>
                       )}
                     </div>
                     <p className="mt-2 text-sm font-medium">
@@ -299,16 +337,27 @@ export const ProcessDetails: React.FC = () => {
                 >
                   Approuver
                 </Button>
-                <Button variant="danger" icon={XCircle}>
+                <Button
+                  variant="danger"
+                  icon={XCircle}
+                  onClick={handleRejectClick}
+                >
                   Rejeter
                 </Button>
-                <Button
-                  variant="secondary"
-                  icon={Navigation}
-                  onClick={handleTransferClick}
-                >
-                  Transférer
-                </Button>
+                {process &&
+                process.nextEtape &&
+                process.nextEtape.users &&
+                process.nextEtape.users.length > 0 ? (
+                  <Button
+                    variant="secondary"
+                    icon={Navigation}
+                    onClick={handleTransferClick}
+                  >
+                    Transférer
+                  </Button>
+                ) : (
+                  <p>Aucun utilisateur disponible pour l'étape suivante.</p>
+                )}
               </div>
 
               {/* Prévisualisation des fichiers joints */}

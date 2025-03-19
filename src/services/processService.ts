@@ -1,5 +1,6 @@
 import api from "./api";
 import type { ProcessStep, Process, Etape } from "../types/process";
+import Cookies from "js-cookie";
 
 export const processService = {
   searchDocuments: async (
@@ -51,7 +52,8 @@ export const processService = {
 
   getMyTasks: async (): Promise<ProcessStep[]> => {
     try {
-      const { data } = await api.get("/etapes/all");
+      const roleName = Cookies.get("roleName"); // Récupérer le rôle depuis les cookies
+      const { data } = await api.get(`/etapes/role/${roleName}`); // Utiliser la route avec le rôle
       return data.data.map(
         (task: {
           idEtape: string;
@@ -77,7 +79,8 @@ export const processService = {
 
   getMyProcesses: async (): Promise<Process[]> => {
     try {
-      const { data } = await api.get("/etapes/all");
+      const roleName = Cookies.get("roleName"); // Récupérer le rôle depuis les cookies
+      const { data } = await api.get(`/etapes/role/${roleName}`); // Utiliser la route avec le rôle
       return data.data.map((etape: Etape) => ({
         id: etape.idEtape,
         name: etape.LibelleEtape,

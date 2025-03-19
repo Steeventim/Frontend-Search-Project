@@ -26,4 +26,5 @@ export const ROUTES = {
     PROFILE: "/profile",
     SETTINGS: "/settings",
   },
+  ERROR: "/error", // Added error route
 } as const;

@@ -182,3 +182,28 @@
           },
           "nextEtape":null
         }
+
+  {
+    "success":true,
+    "data":{
+      "currentEtape":{
+        "id":"ee0f2ab5-3e7c-483c-84a3-3643cb047221",
+        "name":"Analyse des besoins",
+        "sequence":1
+      },
+    "nextEtape":{
+      "id":"1a0b1ebf-b25b-4289-b69b-d9c438ec1611",
+      "name":"Conception du système",
+      "sequence":2,
+      "roleId":"ed11f500-7b6e-45bd-8c6f-93f740d82976",
+      "userCount":1,
+      "users":[
+        {
+          "id":"22012faa-83ee-4108-995f-2991fec0e405",
+          "name":"Tchouaké",
+          "email":"leonie.tchouake@greentech.com"
+        }
+      ]
+    }
+  }
+  }
