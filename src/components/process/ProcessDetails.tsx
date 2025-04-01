@@ -33,7 +33,9 @@ export const ProcessDetails: React.FC = () => {
     const fetchUser = async () => {
       try {
         const userData = await userService.getUserById("me");
-        setInitiatorName(userData.Nom && userData.Prenom);
+
+        const fullName = `${userData.Nom} ${userData.Prenom}`.trim();
+        setInitiatorName(fullName);
         setInitiatorId(userData.id);
       } catch (error) {
         console.error(
@@ -153,10 +155,8 @@ export const ProcessDetails: React.FC = () => {
 
       if (response.data.success) {
         console.log("Document rejeté avec succès", response.data);
-
-        // Mettez à jour l'état ou affichez un message de succès si nécessaire
-        // Par exemple, vous pourriez réinitialiser le commentaire ou afficher une notification
-        setComment(""); // Réinitialiser le champ de commentaire
+        // Réinitialiser le champ de commentaire après le rejet
+        setComment("");
       } else {
         console.error(
           "Erreur lors du rejet du document",
@@ -167,6 +167,8 @@ export const ProcessDetails: React.FC = () => {
       console.error("Erreur lors du rejet du document", error);
     }
   };
+
+  const status = "pending";
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -183,23 +185,19 @@ export const ProcessDetails: React.FC = () => {
             </div>
             <span
               className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                status === "approved"
-                  ? "bg-green-100 text-green-800"
-                  : status === "rejected"
-                  ? "bg-red-100 text-red-800"
-                  : status === "in_progress"
-                  ? "bg-blue-100 text-blue-800"
+                status
+                  ? "bg-yellow-100 text-yellow-800"
                   : "bg-yellow-100 text-yellow-800"
               }`}
             >
-              {process.Validation === "approved" ? (
+              {status ? (
                 <CheckCircle2 className="h-4 w-4 mr-2" />
-              ) : process.Validation === "rejected" ? (
+              ) : status ? (
                 <XCircle className="h-4 w-4 mr-2" />
               ) : (
                 <Clock className="h-4 w-4 mr-2" />
               )}
-              {process.Validation.replace("_", " ")}
+              {status.replace("_", " ")}
             </span>
           </div>
 
@@ -261,6 +259,7 @@ export const ProcessDetails: React.FC = () => {
                       {process.LibelleEtape}
                     </p>
                     <p className="mt-1 text-xs">{process.Description}</p>
+                    <p className="mt-1 text-xs">{initiatorName}</p>
                   </div>
                 ))}
               </div>
@@ -356,7 +355,7 @@ export const ProcessDetails: React.FC = () => {
                     Transférer
                   </Button>
                 ) : (
-                  <p>Aucun utilisateur disponible pour l'étape suivante.</p>
+                  <p>.</p>
                 )}
               </div>
 

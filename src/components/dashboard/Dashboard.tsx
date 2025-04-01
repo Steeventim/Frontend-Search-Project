@@ -5,6 +5,7 @@ import {
   XCircle,
   FileText,
   ChevronRight,
+  Search,
 } from "lucide-react";
 import { Card } from "../common/Card";
 import { Button } from "../common/Button";
@@ -176,7 +177,7 @@ export const Dashboard: React.FC = () => {
                       </h4>
                       <div className="mt-1 flex items-center text-sm text-gray-500">
                         <Clock className="h-4 w-4 mr-1.5" />
-                        Étape {process.currentStep}/{process.totalSteps}
+                        Étape {process.currentStep}
                       </div>
                     </div>
                     <ChevronRight className="h-5 w-5 text-gray-400" />
@@ -233,26 +234,14 @@ export const Dashboard: React.FC = () => {
             <button
               onClick={() => navigate(ROUTES.USER.NEW_PROCESS)}
               className="relative rounded-lg p-4 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
-            >
-              <div className="flex items-center space-x-3">
-                <div className="flex-shrink-0">
-                  <FileText className="h-6 w-6 text-blue-600" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900">
-                    Soumettre un Document
-                  </p>
-                  <p className="text-sm text-gray-500">Soumettre un Document</p>
-                </div>
-              </div>
-            </button>
+            ></button>
             <button
               onClick={() => navigate(ROUTES.USER.SEARCH)}
               className="relative rounded-lg p-4 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
             >
               <div className="flex items-center space-x-3">
                 <div className="flex-shrink-0">
-                  <FileText className="h-6 w-6 text-blue-600" />
+                  <Search className="h-6 w-6 text-blue-600" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900">

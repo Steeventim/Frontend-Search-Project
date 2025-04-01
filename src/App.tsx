@@ -35,18 +35,18 @@ import { ErrorBoundary } from "./components/error/ErrorBoundary";
 
 const ProtectedRoute = ({ roles }: { roles?: string[] }) => {
   const token = Cookies.get("token");
+  const roleUser = Cookies.get("roleUser"); // Assurez-vous que c'est "role" et non "roleUser "
 
   // Vérifiez si l'utilisateur est authentifié
-
   if (!token) {
     return <Navigate to={ROUTES.AUTH.LOGIN} />;
   }
 
-  // Si des rôles sont spécifiés, vous pouvez les vérifier ici
-
-  if (roles && !roles.includes(Cookies.get("role") || "")) {
+  // Si des rôles sont spécifiés, vérifiez si le rôle de l'utilisateur est inclus
+  if (roles && roleUser && !roles.includes(roleUser)) {
     return <Navigate to={ROUTES.AUTH.LOGIN} />;
   }
+
   return <Outlet />;
 };
 
@@ -64,7 +64,7 @@ const App = () => {
           <Route path={ROUTES.AUTH.SETUP} element={<SetupWizard />} />
 
           {/* Admin Routes */}
-          <Route element={<ProtectedRoute roles={["admin", "superadmin"]} />}>
+          <Route element={<ProtectedRoute roles={["superadmin", "admin"]} />}>
             <Route path={ROUTES.ADMIN.ROOT} element={<AdminLayout />}>
               <Route
                 path={ROUTES.ADMIN.DASHBOARD}

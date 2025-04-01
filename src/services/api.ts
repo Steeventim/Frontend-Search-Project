@@ -3,8 +3,9 @@ import Cookies from "js-cookie";
 import { toast } from "react-toastify"; // Assurez-vous d'installer react-toastify
 
 // Créer une instance d'axios
+
 const api = axios.create({
-  baseURL: "http://192.168.50.111:3003", // Remplacez par l'URL de votre API
+  baseURL: import.meta.env.VITE_API_BASE_URL, // Use the VITE_API_BASE_URL from .env
   headers: {
     "Content-Type": "application/json",
   },
@@ -33,8 +34,8 @@ const refreshToken = async () => {
       refreshToken,
     });
     const { token, refreshToken: newRefreshToken } = response.data;
-    Cookies.set("token", token, { expires: 1 / 24 }); // 1 heures
-    Cookies.set("refreshToken", newRefreshToken, { expires: 7 }); // 7 jours
+    Cookies.set("token", token, { expires: 3 / 24 }); // Use TOKEN_EXPIRATION from .env
+    Cookies.set("refreshToken", newRefreshToken, { expires: 7 }); // Use REFRESH_TOKEN_EXPIRATION from .env
     return token;
   } catch (error) {
     console.error("Erreur lors du rafraîchissement du token:", error);

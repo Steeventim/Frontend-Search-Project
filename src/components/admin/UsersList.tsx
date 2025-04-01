@@ -5,7 +5,7 @@ import { Button } from "../common/Button";
 import { UserFormModal } from "./modals/UserFormModal";
 import { DeleteUserModal } from "./modals/DeleteUserModal";
 import { userService } from "../../services/userService";
-import { User } from "../../types/auth"; // Assurez-vous que ce type est défini correctement
+import { User, UserFormData } from "../../types/auth"; // Assurez-vous que ce type est défini correctement
 
 export const UsersList: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -25,47 +25,89 @@ export const UsersList: React.FC = () => {
 
   const loadUsers = async () => {
     try {
-      const data: User[] = await userService.getUsers();
-      console.log("Données récupérées :", data); // Vérifiez les données ici
-      setUsers(data);
+      const response = await userService.getUsers();
+      // console.log("Réponse de l'API :", response); // Vérifiez la réponse brute ici
+      setUsers(response);
     } catch (err) {
-      setError(
+      const errorMessage =
         err instanceof Error
           ? err.message
-          : "Une erreur est survenue lors du chargement des utilisateurs."
+          : "Une erreur est survenue lors du chargement des utilisateurs.";
+      setError(errorMessage);
+      console.error(
+        "Erreur lors du chargement des utilisateurs:",
+        errorMessage
       );
     }
   };
 
-  const handleCreateUser = async (data: CreateUserData) => {
-    await userService.createUser({
-      firstName: data.Prenom,
-      lastName: data.Nom,
-      email: data.email,
-      password: data.password, // Ensure this is provided in the form
-    });
-    setConfirmationMessage("Utilisateur créé avec succès !");
-    await loadUsers();
+  const handleCreateUser = async (data: UserFormData) => {
+    try {
+      await userService.createUser({
+        firstName: data.Prenom,
+        lastName: data.Nom,
+        email: data.Email,
+        password: data.Password, // Assurez-vous que le mot de passe est inclus
+        phone: data.Telephone || "", // Utilisez une chaîne vide si Telephone est undefined
+        isActive: true, // Vous pouvez définir isActive par défaut si nécessaire
+      });
+      setConfirmationMessage("Utilisateur créé avec succès !");
+      await loadUsers();
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "Une erreur est survenue lors de la création de l'utilisateur.";
+      setError(errorMessage);
+      console.error(
+        "Erreur lors de la création de l'utilisateur:",
+        errorMessage
+      );
+    }
   };
 
-  const handleUpdateUser = async (data: User) => {
-    await userService.updateUser(selectedUser.id, {
-      firstName: data.Prenom,
-      lastName: data.Nom,
-      email: data.email,
-      // Include other fields as necessary
-    });
-    setConfirmationMessage("Utilisateur modifié avec succès !");
-    await loadUsers();
+  const handleUpdateUser = async (data: UserFormData) => {
+    if (!selectedUser) return; // Assurez-vous qu'un utilisateur est sélectionné
+    try {
+      await userService.updateUser(selectedUser.id, {
+        firstName: data.Prenom,
+        lastName: data.Nom,
+        email: data.Email,
+        phone: data.Telephone || "", // Incluez le téléphone si nécessaire
+        isActive: data.IsActive || true, // Incluez isActive si nécessaire
+      });
+      setConfirmationMessage("Utilisateur modifié avec succès !");
+      await loadUsers();
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "Une erreur est survenue lors de la mise à jour de l'utilisateur.";
+      setError(errorMessage);
+      console.error(
+        "Erreur lors de la mise à jour de l'utilisateur:",
+        errorMessage
+      );
+    }
   };
 
   const handleDeleteUser = async () => {
-    if (!selectedUser) {
-      return;
+    if (!selectedUser) return; // Assurez-vous qu'un utilisateur est sélectionné
+    try {
+      await userService.deleteUser(selectedUser.id);
+      setConfirmationMessage("Utilisateur supprimé avec succès !");
+      await loadUsers();
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "Une erreur est survenue lors de la suppression de l'utilisateur.";
+      setError(errorMessage);
+      console.error(
+        "Erreur lors de la suppression de l'utilisateur:",
+        errorMessage
+      );
     }
-    await userService.deleteUser(selectedUser.id);
-    setConfirmationMessage("Utilisateur supprimé avec succès !");
-    await loadUsers();
   };
 
   return (
@@ -126,7 +168,7 @@ export const UsersList: React.FC = () => {
                     {user.email}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {user.roles}
+                    {user.Telephone}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button
@@ -169,7 +211,18 @@ export const UsersList: React.FC = () => {
           setSelectedUser(null);
         }}
         onSubmit={handleUpdateUser}
-        initialData={selectedUser ? { ...selectedUser } : undefined} // Ajustez ici
+        initialData={
+          selectedUser
+            ? {
+                id: selectedUser.id,
+                Nom: selectedUser.Nom,
+                Prenom: selectedUser.Prenom,
+                Email: selectedUser.email,
+                Telephone: selectedUser.Telephone,
+                IsActive: selectedUser.IsActive,
+              }
+            : undefined
+        }
         title="Modifier l'utilisateur"
       />
 

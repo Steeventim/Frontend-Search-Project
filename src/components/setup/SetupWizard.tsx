@@ -819,6 +819,14 @@ const SetupWizard = () => {
                   : "Suivant"}
               </Button>
             </div>
+            <div className="flex justify-center mb-4">
+              <Button
+                variant="primary"
+                onClick={() => navigate("/admin/dashboard")}
+              >
+                Aller au tableau de bord
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>

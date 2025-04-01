@@ -184,6 +184,8 @@ src/
 
 ```
 
+https://github.com/Steeventim/Frontend-Search-Project.git
+
 ## 🛠️ Technologies utilisées
 
 - ⚛️ React 18
