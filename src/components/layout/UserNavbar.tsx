@@ -3,14 +3,13 @@ import { Link, useNavigate } from "react-router-dom";
 import { Menu, Transition } from "@headlessui/react";
 import {
   LayoutDashboard,
-  // FileText,
-  // PlusCircle,
   Bell,
   User,
   LogOut,
   Settings,
   Search,
   Clock,
+  Menu as HamburgerMenu, // Importer l'icône hamburger
 } from "lucide-react";
 
 interface Notification {
@@ -26,11 +25,11 @@ export const UserNavbar: React.FC = () => {
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false); // État pour le menu hamburger
 
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
-        // Utilisation de données mockées au lieu d'appeler l'API
         const mockNotifications: Notification[] = [
           {
             id: "1",
@@ -43,7 +42,7 @@ export const UserNavbar: React.FC = () => {
           {
             id: "2",
             title: "Rappel: Action requise",
-            message: 'Une action est requise sur le processus "precedant"',
+            message: 'Une action est requise sur le processus "précédent"',
             processId: "2",
             timestamp: new Date(Date.now() - 86400000), // 1 jour avant
             read: true,
@@ -53,53 +52,39 @@ export const UserNavbar: React.FC = () => {
         setNotifications(mockNotifications);
       } catch (err) {
         console.error("Erreur lors du chargement des notifications:", err);
-        // Définir un tableau vide en cas d'erreur pour éviter les erreurs d'affichage
         setNotifications([]);
       }
     };
 
     fetchNotifications();
-    // Rafraîchir les notifications toutes les minutes
     const interval = setInterval(fetchNotifications, 60000);
     return () => clearInterval(interval);
   }, []);
 
   const menuItems = [
     { icon: LayoutDashboard, label: "Tableau de bord", path: "/dashboard" },
-    // { icon: FileText, label: "Mes processus", path: "/processes" },
-    // { icon: PlusCircle, label: "Nouveau processus", path: "/processes/new" },
     { icon: Search, label: "Recherche", path: "/search" },
   ];
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
-  const handleNotificationClick = async (notification: Notification) => {
-    try {
-      // Simuler le marquage comme lu
-      setNotifications(
-        notifications.map((n) =>
-          n.id === notification.id ? { ...n, read: true } : n
-        )
-      );
-
-      // Rediriger vers le processus
-      // navigate(`/processes/#`);
-    } catch (err) {
-      console.error("Erreur lors du marquage de la notification:", err);
-    }
+  const handleNotificationClick = (notification: Notification) => {
+    setNotifications(
+      notifications.map((n) =>
+        n.id === notification.id ? { ...n, read: true } : n
+      )
+    );
   };
 
   return (
     <nav className="bg-white shadow">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          <div className="flex">
-            <div className="flex-shrink-0 flex items-center">
-              <Link to="/dashboard" className="text-xl font-bold text-blue-600">
-                ProcessFlow
-              </Link>
-            </div>
-            <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
+        <div className="flex justify-between items-center h-16">
+          <div className="flex items-center">
+            <Link to="/dashboard" className="text-xl font-bold text-blue-600">
+              ProcessFlow
+            </Link>
+            <div className="hidden sm:flex sm:ml-6 sm:space-x-8">
               {menuItems.map((item) => (
                 <Link
                   key={item.path}
@@ -111,6 +96,13 @@ export const UserNavbar: React.FC = () => {
                 </Link>
               ))}
             </div>
+            {/* Menu Hamburger pour les écrans plus petits */}
+            <button
+              className="sm:hidden ml-4 p-1 text-gray-500 hover:text-gray-700"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+            >
+              <HamburgerMenu className="h-6 w-6" />
+            </button>
           </div>
 
           <div className="flex items-center">
@@ -176,7 +168,7 @@ export const UserNavbar: React.FC = () => {
 
             <Menu as="div" className="ml-3 relative">
               <Menu.Button className="flex rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                <span className="sr-only">Open user menu</span>
+                <span className="sr-only">Ouvrir le menu utilisateur</span>
                 <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
                   <User className="h-5 w-5 text-gray-500" />
                 </div>
@@ -235,6 +227,25 @@ export const UserNavbar: React.FC = () => {
             </Menu>
           </div>
         </div>
+
+        {/* Menu Hamburger pour les écrans plus petits */}
+        {isMenuOpen && (
+          <div className="sm:hidden bg-white shadow-md mt-2 rounded-lg">
+            <div className="flex flex-col p-4">
+              {menuItems.map((item) => (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className="block py-2 text-gray-700 hover:bg-gray-200"
+                  onClick={() => setIsMenuOpen(false)} // Fermer le menu après la sélection
+                >
+                  <item.icon className="h-4 w-4 mr-2 inline" />
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </nav>
   );
