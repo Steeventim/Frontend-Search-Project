@@ -25,27 +25,34 @@ export const ProcessDetails: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [initiatorName, setInitiatorName] = useState<string>("");
   const [initiatorId, setInitiatorId] = useState<string>("");
+  const [receivedDocuments, setReceivedDocuments] = useState<any[]>([]); // État pour stocker les documents reçus
 
   // Récupérer l'idDocument depuis localStorage
   const idDocument = localStorage.getItem("idDocument");
 
   useEffect(() => {
-    const fetchUser = async () => {
+    const fetchUserAndDocuments = async () => {
       try {
         const userData = await userService.getUserById("me");
 
         const fullName = `${userData.Nom} ${userData.Prenom}`.trim();
         setInitiatorName(fullName);
         setInitiatorId(userData.id);
+
+        // Appeler la route pour récupérer les documents reçus
+        const { data } = await api.get(`/received-documents/${userData.id}`);
+        setReceivedDocuments(data.data); // Stocker les documents reçus dans l'état
+        // console.log("Documents reçus:", data);
+        // Vous pouvez traiter les données reçues ici si nécessaire
       } catch (error) {
         console.error(
-          "Erreur lors du chargement des informations utilisateur:",
+          "Erreur lors du chargement des informations utilisateur ou des documents reçus:",
           error
         );
       }
     };
 
-    fetchUser();
+    fetchUserAndDocuments();
   }, []);
 
   if (loading) {
@@ -355,7 +362,7 @@ export const ProcessDetails: React.FC = () => {
                     Transférer
                   </Button>
                 ) : (
-                  <p>.</p>
+                  <p></p>
                 )}
               </div>
 
@@ -396,29 +403,41 @@ export const ProcessDetails: React.FC = () => {
             Historique des commentaires
           </h2>
           <div className="space-y-4">
-            {process.typeProjets.flatMap((typeProjet) =>
-              typeProjet.EtapeTypeProjet.comments?.map((comment) => (
-                <div
-                  key={comment.id}
-                  className="flex space-x-3 p-4 bg-gray-50 rounded-lg"
-                >
-                  <div className="flex-shrink-0">
-                    <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                      <MessageSquare className="h-5 w-5 text-blue-600" />
+            {receivedDocuments[0]?.comments
+              ?.filter(
+                (comment: { user: { id: string } }) =>
+                  comment.user.id !== initiatorId
+              ) // Filtrer les commentaires des autres utilisateurs
+              .map(
+                (comment: {
+                  id: string;
+                  user: { name: string };
+                  createdAt: string;
+                  content: string;
+                }) => (
+                  <div
+                    key={comment.id}
+                    className="flex space-x-3 p-4 bg-gray-50 rounded-lg"
+                  >
+                    <div className="flex-shrink-0">
+                      <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                        <MessageSquare className="h-5 w-5 text-blue-600" />
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900">
+                        {comment.user.name}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {formatDateTime(comment.createdAt)}
+                      </p>
+                      <p className="mt-2 text-sm text-gray-700">
+                        {comment.content}
+                      </p>
                     </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900">
-                      {comment.userName}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {formatDateTime(comment.timestamp)}
-                    </p>
-                    <p className="mt-2 text-sm text-gray-700">{comment.text}</p>
-                  </div>
-                </div>
-              ))
-            )}
+                )
+              )}
           </div>
         </div>
       </div>

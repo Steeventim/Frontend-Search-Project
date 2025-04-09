@@ -1,6 +1,6 @@
-import React from 'react';
-import { Outlet } from 'react-router-dom';
-import { AdminNavbar } from './AdminNavbar';
+import React from "react";
+import { Outlet } from "react-router-dom";
+import { AdminNavbar } from "./AdminNavbar";
 
 export const AdminLayout: React.FC = () => {
   return (

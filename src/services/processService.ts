@@ -30,8 +30,16 @@ export const processService = {
 
   getProcesses: async (): Promise<Process[]> => {
     try {
-      const { data } = await api.get("/typeprojet/your-type-projet-id/etapes");
-      return data.data.map((etape: Etape) => ({
+      const roleName = Cookies.get("roleName");
+      const { data } = await api.get(`/etapes/role/${roleName}`);
+
+      // Filtrer les données selon hasTransfer et sequenceNumber
+      const filteredData = data.data.filter(
+        (task: { hasTransfer: boolean; sequenceNumber: number }) =>
+          task.hasTransfer || (!task.hasTransfer && task.sequenceNumber === 1)
+      );
+
+      return filteredData.map((etape: Etape) => ({
         id: etape.idEtape,
         name: etape.LibelleEtape,
         title: etape.LibelleEtape,
@@ -41,8 +49,8 @@ export const processService = {
         createdAt: new Date(etape.createdAt),
         updatedAt: new Date(etape.updatedAt),
         initiatedBy: "Inconnu",
-        steps: [], // Initialiser avec un tableau vide ou le remplir si vous avez des étapes associées
-        totalSteps: 21, // Remplacez par la logique appropriée pour obtenir le nombre total d'étapes
+        steps: [],
+        totalSteps: data.totalEtapes,
       }));
     } catch (error) {
       console.error("Error fetching processes:", error);
@@ -52,9 +60,16 @@ export const processService = {
 
   getMyTasks: async (): Promise<ProcessStep[]> => {
     try {
-      const roleName = Cookies.get("roleName"); // Récupérer le rôle depuis les cookies
-      const { data } = await api.get(`/etapes/role/${roleName}`); // Utiliser la route avec le rôle
-      return data.data.map(
+      const roleName = Cookies.get("roleName");
+      const { data } = await api.get(`/etapes/role/${roleName}`);
+
+      // Filtrer les données selon hasTransfer et sequenceNumber
+      const filteredData = data.data.filter(
+        (task: { hasTransfer: boolean; sequenceNumber: number }) =>
+          task.hasTransfer || (!task.hasTransfer && task.sequenceNumber === 1)
+      );
+
+      return filteredData.map(
         (task: {
           idEtape: string;
           LibelleEtape: string;
@@ -66,7 +81,7 @@ export const processService = {
           processName: task.LibelleEtape,
           stepName: task.Description,
           status: "pending",
-          priority: "normal", // Remplacez par la logique appropriée pour obtenir la priorité
+          priority: "normal",
           createdAt: new Date(task.createdAt),
           updatedAt: new Date(task.updatedAt),
         })
@@ -79,8 +94,10 @@ export const processService = {
 
   getMyProcesses: async (): Promise<Process[]> => {
     try {
-      const roleName = Cookies.get("roleName"); // Récupérer le rôle depuis les cookies
-      const { data } = await api.get(`/etapes/role/${roleName}`); // Utiliser la route avec le rôle
+      const roleName = Cookies.get("roleName");
+      const { data } = await api.get(`/etapes/role/${roleName}`);
+
+      // Supprimer le filtre sur hasTransfer et sequenceNumber
       return data.data.map((etape: Etape) => ({
         id: etape.idEtape,
         name: etape.LibelleEtape,
@@ -91,69 +108,11 @@ export const processService = {
         createdAt: new Date(etape.createdAt),
         updatedAt: new Date(etape.updatedAt),
         initiatedBy: "Inconnu",
-        steps: [], // Initialiser avec un tableau vide ou le remplir si vous avez des étapes associées
-        totalSteps: 21, // Remplacez par la logique appropriée pour obtenir le nombre total d'étapes
+        steps: [],
+        totalSteps: data.totalEtapes,
       }));
     } catch (error) {
       console.error("Error fetching processes:", error);
-      throw error;
-    }
-  },
-
-  approveStep: async (
-    processId: string,
-    stepId: string,
-    comment: string,
-    attachments: File[]
-  ): Promise<void> => {
-    return processService.handleStepAction(
-      processId,
-      stepId,
-      comment,
-      attachments,
-      "approve"
-    );
-  },
-
-  rejectStep: async (
-    processId: string,
-    stepId: string,
-    comment: string,
-    attachments: File[]
-  ): Promise<void> => {
-    return processService.handleStepAction(
-      processId,
-      stepId,
-      comment,
-      attachments,
-      "reject"
-    );
-  },
-
-  handleStepAction: async (
-    processId: string,
-    stepId: string,
-    comment: string,
-    attachments: File[],
-    action: "approve" | "reject"
-  ): Promise<void> => {
-    try {
-      const formData = new FormData();
-      formData.append("comment", comment);
-      attachments.forEach((file) => {
-        formData.append("attachments", file);
-      });
-
-      await api.post(
-        `/processes/${processId}/steps/${stepId}/${action}`,
-        formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
-      );
-    } catch (error) {
-      console.error(
-        `Error ${action} step ${stepId} in process ${processId}:`,
-        error
-      );
       throw error;
     }
   },

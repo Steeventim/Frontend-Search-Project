@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Menu, Transition } from "@headlessui/react";
 import {
@@ -11,10 +11,12 @@ import {
   Shield,
   Users,
   User,
+  Menu as HamburgerMenu,
 } from "lucide-react";
 
 export const AdminNavbar: React.FC = () => {
   const navigate = useNavigate();
+  const [isMenuOpen, setIsMenuOpen] = useState(false); // État pour gérer l'ouverture du menu
 
   const menuItems = [
     {
@@ -47,6 +49,19 @@ export const AdminNavbar: React.FC = () => {
                 ProcessFlow Admin
               </Link>
             </div>
+            {/* Menu Hamburger pour petits écrans */}
+            <div className="flex sm:hidden">
+              <button
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="inline-flex items-center justify-center p-2 text-gray-500 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                aria-controls="mobile-menu"
+                aria-expanded={isMenuOpen}
+              >
+                <span className="sr-only">Ouvrir le menu</span>
+                <HamburgerMenu className="h-6 w-6" />
+              </button>
+            </div>
+            {/* Menu principal pour écrans plus grands */}
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
               {menuItems.map((item) => (
                 <Link
@@ -96,6 +111,26 @@ export const AdminNavbar: React.FC = () => {
               </Transition>
             </Menu>
           </div>
+        </div>
+      </div>
+
+      {/* Menu mobile */}
+      <div
+        className={`${isMenuOpen ? "block" : "hidden"} sm:hidden`}
+        id="mobile-menu"
+      >
+        <div className="px-2 pt-2 pb-3 space-y-1">
+          {menuItems.map((item) => (
+            <Link
+              key={item.path}
+              to={item.path}
+              className="block px-3 py-2 text-base font-medium text-gray-500 hover:text-gray-900"
+              onClick={() => setIsMenuOpen(false)} // Fermer le menu après la sélection
+            >
+              <item.icon className="h-4 w-4 mr-2 inline" />
+              {item.label}
+            </Link>
+          ))}
         </div>
       </div>
     </nav>

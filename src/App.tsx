@@ -14,7 +14,7 @@ import SetupWizard from "./components/setup/SetupWizard";
 import { AdminLayout } from "./components/layout/AdminLayout";
 import { UserLayout } from "./components/layout/UserLayout";
 import { Dashboard } from "./components/dashboard/Dashboard";
-import { AdminDashboard } from "./components/admin/AdminDashboard";
+import AdminDashboard from "./components/admin/AdminDashboard";
 // import { DepartmentsList } from "./components/admin/DepartmentsList";
 // import { ProcessTemplatesList } from "./components/admin/ProcessTemplatesList";
 import { Settings } from "./components/admin/Settings";

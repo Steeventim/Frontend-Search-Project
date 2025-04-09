@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Cookies from "js-cookie";
 import { useNavigate } from "react-router-dom";
+import api from "../../services/api";
 
 const CreateAdminForm = () => {
   const [email, setEmail] = useState("");
@@ -8,8 +9,8 @@ const CreateAdminForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [nomUser, setNomUser] = useState("");
   const [prenomUser, setPrenomUser] = useState("");
-  const [countryCode, setCountryCode] = useState("+33");
-  const [phoneNumber, setPhoneNumber] = useState("");
+  const [countryCode, setCountryCode] = useState("+237");
+  const [PhoneNumber, setPhoneNumber] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
   const [success, setSuccess] = useState<string>("");
@@ -17,6 +18,7 @@ const CreateAdminForm = () => {
 
   // Liste des indicatifs de pays avec drapeaux
   const countryCodes = [
+    { code: "+237", flag: "🇨🇲", country: "Cameroun" },
     { code: "+33", flag: "🇫🇷", country: "France" },
     { code: "+1", flag: "🇺🇸", country: "États-Unis/Canada" },
     { code: "+44", flag: "🇬🇧", country: "Royaume-Uni" },
@@ -30,7 +32,6 @@ const CreateAdminForm = () => {
     { code: "+216", flag: "🇹🇳", country: "Tunisie" },
     { code: "+221", flag: "🇸🇳", country: "Sénégal" },
     { code: "+225", flag: "🇨🇮", country: "Côte d'Ivoire" },
-    { code: "+237", flag: "🇨🇲", country: "Cameroun" },
     { code: "+243", flag: "🇨🇩", country: "RD Congo" },
   ];
 
@@ -54,7 +55,7 @@ const CreateAdminForm = () => {
     return conditionsMet >= 2; // Doit respecter au moins deux conditions
   };
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setLoading(true);
     setError("");
@@ -68,26 +69,61 @@ const CreateAdminForm = () => {
       return;
     }
 
-    // Simuler une requête API
-    setTimeout(() => {
+    // Concaténer le countryCode avec le numéro de téléphone
+    const fullPhoneNumber = `${countryCode}${PhoneNumber}`;
+
+    try {
+      const response = await api.post("/init/admin", {
+        email,
+        password,
+        nomUser,
+        prenomUser,
+        telephone: fullPhoneNumber, // Utiliser le numéro de téléphone complet
+      });
+
+      if (response.status === 201) {
+        setSuccess("Administrateur créé avec succès");
+
+        // Détruire tous les tokens
+        Cookies.remove("token");
+        Cookies.remove("role");
+
+        // Rediriger vers la page de connexion
+        navigate("/login");
+
+        // Réinitialiser le formulaire
+        setEmail("");
+        setPassword("");
+        setNomUser("");
+        setPrenomUser("");
+        setPhoneNumber("");
+        setCountryCode("+237");
+      } else {
+        setError(
+          "Erreur lors de la création de l'administrateur. Veuillez réessayer."
+        );
+      }
+    } catch (error: unknown) {
+      // Gérer les erreurs de l'API
+      if (error instanceof Error) {
+        // Vérifiez si l'erreur est une instance de l'objet Error
+        setError(error.message || "Une erreur est survenue.");
+      } else if (
+        typeof error === "object" &&
+        error !== null &&
+        "response" in error
+      ) {
+        // Si l'erreur a une propriété 'response', cela signifie qu'il s'agit d'une erreur d'API
+        const apiError = error as { response: { data: { message?: string } } };
+        setError(apiError.response.data.message || "Une erreur est survenue.");
+      } else {
+        setError(
+          "Erreur lors de la création de l'administrateur. Veuillez réessayer."
+        );
+      }
+    } finally {
       setLoading(false);
-      setSuccess("Administrateur créé avec succès");
-
-      // Détruire tous les tokens
-      Cookies.remove("token");
-      Cookies.remove("role");
-
-      // Rediriger vers la page de connexion
-      navigate("/login"); // Remplacez "/login" par le chemin de votre page de connexion
-
-      // Réinitialiser le formulaire
-      setEmail("");
-      setPassword("");
-      setNomUser("");
-      setPrenomUser("");
-      setPhoneNumber("");
-      setCountryCode("+33");
-    }, 2000);
+    }
   };
 
   return (
@@ -201,7 +237,7 @@ const CreateAdminForm = () => {
             </select>
             <input
               type="text"
-              value={phoneNumber}
+              value={PhoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
               placeholder="612345678"
               required

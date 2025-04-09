@@ -8,7 +8,7 @@ import {
   Search,
 } from "lucide-react";
 import { Card } from "../common/Card";
-import { Button } from "../common/Button";
+// import { Button } from "../common/Button";
 import { useNavigate } from "react-router-dom";
 import { ROUTES } from "../../constants/routes";
 import { processService } from "../../services/processService";
@@ -83,23 +83,16 @@ export const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4 md:p-6 lg:p-8">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900">
           Mon tableau de bord
         </h1>
-        <Button
-          variant="primary"
-          icon={FileText}
-          onClick={() => navigate(ROUTES.USER.NEW_PROCESS)}
-        >
-          Nouveau processus
-        </Button>
       </div>
 
       {error && <p className="text-red-500">{error}</p>}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Tâches à traiter */}
         <Card>
           <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
@@ -177,7 +170,7 @@ export const Dashboard: React.FC = () => {
                       </h4>
                       <div className="mt-1 flex items-center text-sm text-gray-500">
                         <Clock className="h-4 w-4 mr-1.5" />
-                        Étape {process.currentStep}
+                        Étape {process.currentStep}/{process.totalSteps}
                       </div>
                     </div>
                     <ChevronRight className="h-5 w-5 text-gray-400" />
@@ -212,10 +205,10 @@ export const Dashboard: React.FC = () => {
       <Card>
         <div className="px-4 py-5 sm:px-6">
           <h3 className="text-lg font-medium text-gray-900">Actions rapides</h3>
-          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-4 flex justify-between">
             <button
-              onClick={() => navigate(ROUTES.USER.NEW_PROCESS)}
-              className="relative rounded-lg p-4 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+              onClick={() => navigate("#")}
+              className="relative rounded-lg p-4 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 flex-1 mr-4"
             >
               <div className="flex items-center space-x-3">
                 <div className="flex-shrink-0">
@@ -231,13 +224,10 @@ export const Dashboard: React.FC = () => {
                 </div>
               </div>
             </button>
-            <button
-              onClick={() => navigate(ROUTES.USER.NEW_PROCESS)}
-              className="relative rounded-lg p-4 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
-            ></button>
+
             <button
               onClick={() => navigate(ROUTES.USER.SEARCH)}
-              className="relative rounded-lg p-4 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+              className="relative rounded-lg p-4 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 flex-1 ml-4"
             >
               <div className="flex items-center space-x-3">
                 <div className="flex-shrink-0">
