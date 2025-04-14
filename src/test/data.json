@@ -1,0 +1,35 @@
+{
+  "success": true,
+  "data": {
+    "idDocument": "6480b3fb-3d9f-4386-8652-3e324220efc4",
+    "Title": "L1-DF-Résultat-Procès-Verbal-de-synthèse.pdf",
+    "status": "verified",
+    "transferStatus": "sent",
+    "transferTimestamp": "2025-04-08T08:44:46.234Z",
+    "url": "",
+    "createdAt": "2024-12-27T12:44:33.132Z",
+    "updatedAt": "2025-04-08T08:44:46.237Z",
+    "etape": {
+      "idEtape": "5003fa9d-00a8-4990-8510-4ce6661bef59",
+      "LibelleEtape": "Conception et développement du robot"
+    },
+    "commentaires": [
+      {
+        "idComment": "f567ba42-875c-46d7-bce0-0b8f601c6929",
+        "Contenu": "qwerty",
+        "createdAt": "2025-03-24T13:54:26.394Z"
+      },
+      {
+        "idComment": "06072e0d-c49f-4294-8c08-1070f838c181",
+        "Contenu": "qwerty",
+        "createdAt": "2025-03-24T13:54:34.635Z"
+      },
+      {
+        "idComment": "bec2cefa-f63e-4abf-b9d6-5cad9fd6755c",
+        "Contenu": "je suis d'accord",
+        "createdAt": "2025-04-07T22:43:26.343Z"
+      }
+    ],
+    "files": []
+  }
+}

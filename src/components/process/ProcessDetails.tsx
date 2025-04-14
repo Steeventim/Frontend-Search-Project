@@ -25,8 +25,20 @@ export const ProcessDetails: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [initiatorName, setInitiatorName] = useState<string>("");
   const [initiatorId, setInitiatorId] = useState<string>("");
-  const [receivedDocuments, setReceivedDocuments] = useState<any[]>([]); // État pour stocker les documents reçus
-
+  const [receivedDocuments, setReceivedDocuments] = useState<
+    ReceivedDocument[]
+  >([]);
+  interface ReceivedDocument {
+    documentId: string; // Correspond à "documentId" dans vos données
+    title: string; // Correspond à "title" dans vos données
+    url: string | null; // Peut être null si aucune URL n'est fournie
+    files: { name: string }[]; // Tableau des fichiers associés
+    comments: {
+      id: string; // Correspond à "id" dans vos données
+      content: string; // Correspond à "content" dans vos données
+      createdAt: string; // Correspond à "createdAt" dans vos données
+    }[]; // Tableau des commentaires associés
+  }
   // Récupérer l'idDocument depuis localStorage
   const idDocument = localStorage.getItem("idDocument");
 
@@ -41,6 +53,7 @@ export const ProcessDetails: React.FC = () => {
 
         // Appeler la route pour récupérer les documents reçus
         const { data } = await api.get(`/received-documents/${userData.id}`);
+        console.log("Documents reçus :", data.data); // Vérifiez ici
         setReceivedDocuments(data.data); // Stocker les documents reçus dans l'état
         // console.log("Documents reçus:", data);
         // Vous pouvez traiter les données reçues ici si nécessaire
@@ -392,6 +405,60 @@ export const ProcessDetails: React.FC = () => {
                   </div>
                 </div>
               )}
+              {/* Section des pièces jointes */}
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                <div className="p-6">
+                  <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                    Pieces jointes
+                  </h2>
+                  {receivedDocuments && receivedDocuments.length > 0 ? (
+                    receivedDocuments.map((doc) => (
+                      <div key={doc.documentId} className="mb-6">
+                        {/* Titre du document */}
+                        <a
+                          href={doc.url || "#"}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={`text-lg font-medium ${
+                            doc.url
+                              ? "text-blue-600 hover:underline"
+                              : "text-gray-500"
+                          }`}
+                        >
+                          {doc.title}
+                        </a>
+
+                        {/* Fichiers associés */}
+                        {doc.files && doc.files.length > 0 ? (
+                          <div className="mt-4 space-y-2">
+                            {doc.files.map((file, index) => (
+                              <div
+                                key={`${doc.documentId}-${index}`}
+                                className="flex items-center justify-between p-2 bg-gray-50 rounded-md"
+                              >
+                                <div className="flex items-center">
+                                  <Paperclip className="h-4 w-4 text-gray-400 mr-2" />
+                                  <span className="text-sm text-gray-600">
+                                    {file.name}
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-gray-500 mt-2">
+                            Aucun fichier associé à ce document.
+                          </p>
+                        )}
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-gray-500">
+                      Aucun document reçu disponible.
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -405,13 +472,17 @@ export const ProcessDetails: React.FC = () => {
           <div className="space-y-4">
             {receivedDocuments[0]?.comments
               ?.filter(
-                (comment: { user: { id: string } }) =>
-                  comment.user.id !== initiatorId
+                (comment: {
+                  id: string;
+                  content: string;
+                  createdAt: string;
+                  user?: { id: string };
+                }) => comment.user?.id !== initiatorId
               ) // Filtrer les commentaires des autres utilisateurs
               .map(
                 (comment: {
                   id: string;
-                  user: { name: string };
+                  user?: { name: string };
                   createdAt: string;
                   content: string;
                 }) => (
@@ -426,7 +497,7 @@ export const ProcessDetails: React.FC = () => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900">
-                        {comment.user.name}
+                        {comment.user?.name || "Utilisateur inconnu"}
                       </p>
                       <p className="text-sm text-gray-500">
                         {formatDateTime(comment.createdAt)}

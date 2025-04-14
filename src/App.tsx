@@ -32,7 +32,6 @@ import { RolesManagement } from "./components/admin/RolesManagement";
 import { UsersList } from "./components/admin/UsersList";
 import SearchInterface from "./components/process/SearchInterface";
 import { ErrorBoundary } from "./components/error/ErrorBoundary";
-
 const ProtectedRoute = ({ roles }: { roles?: string[] }) => {
   const token = Cookies.get("token");
   const roleUser = Cookies.get("roleUser"); // Assurez-vous que c'est "role" et non "roleUser "
@@ -103,7 +102,6 @@ const App = () => {
               <Route path={ROUTES.USER.DASHBOARD} element={<Dashboard />} />
               {/* <Route path={ROUTES.USER.PROCESSES} element={<ProcessList />} /> */}
               <Route path={ROUTES.USER.NEW_PROCESS} element={<NewProcess />} />
-              <Route path={ROUTES.USER.SEARCH} element={<SearchInterface />} />
               <Route
                 path={ROUTES.USER.PROCESS_DETAILS}
                 element={<ProcessDetails />}
@@ -112,6 +110,17 @@ const App = () => {
               <Route path={ROUTES.USER.SETTINGS} element={<UserSettings />} />
             </Route>
           </Route>
+
+          {/* SearchInterface Route - Indépendante */}
+          <Route element={<ProtectedRoute />}>
+            <Route
+              path={ROUTES.SEARCH.INTERFACE}
+              element={<SearchInterface />}
+            />
+          </Route>
+
+          {/* Catch-all route for 404 */}
+
           <Route
             path="*"
             element={<Navigate to={ROUTES.AUTH.LOGIN} replace />}

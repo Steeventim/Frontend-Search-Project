@@ -18,13 +18,21 @@ export const ROUTES = {
   },
   USER: {
     ROOT: "/",
-    SEARCH: "/search",
     DASHBOARD: "/dashboard",
     PROCESSES: "/processes",
     NEW_PROCESS: "/processes/new",
     PROCESS_DETAILS: "/processes/:id",
     PROFILE: "/profile",
     SETTINGS: "/settings",
+  },
+  SEARCH: {
+    ROOT: "/search",
+    INTERFACE: "/search/interface",
+    // 404: "/404",
+    // 500: "/500",
+    // UNAUTHORIZED: "/unauthorized",
+    // FORBIDDEN: "/forbidden",
+    // NOT_FOUND: "/not-found",
   },
   ERROR: "/error", // Added error route
 } as const;

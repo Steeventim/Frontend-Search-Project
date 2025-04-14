@@ -9,6 +9,7 @@ export const useProcessData = (processId?: string) => {
   const [process, setProcess] = useState<Process | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [latestEtapeId, setLatestEtapeId] = useState<string | null>(null);
 
   // Fonction pour récupérer le dernier document
   const fetchLatestDocument = useCallback(async () => {
@@ -18,6 +19,7 @@ export const useProcessData = (processId?: string) => {
     try {
       const { data } = await api.get("/latest-document");
       setProcess(data.data); // Assurez-vous que la structure des données est correcte
+      setLatestEtapeId(data.data.etape?.idEtape || null); // Stocker l'idEtape
     } catch (error) {
       // Vérifier si l'erreur est une AxiosError
       if (error instanceof AxiosError) {
@@ -45,11 +47,14 @@ export const useProcessData = (processId?: string) => {
     const roleName = Cookies.get("roleName"); // Récupérer le rôle depuis les cookies
 
     try {
-      if (processId) {
+      if (processId || latestEtapeId) {
+        // Utiliser processId ou latestEtapeId pour récupérer les données
+        const etapeIdToUse = processId || latestEtapeId;
+
         // Si un processId est fourni, on récupère les infos de l'étape actuelle
-        const { data: currentData } = await api.get(`/etapes/${processId}`);
+        const { data: currentData } = await api.get(`/etapes/${etapeIdToUse}`);
         const { data: nextData } = await api.get(
-          `/etapes/${processId}/next-users`
+          `/etapes/${etapeIdToUse}/next-users`
         );
 
         // Assurez-vous que les données sont correctement intégrées
@@ -80,41 +85,15 @@ export const useProcessData = (processId?: string) => {
     } finally {
       setLoading(false);
     }
-  }, [processId]); // Ajoutez processId comme dépendance
-
-  // // Fonction pour récupérer les documents reçus
-  // const fetchReceivedDocuments = useCallback(async () => {
-  //   setLoading(true);
-  //   setError(null); // Réinitialiser l'erreur avant de commencer
-
-  //   try {
-  //     const user = await userService.getUserById("me"); // Récupérer les informations de l'utilisateur
-  //     const { data } = await api.get(`/received-documents/${user.id}`); // Utiliser l'ID utilisateur
-  //     setProcess(data.data); // Assurez-vous que la structure des données est correcte
-  //   } catch (error) {
-  //     // Vérifier si l'erreur est une AxiosError
-  //     if (error instanceof AxiosError) {
-  //       const errorMessage =
-  //         error.response?.data?.message ||
-  //         "Erreur lors du chargement des documents reçus";
-  //       setError(errorMessage);
-  //     } else {
-  //       setError("Erreur inconnue lors du chargement des documents reçus");
-  //     }
-  //     console.error(
-  //       "Erreur lors de la récupération des documents reçus:",
-  //       error
-  //     );
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // }, []);
+  }, [processId, latestEtapeId]); // Ajoutez processId comme dépendance
 
   useEffect(() => {
     if (processId) {
       fetchProcessData(); // Appeler la fonction pour récupérer les données du processus
     } else {
-      fetchLatestDocument(); // Appeler la fonction pour récupérer le dernier document
+      fetchLatestDocument().then(() => {
+        fetchProcessData();
+      });
       // fetchReceivedDocuments(); // Appeler la fonction pour récupérer les documents reçus
     }
   }, [

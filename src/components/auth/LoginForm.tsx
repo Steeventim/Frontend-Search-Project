@@ -18,38 +18,10 @@ const AuthForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loginStep, setLoginStep] = useState(1); // 1 = email, 2 = password
   const [authenticated, setAuthenticated] = useState(false);
-  const [showBiometricPrompt, setShowBiometricPrompt] = useState(false);
-  const [supportsBiometric, setSupportsBiometric] = useState(false);
   const navigate = useNavigate();
 
   // Vérifier le support biométrique au chargement
   useEffect(() => {
-    const checkBiometricSupport = async () => {
-      try {
-        // Cette vérification est fictive - elle nécessiterait l'utilisation de l'API Web Authentication
-        // dans une implémentation réelle
-        const supported =
-          "PublicKeyCredential" in window &&
-          navigator.credentials &&
-          window.PublicKeyCredential
-            .isUserVerifyingPlatformAuthenticatorAvailable;
-
-        if (supported) {
-          const isAvailable =
-            await window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-          setSupportsBiometric(isAvailable);
-        }
-      } catch (err) {
-        console.error(
-          "Erreur lors de la vérification du support biométrique:",
-          err
-        );
-        setSupportsBiometric(false);
-      }
-    };
-
-    checkBiometricSupport();
-
     // Vérifier si l'utilisateur a déjà visité l'application
     const savedEmail = localStorage.getItem("userEmail");
     if (savedEmail) {
@@ -87,22 +59,22 @@ const AuthForm = () => {
   };
 
   // Simuler l'authentification biométrique
-  const handleBiometricAuth = async () => {
-    setShowBiometricPrompt(true);
-    setLoading(true);
+  // const handleBiometricAuth = async () => {
+  //   setShowBiometricPrompt(true);
+  //   setLoading(true);
 
-    // Simuler un délai pour l'authentification biométrique
-    setTimeout(() => {
-      setLoading(false);
-      setShowBiometricPrompt(false);
-      setAuthenticated(true);
+  //   // Simuler un délai pour l'authentification biométrique
+  //   setTimeout(() => {
+  //     setLoading(false);
+  //     setShowBiometricPrompt(false);
+  //     setAuthenticated(true);
 
-      // Rediriger après une courte pause pour montrer l'animation de succès
-      setTimeout(() => {
-        navigate(ROUTES.USER.DASHBOARD);
-      }, 1000);
-    }, 2000);
-  };
+  //     // Rediriger après une courte pause pour montrer l'animation de succès
+  //     setTimeout(() => {
+  //       navigate(ROUTES.USER.DASHBOARD);
+  //     }, 1000);
+  //   }, 2000);
+  // };
 
   // Soumission du formulaire
   const handleSubmit = useCallback(
@@ -144,6 +116,15 @@ const AuthForm = () => {
           expires: formState.rememberMe ? 7 : 3 / 24,
         });
 
+        // Vérifier les étapes associées au rôle
+        const etapesResponse = await api.get(`/etapes/role/${userRole}`);
+        const etapes = etapesResponse.data.data;
+
+        // Vérifier si une étape a un sequenceNumber égal à 1
+        const firstEtape = etapes.find(
+          (etape: { sequenceNumber: number }) => etape.sequenceNumber === 1
+        );
+
         // Animation de connexion réussie
         setAuthenticated(true);
 
@@ -153,6 +134,9 @@ const AuthForm = () => {
             navigate(ROUTES.ADMIN.CREATE_ADMIN);
           } else if (userRole === "admin") {
             navigate(ROUTES.AUTH.SETUP);
+          } else if (firstEtape) {
+            // Rediriger vers la page de recherche
+            navigate(ROUTES.SEARCH.INTERFACE);
           } else {
             navigate(ROUTES.USER.DASHBOARD);
           }
@@ -258,30 +242,6 @@ const AuthForm = () => {
               </h2>
               <p className="text-gray-500">Redirection en cours...</p>
             </div>
-          ) : showBiometricPrompt ? (
-            <div className="text-center py-16 flex flex-col items-center justify-center">
-              <div className="w-20 h-20 rounded-full bg-blue-100 flex items-center justify-center mb-6 animate-pulse">
-                <svg
-                  className="w-10 h-10 text-blue-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                  ></path>
-                </svg>
-              </div>
-              <h2 className="text-2xl font-bold text-blue-700 mb-2">
-                Vérification biométrique
-              </h2>
-              <p className="text-gray-500">
-                Veuillez confirmer votre identité...
-              </p>
-            </div>
           ) : (
             <>
               <h2 className="text-3xl font-bold mb-2 text-gray-800">
@@ -323,7 +283,7 @@ const AuthForm = () => {
                       Continuer
                     </button>
 
-                    {supportsBiometric && (
+                    {/* {supportsBiometric && (
                       <div className="mt-6 text-center">
                         <button
                           type="button"
@@ -346,7 +306,7 @@ const AuthForm = () => {
                           Connexion biométrique
                         </button>
                       </div>
-                    )}
+                    )} */}
                   </div>
                 ) : (
                   <div className="transition-all duration-500 transform">

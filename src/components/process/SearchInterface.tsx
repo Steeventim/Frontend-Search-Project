@@ -1,16 +1,21 @@
 import React, { useState, useEffect } from "react";
-import { Search, FileText, Plus } from "lucide-react";
+import { AxiosError } from "axios";
+import { Search, FileText, Plus, Paperclip, XCircle } from "lucide-react";
 import { Card } from "../common/Card";
 import { Button } from "../common/Button";
 import { searchService } from "../../services/searchService";
-import { SearchResponse, Hit } from "../../types/search";
+import { SearchResponse, Hit, LatestDocument } from "../../types/search";
 import api from "../../services/api";
 import { Dialog } from "../common/Dialog";
-// import { useNavigate } from "react-router-dom";
+import { SearchNavbar } from "../layout/SearchNavbar";
+import { userService } from "../../services/userService";
+import { useProcessData } from "../../hooks/useProcessData";
 
-// Define the interface for the etape object
+// Interface pour l'étape
 interface Etape {
+  idEtape: string;
   LibelleEtape: string;
+  typeProjets: { Libelle: string }[];
 }
 
 const SearchInterface: React.FC = () => {
@@ -19,39 +24,88 @@ const SearchInterface: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedDocument, setSelectedDocument] = useState<Hit | null>(null);
-  const [etapes, setEtapes] = useState<string[]>([]);
-  const [selectedEtape, setSelectedEtape] = useState("");
+  const [latestDocument, setLatestDocument] = useState<LatestDocument | null>(
+    null
+  );
+  const [comment, setComment] = useState("");
   const [showDialog, setShowDialog] = useState(false);
   const [confirmationMessage, setConfirmationMessage] = useState<string | null>(
     null
   );
   const [assignLoading, setAssignLoading] = useState(false);
-
-  // const navigate = useNavigate();
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const [userId, setUserId] = useState<string | null>(null);
+  const { process } = useProcessData();
+  const [userDestinatorName, setUserDestinatorName] = useState<string | null>(
+    null
+  );
+  const [nextEtape, setNextEtape] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
 
   useEffect(() => {
-    const fetchEtapes = async () => {
+    const fetchUserId = async () => {
       try {
-        const response = await api.get<{
-          success: boolean;
-          count: number;
-          data: Etape[];
-        }>("/etapes/all");
-        console.log("Réponse du serveur:", response.data); // Pour déboguer
-        if (response.data.success) {
-          const libelleEtapes = response.data.data
-            .map((etape: Etape) => etape.LibelleEtape)
-            .filter(Boolean);
-          setEtapes(libelleEtapes);
+        const user = await userService.getUserById("me");
+        setUserId(user.id);
+      } catch (error) {
+        console.error(
+          "Erreur lors de la récupération de l'utilisateur connecté :",
+          error
+        );
+      }
+    };
+
+    fetchUserId();
+  }, []);
+
+  useEffect(() => {
+    if (process?.nextEtape) {
+      setNextEtape({
+        id: process.nextEtape.id,
+        name: process.nextEtape.name,
+      });
+    }
+  }, [process]);
+
+  useEffect(() => {
+    if (process?.nextEtape?.users && process.nextEtape.users.length > 0) {
+      const nextUser = process.nextEtape.users[0];
+      setUserDestinatorName(nextUser.name);
+    }
+  }, [process]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [etapesResponse, latestDocumentResponse] = await Promise.all([
+          api.get<{ success: boolean; count: number; data: Etape[] }>(
+            "/etapes/all"
+          ),
+          api.get<{ success: boolean; data: LatestDocument }>(
+            "/latest-document"
+          ),
+        ]);
+
+        if (etapesResponse.data.success) {
+          // setEtapes(etapesResponse.data.data);
         } else {
           setError("Erreur lors de la récupération des étapes");
         }
+
+        if (latestDocumentResponse.data.success) {
+          setLatestDocument(latestDocumentResponse.data.data);
+        } else {
+          setError("Erreur lors de la récupération du dernier document");
+        }
       } catch (err) {
-        console.error("Erreur lors de la récupération des étapes", err);
+        console.error("Erreur lors de la récupération des données", err);
         setError(err instanceof Error ? err.message : "Erreur inconnue");
       }
     };
-    fetchEtapes();
+
+    fetchData();
   }, []);
 
   const handleSearch = async () => {
@@ -61,15 +115,12 @@ const SearchInterface: React.FC = () => {
     setError(null);
     try {
       const response: SearchResponse = await searchService.search(searchQuery);
-      console.log("Réponse de l'API:", response); // Ajoutez cette ligne pour déboguer
-
-      // Vérifiez si la réponse est conforme à ce que vous attendez
       if (
         response.success &&
         response.data.hits &&
         response.data.hits.total.value > 0
       ) {
-        setResults(response.data.hits.hits); // Accédez à la bonne structure
+        setResults(response.data.hits.hits);
       } else {
         setResults([]);
       }
@@ -82,38 +133,112 @@ const SearchInterface: React.FC = () => {
 
   const handlePreview = (documentName: string) => {
     const searchTerm = searchQuery;
-    const previewUrl = `${api.defaults.baseURL}/search/${encodeURIComponent(
-      documentName
-    )}/${encodeURIComponent(searchTerm)}`;
+    const previewUrl = `${
+      api.defaults.baseURL
+    }/highlightera2/${encodeURIComponent(documentName)}/${encodeURIComponent(
+      searchTerm
+    )}`;
     window.open(previewUrl, "_blank");
   };
 
   const openAssignDialog = (document: Hit) => {
     setSelectedDocument(document);
-    setSelectedEtape("");
     setShowDialog(true);
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setAttachments(Array.from(e.target.files));
+    }
+  };
+
+  const removeAttachment = (index: number) => {
+    setAttachments((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  // Fonction pour encoder un fichier en Base64
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        if (typeof reader.result === "string") {
+          // Supprimer le préfixe "data:application/pdf;base64," (ou autre type MIME)
+          const base64String = reader.result.split(",")[1];
+          resolve(base64String);
+        } else {
+          reject(new Error("Erreur lors de la lecture du fichier"));
+        }
+      };
+      reader.onerror = () =>
+        reject(new Error("Erreur lors de la lecture du fichier"));
+    });
+  };
+
   const handleAssign = async () => {
-    if (!selectedEtape) return;
+    if (!nextEtape || !selectedDocument || !latestDocument?.idDocument) {
+      setError("L'ID du document est manquant ou invalide.");
+      return;
+    }
+
     setAssignLoading(true);
+
     try {
-      const response = await api.post("/etapes/affect", {
-        documentName: selectedDocument?._source.file.filename, // Mettez à jour pour accéder à la bonne propriété
-        etapeName: selectedEtape,
+      // Encoder les fichiers en Base64
+      const encodedFiles = await Promise.all(
+        attachments.map(async (file) => ({
+          name: file.name,
+          content: await fileToBase64(file),
+        }))
+      );
+
+      // Créer le payload JSON
+      const payload = {
+        documentId: String(latestDocument.idDocument),
+        userId: userId || "",
+        commentaire: comment,
+        etapeId: latestDocument.etape?.idEtape || "",
+        UserDestinatorName: userDestinatorName || "",
+        nextEtapeName: nextEtape.name || "",
+        files: encodedFiles, // Tableau de { name, content }
+      };
+
+      console.log("Envoi de payload JSON :", payload);
+
+      const response = await api.post("/etapes/affect", payload, {
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
-      const idDocument = response.data.data.idDocument; // Récupérer l'idDocument
-      localStorage.setItem("idDocument", idDocument); // Stocker l'idDocument dans localStorage
-      setConfirmationMessage("Document affecté avec succès.");
-      setShowDialog(false);
-      // Réinitialiser le message de confirmation après 3 secondes
-      setTimeout(() => {
-        setConfirmationMessage(null);
-      }, 3000);
-    } catch (err) {
-      console.error("Erreur lors de l'affectation du document", err);
-      setError("Erreur lors de l'affectation du document");
-      // Réinitialiser le message d'erreur après 3 secondes
+
+      console.log("Réponse :", response.data);
+
+      if (response.data.success) {
+        const idDocument = response.data.data.document.idDocument;
+        localStorage.setItem("idDocument", idDocument);
+        setConfirmationMessage("Document affecté avec succès.");
+        setShowDialog(false);
+        setTimeout(() => {
+          setConfirmationMessage(null);
+        }, 3000);
+      } else {
+        setError(response.data.message || "Erreur lors de l'affectation.");
+      }
+    } catch (err: unknown) {
+      if (err instanceof AxiosError) {
+        console.error("Erreur lors de l'affectation du document :", {
+          message: err.message,
+          response: err.response?.data,
+          status: err.response?.status,
+        });
+        setError(
+          err.response?.data?.message ||
+            "Erreur lors de l'affectation du document"
+        );
+      } else {
+        console.error("Erreur inattendue :", err);
+        setError("Erreur inattendue lors de l'affectation du document");
+      }
       setTimeout(() => {
         setError(null);
       }, 9000);
@@ -124,6 +249,7 @@ const SearchInterface: React.FC = () => {
 
   return (
     <div className="space-y-6 p-6 bg-gray-100 min-h-screen">
+      <SearchNavbar />
       <Card className="shadow-lg p-6 bg-white rounded-xl">
         <h2 className="text-2xl font-semibold text-gray-900 text-center mb-4">
           Recherche de documents
@@ -203,7 +329,7 @@ const SearchInterface: React.FC = () => {
                               />
                             ))
                           ) : (
-                            <p>{hit._source.content}</p> // Affichez le contenu par défaut si aucun highlight
+                            <p>{hit._source.content}</p>
                           )}
                         </div>
                       </div>
@@ -227,19 +353,64 @@ const SearchInterface: React.FC = () => {
 
       {showDialog && (
         <Dialog onClose={() => setShowDialog(false)}>
-          <h3 className="text-lg font-semibold">Affecter un document</h3>
-          <select
-            value={selectedEtape}
-            onChange={(e) => setSelectedEtape(e.target.value)}
-            className="w-full border p-2 mt-2 rounded"
-          >
-            <option value="">Sélectionner une étape</option>
-            {etapes.map((etape, index) => (
-              <option key={index} value={etape}>
-                {etape}
-              </option>
-            ))}
-          </select>
+          {nextEtape ? (
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-700">
+                Étape suivante
+              </label>
+              <input
+                type="text"
+                value={nextEtape.name}
+                readOnly
+                className="mt-2 block w-full text-sm text-gray-500 border-gray-300 rounded-md"
+              />
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500 mt-2">
+              Aucune étape suivante disponible.
+            </p>
+          )}
+
+          <textarea
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            placeholder="Ajouter un commentaire..."
+            rows={4}
+            className="w-full border p-2 mt-4 rounded"
+          />
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-700">
+              Joindre des fichiers
+            </label>
+            <input
+              type="file"
+              multiple
+              onChange={handleFileChange}
+              className="mt-2 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+            />
+            {attachments.length > 0 && (
+              <div className="mt-3 space-y-2">
+                {attachments.map((file, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-2 bg-gray-50 rounded-md"
+                  >
+                    <div className="flex items-center">
+                      <Paperclip className="h-4 w-4 text-gray-400 mr-2" />
+                      <span className="text-sm text-gray-600">{file.name}</span>
+                    </div>
+                    <button
+                      onClick={() => removeAttachment(index)}
+                      className="text-gray-400 hover:text-gray-600"
+                    >
+                      <XCircle className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div className="flex justify-end mt-4 space-x-2">
             <Button variant="secondary" onClick={() => setShowDialog(false)}>
               Annuler
@@ -247,7 +418,7 @@ const SearchInterface: React.FC = () => {
             <Button
               variant="primary"
               onClick={handleAssign}
-              disabled={!selectedEtape || assignLoading}
+              disabled={!nextEtape?.name || assignLoading}
               loading={assignLoading}
             >
               Affecter

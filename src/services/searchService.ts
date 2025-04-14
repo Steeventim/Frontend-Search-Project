@@ -5,7 +5,7 @@ export const searchService = {
   // Méthode pour effectuer une recherche avec un terme
   search: async (searchTerm: string): Promise<SearchResponse> => {
     const { data } = await api.get(
-      `/search-propositions/${encodeURIComponent(searchTerm)}`
+      `/search1Highligth/${encodeURIComponent(searchTerm)}`
     );
     return data;
   },
@@ -17,9 +17,9 @@ export const searchService = {
   ): Promise<DocumentSource> => {
     try {
       const { data } = await api.get(
-        `/search/${encodeURIComponent(documentName)}/${encodeURIComponent(
-          searchTerm
-        )}`
+        `/highlightera2/${encodeURIComponent(
+          documentName
+        )}/${encodeURIComponent(searchTerm)}`
       );
       return data; // Retourner les données de prévisualisation
     } catch (error) {

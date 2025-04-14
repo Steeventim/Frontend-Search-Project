@@ -1,0 +1,62 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main  # Déclenche l'action sur les commits sur la branche main
+  pull_request:
+    branches:
+      - main  # Déclenche l'action lors des pull requests vers la branche main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Étape 1: Vérifier le code source
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Étape 2: Installer Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16'  # Utilise Node.js 16 (ou une version compatible avec ton projet)
+
+      # Étape 3: Installer les dépendances
+      - name: Install dependencies
+        run: npm install
+
+      # Étape 4: Lancer les tests (si tu as des tests)
+      - name: Run tests
+        run: npm test
+
+      # Étape 5: Construire l'application pour la production
+      - name: Build the application
+        run: npm run build
+
+      # Étape 6: Déployer l'application (si tu veux déployer automatiquement après chaque push)
+      # Remplace cette étape par celle de ton choix pour déployer sur ton serveur
+      - name: Deploy to production
+        run: |
+          ssh -o StrictHostKeyChecking=no user@<server-ip> "cd /path/to/project && git pull origin main && npm install && npm run build"
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+SSH_HOST: <server-ip>
+        # Assure-toi d'ajouter la clé SSH privée dans les secrets de ton dépôt GitHub
+        # et de configurer le serveur pour accepter cette clé pour le déploiement.  
+      # Étape 7: Notifier le succès ou l'échec du déploiement
+      - name: Notify deployment status
+        run: |
+          if [ $? -eq 0 ]; then
+            echo "Deployment succeeded!"
+          else
+            echo "Deployment failed!"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}  # Si tu veux notifier sur Slack
+          # Assure-toi d'ajouter l'URL du webhook Slack dans les secrets de ton dépôt GitHub
+          # et de configurer le webhook sur Slack pour recevoir les notifications.
+          # Tu peux également utiliser d'autres services de notification comme Discord, Email, etc.
+        

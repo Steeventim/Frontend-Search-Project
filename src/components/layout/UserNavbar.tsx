@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 import api from "../../services/api";
 import Cookies from "js-cookie";
+import { NotificationCenter } from "../common/NotificationCenter";
+import { useNotifications } from "../../hooks/useNotifications";
 
 interface Notification {
   id: string;
@@ -45,7 +47,7 @@ export const UserNavbar: React.FC = () => {
 
   const menuItems = [
     { icon: LayoutDashboard, label: "Tableau de bord", path: "/dashboard" },
-    { icon: Search, label: "Recherche", path: "/search" },
+    // { icon: Search, label: "Recherche", path: "/search" },
   ];
 
   const unreadCount = notifications.filter((n) => !n.read).length;
