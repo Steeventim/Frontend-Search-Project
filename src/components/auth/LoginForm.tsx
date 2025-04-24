@@ -7,7 +7,6 @@ import { ROUTES } from "../../constants/routes";
 import Cookies from "js-cookie";
 
 const AuthForm = () => {
-  // États
   const [formState, setFormState] = useState({
     email: "",
     password: "",
@@ -16,67 +15,36 @@ const AuthForm = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
-  const [loginStep, setLoginStep] = useState(1); // 1 = email, 2 = password
+  const [loginStep, setLoginStep] = useState(1);
   const [authenticated, setAuthenticated] = useState(false);
   const navigate = useNavigate();
 
-  // Vérifier le support biométrique au chargement
   useEffect(() => {
-    // Vérifier si l'utilisateur a déjà visité l'application
     const savedEmail = localStorage.getItem("userEmail");
     if (savedEmail) {
       setFormState((prev) => ({ ...prev, email: savedEmail }));
     }
   }, []);
 
-  // Gestionnaire de changement des champs
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value, type } = e.target as
-      | HTMLInputElement
-      | HTMLTextAreaElement;
-
-    const checked =
-      type === "checkbox" ? (e.target as HTMLInputElement).checked : undefined;
-
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value, type } = e.target;
+    const checked = type === "checkbox" ? e.target.checked : undefined;
     setFormState((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
   };
 
-  // Animation de transition entre les étapes
   const nextStep = useCallback(() => {
     if (formState.email.trim() === "") return;
     setLoginStep(2);
-  }, [formState.email]); // Ajoutez les dépendances nécessaires
+  }, [formState.email]);
 
-  // Retour à l'étape email
   const backToEmailStep = () => {
     setLoginStep(1);
     setError(null);
   };
 
-  // Simuler l'authentification biométrique
-  // const handleBiometricAuth = async () => {
-  //   setShowBiometricPrompt(true);
-  //   setLoading(true);
-
-  //   // Simuler un délai pour l'authentification biométrique
-  //   setTimeout(() => {
-  //     setLoading(false);
-  //     setShowBiometricPrompt(false);
-  //     setAuthenticated(true);
-
-  //     // Rediriger après une courte pause pour montrer l'animation de succès
-  //     setTimeout(() => {
-  //       navigate(ROUTES.USER.DASHBOARD);
-  //     }, 1000);
-  //   }, 2000);
-  // };
-
-  // Soumission du formulaire
   const handleSubmit = useCallback(
     async (event: React.FormEvent<HTMLFormElement>) => {
       event.preventDefault();
@@ -99,7 +67,6 @@ const AuthForm = () => {
           expires: formState.rememberMe ? 7 : 3 / 24,
         });
 
-        // Sauvegarder l'email si "se souvenir de moi" est activé
         if (formState.rememberMe) {
           localStorage.setItem("userEmail", formState.email);
         } else {
@@ -112,30 +79,24 @@ const AuthForm = () => {
         }
 
         const userRole = user.roles[0].name;
-        Cookies.set("roleName", userRole, {
+        Cookies.set("roleUser", userRole, {
           expires: formState.rememberMe ? 7 : 3 / 24,
         });
+        console.log("Login: setting roleUser=", userRole);
 
-        // Vérifier les étapes associées au rôle
         const etapesResponse = await api.get(`/etapes/role/${userRole}`);
-        const etapes = etapesResponse.data.data;
+        const etapes: { sequenceNumber: number }[] = etapesResponse.data.data;
 
-        // Vérifier si une étape a un sequenceNumber égal à 1
-        const firstEtape = etapes.find(
-          (etape: { sequenceNumber: number }) => etape.sequenceNumber === 1
-        );
+        const firstEtape = etapes.find((etape) => etape.sequenceNumber === 1);
 
-        // Animation de connexion réussie
         setAuthenticated(true);
 
-        // Attendre un peu pour l'animation avant la redirection
         setTimeout(() => {
           if (userRole === "superadmin") {
             navigate(ROUTES.ADMIN.CREATE_ADMIN);
           } else if (userRole === "admin") {
             navigate(ROUTES.AUTH.SETUP);
           } else if (firstEtape) {
-            // Rediriger vers la page de recherche
             navigate(ROUTES.SEARCH.INTERFACE);
           } else {
             navigate(ROUTES.USER.DASHBOARD);
@@ -167,7 +128,6 @@ const AuthForm = () => {
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-gradient-to-br from-blue-50 to-white">
-      {/* Panneau de gauche avec animation */}
       <div className="lg:w-1/2 bg-gradient-to-r from-blue-700 to-indigo-600 p-8 hidden lg:flex flex-col justify-center relative overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <div
@@ -183,14 +143,12 @@ const AuthForm = () => {
             style={{ animationDuration: "10s" }}
           ></div>
         </div>
-
         <div className="max-w-md mx-auto text-white relative z-10">
           <div className="mb-8">
             <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-6">
               <Lock className="w-8 h-8 text-white" />
             </div>
           </div>
-
           <h2 className="text-4xl font-bold mb-4">
             Bienvenue sur notre plateforme
           </h2>
@@ -198,7 +156,6 @@ const AuthForm = () => {
             Sécurisée et intuitive, notre solution vous permet de gérer
             efficacement vos processus métiers.
           </p>
-
           <div className="space-y-6 mt-12">
             <div className="flex items-center">
               <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center mr-4">
@@ -206,7 +163,6 @@ const AuthForm = () => {
               </div>
               <p className="text-blue-100">Authentification sécurisée</p>
             </div>
-
             <div className="flex items-center">
               <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center mr-4">
                 <User className="w-5 h-5 text-white" />
@@ -216,8 +172,6 @@ const AuthForm = () => {
           </div>
         </div>
       </div>
-
-      {/* Panneau de droite avec formulaire */}
       <div className="lg:w-1/2 flex flex-col justify-center p-8">
         <div className="max-w-md mx-auto w-full">
           {authenticated ? (
@@ -252,7 +206,6 @@ const AuthForm = () => {
                   ? "Connectez-vous pour accéder à votre espace"
                   : `Connexion avec ${formState.email}`}
               </p>
-
               <form onSubmit={handleSubmit} className="space-y-4">
                 {loginStep === 1 ? (
                   <div className="transition-all duration-500 transform">
@@ -275,38 +228,12 @@ const AuthForm = () => {
                         />
                       </div>
                     </div>
-
                     <button
                       type="submit"
                       className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 flex items-center justify-center"
                     >
                       Continuer
                     </button>
-
-                    {/* {supportsBiometric && (
-                      <div className="mt-6 text-center">
-                        <button
-                          type="button"
-                          onClick={handleBiometricAuth}
-                          className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-all duration-300 flex items-center justify-center mx-auto"
-                        >
-                          <svg
-                            className="w-5 h-5 mr-2 text-gray-700"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth="2"
-                              d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4"
-                            ></path>
-                          </svg>
-                          Connexion biométrique
-                        </button>
-                      </div>
-                    )} */}
                   </div>
                 ) : (
                   <div className="transition-all duration-500 transform">
@@ -349,7 +276,6 @@ const AuthForm = () => {
                         </button>
                       </div>
                     </div>
-
                     <div className="flex items-center mb-6">
                       <input
                         type="checkbox"
@@ -372,7 +298,6 @@ const AuthForm = () => {
                         Mot de passe oublié ?
                       </a>
                     </div>
-
                     {error && (
                       <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded">
                         <div className="flex items-center">
@@ -381,7 +306,6 @@ const AuthForm = () => {
                         </div>
                       </div>
                     )}
-
                     <button
                       type="submit"
                       disabled={loading}
@@ -414,18 +338,6 @@ const AuthForm = () => {
                     </button>
                   </div>
                 )}
-
-                {/* <div className="text-center mt-6">
-                  <p className="text-sm text-gray-600">
-                    Vous n'avez pas de compte ?{" "}
-                    <a
-                      href="#"
-                      className="text-blue-600 hover:text-blue-800 font-medium"
-                    >
-                      Créer un compte
-                    </a>
-                  </p>
-                </div> */}
               </form>
             </>
           )}

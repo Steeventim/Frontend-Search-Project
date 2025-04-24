@@ -1,32 +1,54 @@
 import React, { useState, useEffect } from "react";
-import { Trash2, Edit, Plus, User as UserIcon } from "lucide-react";
+import { Trash2, Edit, Plus, User as UserIcon, X } from "lucide-react";
 import { Card } from "../common/Card";
 import { Button } from "../common/Button";
-import { UserFormModal } from "./modals/UserFormModal";
-import { DeleteUserModal } from "./modals/DeleteUserModal";
+import { InputField } from "../common/InputField";
+import Select from "../common/form/Select";
 import { userService } from "../../services/userService";
-import { User, UserFormData } from "../../types/auth"; // Assurez-vous que ce type est défini correctement
+import { User } from "../../types/auth";
+import api from "../../services/api";
+
+// Interface pour le formulaire utilisateur (création et mise à jour)
+interface UserFormData {
+  nomUser: string;
+  prenomUser: string;
+  email: string;
+  password?: string; // Optionnel pour la mise à jour
+  Telephone: string;
+  IsActive: boolean;
+  roles: string[];
+}
 
 export const UsersList: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
+  const [roles, setRoles] = useState<string[]>(["admin", "user", "manager"]); // Liste statique temporaire
   const [error, setError] = useState<string | null>(null);
   const [confirmationMessage, setConfirmationMessage] = useState<string | null>(
     null
   );
-
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
+  const [newUser, setNewUser] = useState<UserFormData>({
+    nomUser: "",
+    prenomUser: "",
+    email: "",
+    password: "",
+    Telephone: "",
+    IsActive: true,
+    roles: [],
+  });
+
   useEffect(() => {
     loadUsers();
+    loadRoles();
   }, []);
 
   const loadUsers = async () => {
     try {
       const response = await userService.getUsers();
-      // console.log("Réponse de l'API :", response); // Vérifiez la réponse brute ici
       setUsers(response);
     } catch (err) {
       const errorMessage =
@@ -41,17 +63,43 @@ export const UsersList: React.FC = () => {
     }
   };
 
-  const handleCreateUser = async (data: UserFormData) => {
+  const loadRoles = async () => {
+    try {
+      // Remplacer par un appel API réel si disponible
+      const response = await api.get("/roles");
+      setRoles(response.data.map((role: { name: string }) => role.name));
+    } catch (err) {
+      console.error(
+        "Erreur lors du chargement des rôles, utilisation de la liste statique:",
+        err
+      );
+      // Garder la liste statique en cas d'erreur
+      setRoles(["admin", "user", "manager"]);
+    }
+  };
+
+  const handleCreateUser = async () => {
     try {
       await userService.createUser({
-        firstName: data.Prenom,
-        lastName: data.Nom,
-        email: data.Email,
-        password: data.Password, // Assurez-vous que le mot de passe est inclus
-        phone: data.Telephone || "", // Utilisez une chaîne vide si Telephone est undefined
-        isActive: true, // Vous pouvez définir isActive par défaut si nécessaire
+        email: newUser.email,
+        password: newUser.password || "",
+        nomUser: newUser.nomUser,
+        prenomUser: newUser.prenomUser,
+        roles: newUser.roles,
+        IsActive: newUser.IsActive,
+        Telephone: newUser.Telephone || "",
       });
       setConfirmationMessage("Utilisateur créé avec succès !");
+      setIsCreateModalOpen(false);
+      setNewUser({
+        nomUser: "",
+        prenomUser: "",
+        email: "",
+        password: "",
+        Telephone: "",
+        IsActive: true,
+        roles: [],
+      });
       await loadUsers();
     } catch (err) {
       const errorMessage =
@@ -66,17 +114,30 @@ export const UsersList: React.FC = () => {
     }
   };
 
-  const handleUpdateUser = async (data: UserFormData) => {
-    if (!selectedUser) return; // Assurez-vous qu'un utilisateur est sélectionné
+  const handleEditUser = async () => {
+    if (!selectedUser) return;
     try {
       await userService.updateUser(selectedUser.id, {
-        firstName: data.Prenom,
-        lastName: data.Nom,
-        email: data.Email,
-        phone: data.Telephone || "", // Incluez le téléphone si nécessaire
-        isActive: data.IsActive || true, // Incluez isActive si nécessaire
+        email: newUser.email,
+        nomUser: newUser.nomUser,
+        prenomUser: newUser.prenomUser,
+        roles: newUser.roles,
+        IsActive: newUser.IsActive,
+        Telephone: newUser.Telephone || "",
+        password: newUser.password || undefined, // Ne pas envoyer si vide
       });
-      setConfirmationMessage("Utilisateur modifié avec succès !");
+      setConfirmationMessage("Utilisateur mis à jour avec succès !");
+      setIsEditModalOpen(false);
+      setSelectedUser(null);
+      setNewUser({
+        nomUser: "",
+        prenomUser: "",
+        email: "",
+        password: "",
+        Telephone: "",
+        IsActive: true,
+        roles: [],
+      });
       await loadUsers();
     } catch (err) {
       const errorMessage =
@@ -92,10 +153,12 @@ export const UsersList: React.FC = () => {
   };
 
   const handleDeleteUser = async () => {
-    if (!selectedUser) return; // Assurez-vous qu'un utilisateur est sélectionné
+    if (!selectedUser) return;
     try {
       await userService.deleteUser(selectedUser.id);
       setConfirmationMessage("Utilisateur supprimé avec succès !");
+      setIsDeleteModalOpen(false);
+      setSelectedUser(null);
       await loadUsers();
     } catch (err) {
       const errorMessage =
@@ -108,6 +171,20 @@ export const UsersList: React.FC = () => {
         errorMessage
       );
     }
+  };
+
+  const openEditModal = (user: User) => {
+    setSelectedUser(user);
+    setNewUser({
+      nomUser: user.Nom,
+      prenomUser: user.Prenom,
+      email: user.email,
+      password: "",
+      Telephone: user.Telephone || "",
+      IsActive: user.IsActive ?? false,
+      roles: user.roles || [],
+    });
+    setIsEditModalOpen(true);
   };
 
   return (
@@ -172,10 +249,7 @@ export const UsersList: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button
-                      onClick={() => {
-                        setSelectedUser(user);
-                        setIsEditModalOpen(true);
-                      }}
+                      onClick={() => openEditModal(user)}
                       className="text-blue-600 hover:text-blue-900 mr-4"
                     >
                       <Edit className="h-5 w-5" />
@@ -197,46 +271,233 @@ export const UsersList: React.FC = () => {
         </div>
       </Card>
 
-      <UserFormModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-        onSubmit={handleCreateUser}
-        title="Ajouter un utilisateur"
-      />
+      {/* Modale pour créer un utilisateur */}
+      {isCreateModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-lg">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">Ajouter un utilisateur</h2>
+              <button
+                onClick={() => setIsCreateModalOpen(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <label className="block text-sm font-medium text-gray-700">
+                Nom
+                <InputField
+                  value={newUser.nomUser}
+                  onChange={(e) =>
+                    setNewUser({ ...newUser, nomUser: e.target.value })
+                  }
+                  placeholder="Entrez le nom"
+                />
+              </label>
+              <label className="block text-sm font-medium text-gray-700">
+                Prénom
+                <InputField
+                  value={newUser.prenomUser}
+                  onChange={(e) =>
+                    setNewUser({ ...newUser, prenomUser: e.target.value })
+                  }
+                  placeholder="Entrez le prénom"
+                />
+              </label>
+              <label className="block text-sm font-medium text-gray-700">
+                Email
+                <InputField
+                  value={newUser.email}
+                  onChange={(e) =>
+                    setNewUser({ ...newUser, email: e.target.value })
+                  }
+                  placeholder="Entrez l'email"
+                />
+              </label>
+              <InputField
+                type="password"
+                value={newUser.password}
+                onChange={(e) =>
+                  setNewUser({ ...newUser, password: e.target.value })
+                }
+                placeholder="Entrez le mot de passe"
+              />
+              <label className="block text-sm font-medium text-gray-700">
+                Mot de passe
+              </label>
+              /
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Téléphone
+                </label>
+                <InputField
+                  value={newUser.Telephone}
+                  onChange={(e) =>
+                    setNewUser({ ...newUser, Telephone: e.target.value })
+                  }
+                  placeholder="Entrez le téléphone"
+                />
+              </div>
+              <label className="block text-sm font-medium text-gray-700">
+                Rôles
+                <Select
+                  value={newUser.roles[0] || ""}
+                  onChange={(e) =>
+                    setNewUser({ ...newUser, roles: [e.target.value] })
+                  }
+                >
+                  <option value="">Sélectionnez un rôle</option>
+                  {roles.map((role) => (
+                    <option key={role} value={role}>
+                      {role}
+                    </option>
+                  ))}
+                </Select>
+              </label>
+            </div>
+            <div className="mt-6 flex justify-end space-x-2">
+              <Button
+                variant="secondary"
+                onClick={() => setIsCreateModalOpen(false)}
+              >
+                Annuler
+              </Button>
+              <Button variant="primary" onClick={handleCreateUser}>
+                Ajouter
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
-      <UserFormModal
-        isOpen={isEditModalOpen}
-        onClose={() => {
-          setIsEditModalOpen(false);
-          setSelectedUser(null);
-        }}
-        onSubmit={handleUpdateUser}
-        initialData={
-          selectedUser
-            ? {
-                id: selectedUser.id,
-                Nom: selectedUser.Nom,
-                Prenom: selectedUser.Prenom,
-                Email: selectedUser.email,
-                Telephone: selectedUser.Telephone,
-                IsActive: selectedUser.IsActive,
-              }
-            : undefined
-        }
-        title="Modifier l'utilisateur"
-      />
+      {/* Modale pour modifier un utilisateur */}
+      {isEditModalOpen && selectedUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-lg">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">Modifier l'utilisateur</h2>
+              <button
+                onClick={() => setIsEditModalOpen(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <label className="block text-sm font-medium text-gray-700">
+                Nom
+                <InputField
+                  value={newUser.nomUser}
+                  onChange={(e) =>
+                    setNewUser({ ...newUser, nomUser: e.target.value })
+                  }
+                  placeholder="Entrez le nom"
+                />
+              </label>
+              <label className="block text-sm font-medium text-gray-700">
+                Prénom
+                <InputField
+                  value={newUser.prenomUser}
+                  onChange={(e) =>
+                    setNewUser({ ...newUser, prenomUser: e.target.value })
+                  }
+                  placeholder="Entrez le prénom"
+                />
+              </label>
+              <label className="block text-sm font-medium text-gray-700">
+                Email
+                <InputField
+                  value={newUser.email}
+                  onChange={(e) =>
+                    setNewUser({ ...newUser, email: e.target.value })
+                  }
+                  placeholder="Entrez l'email"
+                />
+              </label>
+              <InputField
+                label="Mot de passe (laisser vide pour ne pas modifier)"
+                type="password"
+                value={newUser.password}
+                onChange={(e) =>
+                  setNewUser({ ...newUser, password: e.target.value })
+                }
+                placeholder="Entrez un nouveau mot de passe"
+              />
+              <label className="block text-sm font-medium text-gray-700">
+                Téléphone
+                <InputField
+                  value={newUser.Telephone}
+                  onChange={(e) =>
+                    setNewUser({ ...newUser, Telephone: e.target.value })
+                  }
+                  placeholder="Entrez le téléphone"
+                />
+              </label>
+              <Select
+                label="Rôles"
+                value={newUser.roles[0] || ""}
+                onChange={(e) =>
+                  setNewUser({ ...newUser, roles: [e.target.value] })
+                }
+              >
+                <option value="">Sélectionnez un rôle</option>
+                {roles.map((role) => (
+                  <option key={role} value={role}>
+                    {role}
+                  </option>
+                ))}
+              </Select>
+            </div>
+            <div className="mt-6 flex justify-end space-x-2">
+              <Button
+                variant="secondary"
+                onClick={() => setIsEditModalOpen(false)}
+              >
+                Annuler
+              </Button>
+              <Button variant="primary" onClick={handleEditUser}>
+                Enregistrer
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
-      <DeleteUserModal
-        isOpen={isDeleteModalOpen}
-        onClose={() => {
-          setIsDeleteModalOpen(false);
-          setSelectedUser(null);
-        }}
-        onConfirm={handleDeleteUser}
-        userName={
-          selectedUser ? `${selectedUser.Prenom} ${selectedUser.Nom}` : ""
-        }
-      />
+      {/* Modale pour confirmer la suppression */}
+      {isDeleteModalOpen && selectedUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">Confirmer la suppression</h2>
+              <button
+                onClick={() => setIsDeleteModalOpen(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <p>
+              Êtes-vous sûr de vouloir supprimer l'utilisateur{" "}
+              <strong>
+                {selectedUser.Prenom} {selectedUser.Nom}
+              </strong>
+              ?
+            </p>
+            <div className="mt-6 flex justify-end space-x-2">
+              <Button
+                variant="secondary"
+                onClick={() => setIsDeleteModalOpen(false)}
+              >
+                Annuler
+              </Button>
+              <Button variant="danger" onClick={handleDeleteUser}>
+                Supprimer
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

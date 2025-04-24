@@ -8,7 +8,6 @@ import {
   Search,
 } from "lucide-react";
 import { Card } from "../common/Card";
-// import { Button } from "../common/Button";
 import { useNavigate } from "react-router-dom";
 import { ROUTES } from "../../constants/routes";
 import { processService } from "../../services/processService";
@@ -18,41 +17,49 @@ export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const [myTasks, setMyTasks] = useState<ProcessStep[]>([]);
   const [myProcesses, setMyProcesses] = useState<Process[]>([]);
-  const [loadingTasks, setLoadingTasks] = useState<boolean>(true);
-  const [loadingProcesses, setLoadingProcesses] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [tasksError, setTasksError] = useState<string | null>(null);
+  const [processesError, setProcessesError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchTasks = async () => {
+    const fetchData = async () => {
+      setLoading(true);
       try {
-        const tasks = await processService.getMyTasks();
+        const [tasks, processes] = await Promise.all([
+          processService.getMyTasks(),
+          processService.getMyProcesses(),
+        ]);
+        console.log("Fetched tasks:", tasks);
+        console.log("Fetched processes:", processes);
         setMyTasks(tasks);
-      } catch {
-        setError("Erreur lors de la récupération des tâches.");
-      } finally {
-        setLoadingTasks(false);
-      }
-    };
-
-    const fetchProcesses = async () => {
-      try {
-        const processes = await processService.getMyProcesses();
         setMyProcesses(processes);
-      } catch {
-        setError("Erreur lors de la récupération des processus.");
+        setTasksError(null);
+        setProcessesError(null);
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+        const errMsg = error instanceof Error ? error.message : String(error);
+        if (errMsg.includes("tasks")) {
+          setTasksError("Erreur lors de la récupération des tâches.");
+        } else if (errMsg.includes("processes")) {
+          setProcessesError("Erreur lors de la récupération des processus.");
+        } else {
+          setTasksError("Erreur lors de la récupération des données.");
+          setProcessesError("Erreur lors de la récupération des données.");
+        }
       } finally {
-        setLoadingProcesses(false);
+        setLoading(false);
       }
     };
 
-    fetchTasks();
-    fetchProcesses();
+    fetchData();
   }, []);
 
   const handleTaskClick = (taskId: string) => {
     const process = myProcesses.find((p) => p.id === taskId);
     if (process) {
       navigate(`${ROUTES.USER.PROCESSES}/${taskId}`, { state: { process } });
+    } else {
+      console.warn(`Process with id ${taskId} not found`);
     }
   };
 
@@ -90,7 +97,11 @@ export const Dashboard: React.FC = () => {
         </h1>
       </div>
 
-      {error && <p className="text-red-500">{error}</p>}
+      {(tasksError || processesError) && (
+        <div className="bg-red-50 border border-red-200 rounded-md p-4 text-sm text-red-600">
+          {tasksError || processesError}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Tâches à traiter */}
@@ -101,9 +112,12 @@ export const Dashboard: React.FC = () => {
             </h3>
           </div>
           <div className="divide-y divide-gray-200">
-            {loadingTasks ? (
+            {loading ? (
               <div className="p-4 text-center text-gray-500">
-                Chargement des tâches...
+                <div className="animate-pulse space-y-4">
+                  <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto"></div>
+                  <div className="h-4 bg-gray-200 rounded w-1/2 mx-auto"></div>
+                </div>
               </div>
             ) : (
               myTasks.map((task) => (
@@ -137,7 +151,7 @@ export const Dashboard: React.FC = () => {
                 </div>
               ))
             )}
-            {myTasks.length === 0 && !loadingTasks && (
+            {myTasks.length === 0 && !loading && (
               <div className="p-4 text-center text-gray-500">
                 Aucune tâche en attente
               </div>
@@ -153,15 +167,23 @@ export const Dashboard: React.FC = () => {
             </h3>
           </div>
           <div className="divide-y divide-gray-200">
-            {loadingProcesses ? (
+            {loading ? (
               <div className="p-4 text-center text-gray-500">
-                Chargement des processus...
+                <div className="animate-pulse space-y-4">
+                  <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto"></div>
+                  <div className="h-4 bg-gray-200 rounded w-1/2 mx-auto"></div>
+                </div>
               </div>
             ) : (
               myProcesses.map((process) => (
                 <div
                   key={process.id}
                   className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                  onClick={() =>
+                    navigate(`#`, {
+                      state: { process },
+                    })
+                  }
                 >
                   <div className="flex items-center justify-between">
                     <div>
@@ -192,7 +214,7 @@ export const Dashboard: React.FC = () => {
                 </div>
               ))
             )}
-            {myProcesses.length === 0 && !loadingProcesses && (
+            {myProcesses.length === 0 && !loading && (
               <div className="p-4 text-center text-gray-500">
                 Aucun processus en cours
               </div>
@@ -207,7 +229,7 @@ export const Dashboard: React.FC = () => {
           <h3 className="text-lg font-medium text-gray-900">Actions rapides</h3>
           <div className="mt-4 flex justify-between">
             <button
-              onClick={() => navigate("#")}
+              onClick={() => navigate(ROUTES.USER.NEW_PROCESS || "#")} // Remplacer par une route valide
               className="relative rounded-lg p-4 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 flex-1 mr-4"
             >
               <div className="flex items-center space-x-3">

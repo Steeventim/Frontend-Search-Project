@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, memo } from "react";
 import { useParams } from "react-router-dom";
 import {
   Clock,
@@ -15,48 +15,75 @@ import { Button } from "../common/Button";
 import { useProcessData } from "../../hooks/useProcessData";
 import { userService } from "../../services/userService";
 import { formatDateTime } from "../../utils/date";
-import api from "../../services/api"; // Importez votre service API
+import api from "../../services/api";
 
-export const ProcessDetails: React.FC = () => {
-  const { id } = useParams<{ id: string }>(); // Utilisez l'idDocument passé via la navigation
+interface ReceivedDocument {
+  documentId: string;
+  title: string;
+  previousEtapeId?: string;
+  currentEtapeId?: string;
+  status: string;
+  transferStatus: string;
+  transferTimestamp?: string;
+  url: string | null;
+  destinator?: string;
+  senderUserId?: string;
+  comments: {
+    id: string;
+    content: string;
+    createdAt: string;
+    user?: { id: string; name: string };
+  }[];
+  files: {
+    idFile: string;
+    documentId: string;
+    fileName: string;
+    filePath: string;
+    fileType: string;
+    fileSize: number;
+    thumbnailPath?: string | null;
+    createdAt: string;
+    updatedAt: string;
+  }[];
+}
+
+const ProcessDetails: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
   const { process, loading, error } = useProcessData(id);
+  const [state, setState] = useState({
+    initiatorName: "",
+    initiatorId: "",
+    receivedDocuments: [] as ReceivedDocument[],
+    transferError: null as string | null,
+  });
   const [comment, setComment] = useState("");
   const [attachments, setAttachments] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [initiatorName, setInitiatorName] = useState<string>("");
-  const [initiatorId, setInitiatorId] = useState<string>("");
-  const [receivedDocuments, setReceivedDocuments] = useState<
-    ReceivedDocument[]
-  >([]);
-  interface ReceivedDocument {
-    documentId: string; // Correspond à "documentId" dans vos données
-    title: string; // Correspond à "title" dans vos données
-    url: string | null; // Peut être null si aucune URL n'est fournie
-    files: { name: string }[]; // Tableau des fichiers associés
-    comments: {
-      id: string; // Correspond à "id" dans vos données
-      content: string; // Correspond à "content" dans vos données
-      createdAt: string; // Correspond à "createdAt" dans vos données
-    }[]; // Tableau des commentaires associés
-  }
-  // Récupérer l'idDocument depuis localStorage
   const idDocument = localStorage.getItem("idDocument");
 
   useEffect(() => {
+    console.log("ProcessDetails mounted");
     const fetchUserAndDocuments = async () => {
       try {
         const userData = await userService.getUserById("me");
-
         const fullName = `${userData.Nom} ${userData.Prenom}`.trim();
-        setInitiatorName(fullName);
-        setInitiatorId(userData.id);
-
-        // Appeler la route pour récupérer les documents reçus
         const { data } = await api.get(`/received-documents/${userData.id}`);
-        console.log("Documents reçus :", data.data); // Vérifiez ici
-        setReceivedDocuments(data.data); // Stocker les documents reçus dans l'état
-        // console.log("Documents reçus:", data);
-        // Vous pouvez traiter les données reçues ici si nécessaire
+        setState((prev) => {
+          if (
+            prev.initiatorName === fullName &&
+            prev.initiatorId === userData.id
+          ) {
+            console.log("useEffect: state unchanged, skipping setState");
+            return prev;
+          }
+          console.log("useEffect: updating state");
+          return {
+            ...prev,
+            initiatorName: fullName,
+            initiatorId: userData.id,
+            receivedDocuments: data.data,
+          };
+        });
       } catch (error) {
         console.error(
           "Erreur lors du chargement des informations utilisateur ou des documents reçus:",
@@ -66,7 +93,138 @@ export const ProcessDetails: React.FC = () => {
     };
 
     fetchUserAndDocuments();
+    return () => console.log("ProcessDetails unmounted");
   }, []);
+
+  // Compteur de rendus
+  const renderCount = useRef(0);
+  useEffect(() => {
+    renderCount.current += 1;
+    console.log(`ProcessDetails rendered ${renderCount.current} times`);
+  }, [state, comment, attachments, process, loading, error]);
+
+  const toBase64 = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve((reader.result as string).split(",")[1]);
+      reader.onerror = (error) => reject(error);
+    });
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setAttachments(Array.from(e.target.files));
+    }
+  };
+
+  const removeAttachment = (index: number) => {
+    setAttachments((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleApproveClick = async () => {
+    try {
+      const base64Files = await Promise.all(
+        attachments.map(async (file) => ({
+          name: file.name,
+          content: await toBase64(file),
+        }))
+      );
+      const response = await api.post("/approve-document", {
+        documentId: idDocument,
+        userId: state.initiatorId,
+        etapeId: process?.typeProjets[0]?.EtapeTypeProjet?.etapeId,
+        comments: [{ content: comment }],
+        files: base64Files,
+      });
+
+      if (response.data.success) {
+        console.log("Document approuvé avec succès", response.data);
+        setComment("");
+        setAttachments([]);
+      } else {
+        console.error(
+          "Erreur lors de l'approbation du document",
+          response.data
+        );
+      }
+    } catch (error) {
+      console.error("Erreur lors de l'approbation du document", error);
+    }
+  };
+
+  const handleTransferClick = async () => {
+    try {
+      if ((process?.nextEtape?.users ?? []).length > 0) {
+        const nextUser = process?.nextEtape?.users?.[0];
+        const base64Files = await Promise.all(
+          attachments.map(async (file) => ({
+            name: file.name,
+            content: await toBase64(file),
+          }))
+        );
+        const payload = {
+          documentId: idDocument,
+          userId: state.initiatorId,
+          comments: [{ content: comment }],
+          files: base64Files,
+          etapeId: process?.typeProjets[0]?.EtapeTypeProjet?.etapeId,
+          nextEtapeName: process?.nextEtape?.name,
+          UserDestinatorName: nextUser?.name, // Supposé disponible, sinon ajuster
+        };
+        console.log("Transfer payload:", payload);
+
+        const response = await api.post("/etapes/affect", payload);
+
+        if (response.data.success) {
+          console.log("Processus transféré avec succès", response.data);
+          setComment("");
+          setAttachments([]);
+          setState((prev) => ({ ...prev, transferError: null }));
+        } else {
+          console.error("Erreur lors du transfert du processus", response.data);
+          setState((prev) => ({
+            ...prev,
+            transferError: response.data.message || "Erreur lors du transfert",
+          }));
+        }
+      } else {
+        console.error("Aucun utilisateur disponible pour l'étape suivante.");
+        setState((prev) => ({
+          ...prev,
+          transferError: "Aucun utilisateur disponible pour l'étape suivante.",
+        }));
+      }
+    } catch (error) {
+      console.error("Erreur lors du transfert du processus", error);
+      const errMsg = error instanceof Error ? error.message : String(error);
+      setState((prev) => ({
+        ...prev,
+        transferError: `Erreur lors du transfert: ${errMsg}`,
+      }));
+    }
+  };
+
+  const handleRejectClick = async () => {
+    try {
+      const response = await api.post(`/documents/${idDocument}/reject`, {
+        documentId: idDocument,
+        userId: state.initiatorId,
+        comments: [{ content: comment }],
+      });
+
+      if (response.data.success) {
+        console.log("Document rejeté avec succès", response.data);
+        setComment("");
+      } else {
+        console.error(
+          "Erreur lors du rejet du document",
+          response.data.message
+        );
+      }
+    } catch (error) {
+      console.error("Erreur lors du rejet du document", error);
+    }
+  };
 
   if (loading) {
     return (
@@ -96,98 +254,6 @@ export const ProcessDetails: React.FC = () => {
 
   const firstTypeProjet = process.typeProjets[0];
   const etapeTypeProjet = firstTypeProjet.EtapeTypeProjet;
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setAttachments(Array.from(e.target.files));
-    }
-  };
-
-  const removeAttachment = (index: number) => {
-    setAttachments((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const handleApproveClick = async () => {
-    try {
-      const response = await api.post("/approve-document", {
-        documentId: idDocument, // Utilisez l'idDocument ici
-        userId: initiatorId,
-        etapeId: etapeTypeProjet.etapeId,
-        comments: [{ content: comment }],
-        files: attachments,
-      });
-
-      if (response.data.success) {
-        console.log("Document approuvé avec succès", response.data);
-        // Mettez à jour l'état ou affichez un message de succès si nécessaire
-      } else {
-        console.error(
-          "Erreur lors de l'approbation du document",
-          response.data
-        );
-      }
-    } catch (error) {
-      console.error("Erreur lors de l'approbation du document", error);
-    }
-  };
-
-  const handleTransferClick = async () => {
-    try {
-      if (
-        process.nextEtape &&
-        process.nextEtape.users &&
-        process.nextEtape.users.length > 0
-      ) {
-        const nextUser = process.nextEtape.users[0]; // Récupérer le premier utilisateur de l'étape suivante
-        const response = await api.post("/forward-to-next-etape", {
-          documentId: idDocument,
-          userId: initiatorId,
-          comments: [{ content: comment }],
-          files: attachments,
-          etapeId: etapeTypeProjet.etapeId,
-          UserDestinatorName: nextUser.name, // Utiliser le nom de l'utilisateur récupéré
-          nextEtapeName: process.nextEtape.name, // Utiliser le nom de l'étape suivante
-        });
-
-        if (response.data.success) {
-          console.log("Processus transféré avec succès", response.data);
-        } else {
-          console.error("Erreur lors du transfert du processus", response.data);
-        }
-      } else {
-        console.error("Aucun utilisateur disponible pour l'étape suivante.");
-      }
-    } catch (error) {
-      console.error("Erreur lors du transfert du processus", error);
-    }
-  };
-
-  const handleRejectClick = async () => {
-    try {
-      const comments = [{ content: comment }];
-
-      // Appel à l'API pour rejeter le document
-      const response = await api.post(`/documents/${idDocument}/reject`, {
-        documentId: idDocument,
-        userId: initiatorId,
-        comments,
-      });
-
-      if (response.data.success) {
-        console.log("Document rejeté avec succès", response.data);
-        // Réinitialiser le champ de commentaire après le rejet
-        setComment("");
-      } else {
-        console.error(
-          "Erreur lors du rejet du document",
-          response.data.message
-        );
-      }
-    } catch (error) {
-      console.error("Erreur lors du rejet du document", error);
-    }
-  };
-
   const status = "pending";
 
   return (
@@ -197,26 +263,16 @@ export const ProcessDetails: React.FC = () => {
           <div className="flex items-start justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
-                {process.typeProjets[0].Libelle}
+                {firstTypeProjet.Libelle}
               </h1>
               <p className="mt-2 text-gray-600">
-                {process.typeProjets[0].Description}
+                {firstTypeProjet.Description}
               </p>
             </div>
             <span
-              className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                status
-                  ? "bg-yellow-100 text-yellow-800"
-                  : "bg-yellow-100 text-yellow-800"
-              }`}
+              className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800`}
             >
-              {status ? (
-                <CheckCircle2 className="h-4 w-4 mr-2" />
-              ) : status ? (
-                <XCircle className="h-4 w-4 mr-2" />
-              ) : (
-                <Clock className="h-4 w-4 mr-2" />
-              )}
+              <Clock className="h-4 w-4 mr-2" />
               {status.replace("_", " ")}
             </span>
           </div>
@@ -224,7 +280,7 @@ export const ProcessDetails: React.FC = () => {
           <div className="mt-6 flex items-center space-x-6 text-sm text-gray-500">
             <div className="flex items-center">
               <User className="h-4 w-4 mr-2" />
-              {initiatorName}
+              {state.initiatorName}
             </div>
             <div className="flex items-center">
               <Calendar className="h-4 w-4 mr-2" />
@@ -267,7 +323,7 @@ export const ProcessDetails: React.FC = () => {
                     >
                       {process.Validation === "approved" ? (
                         <CheckCircle2 className="h-6 w-6" />
-                      ) : status === "rejected" ? (
+                      ) : process.Validation === "rejected" ? (
                         <XCircle className="h-6 w-6" />
                       ) : (
                         <span className="text-sm font-medium">
@@ -279,7 +335,7 @@ export const ProcessDetails: React.FC = () => {
                       {process.LibelleEtape}
                     </p>
                     <p className="mt-1 text-xs">{process.Description}</p>
-                    <p className="mt-1 text-xs">{initiatorName}</p>
+                    <p className="mt-1 text-xs">{state.initiatorName}</p>
                   </div>
                 ))}
               </div>
@@ -294,6 +350,11 @@ export const ProcessDetails: React.FC = () => {
             <h2 className="text-lg font-semibold text-gray-900 mb-4">
               Action requise
             </h2>
+            {state.transferError && (
+              <div className="mb-4 bg-red-50 border border-red-200 rounded-md p-4 text-sm text-red-600">
+                {state.transferError}
+              </div>
+            )}
             <div className="space-y-4">
               <textarea
                 value={comment}
@@ -363,10 +424,7 @@ export const ProcessDetails: React.FC = () => {
                 >
                   Rejeter
                 </Button>
-                {process &&
-                process.nextEtape &&
-                process.nextEtape.users &&
-                process.nextEtape.users.length > 0 ? (
+                {(process?.nextEtape?.users ?? []).length > 0 && (
                   <Button
                     variant="secondary"
                     icon={Navigation}
@@ -374,12 +432,9 @@ export const ProcessDetails: React.FC = () => {
                   >
                     Transférer
                   </Button>
-                ) : (
-                  <p></p>
                 )}
               </div>
 
-              {/* Prévisualisation des fichiers joints */}
               {attachments.length > 0 && (
                 <div className="mt-4">
                   <h3 className="text-sm font-semibold text-gray-700">
@@ -392,7 +447,6 @@ export const ProcessDetails: React.FC = () => {
                         <p className="text-xs text-gray-500">
                           Taille : {(file.size / 1024).toFixed(1)} KB
                         </p>
-                        {/* Affichage d'une prévisualisation si le fichier est une image */}
                         {file.type.startsWith("image/") && (
                           <img
                             src={URL.createObjectURL(file)}
@@ -405,16 +459,15 @@ export const ProcessDetails: React.FC = () => {
                   </div>
                 </div>
               )}
-              {/* Section des pièces jointes */}
+
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                 <div className="p-6">
                   <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                    Pieces jointes
+                    Documents reçus
                   </h2>
-                  {receivedDocuments && receivedDocuments.length > 0 ? (
-                    receivedDocuments.map((doc) => (
+                  {state.receivedDocuments.length > 0 ? (
+                    state.receivedDocuments.map((doc) => (
                       <div key={doc.documentId} className="mb-6">
-                        {/* Titre du document */}
                         <a
                           href={doc.url || "#"}
                           target="_blank"
@@ -427,28 +480,39 @@ export const ProcessDetails: React.FC = () => {
                         >
                           {doc.title}
                         </a>
-
-                        {/* Fichiers associés */}
-                        {doc.files && doc.files.length > 0 ? (
+                        <p className="text-sm text-gray-500">
+                          Transféré le :{" "}
+                          {doc.transferTimestamp
+                            ? new Date(doc.transferTimestamp).toLocaleString()
+                            : "N/A"}
+                        </p>
+                        {doc.files.length > 0 && (
                           <div className="mt-4 space-y-2">
-                            {doc.files.map((file, index) => (
+                            {doc.files.map((file) => (
                               <div
-                                key={`${doc.documentId}-${index}`}
+                                key={file.idFile}
                                 className="flex items-center justify-between p-2 bg-gray-50 rounded-md"
                               >
                                 <div className="flex items-center">
                                   <Paperclip className="h-4 w-4 text-gray-400 mr-2" />
                                   <span className="text-sm text-gray-600">
-                                    {file.name}
+                                    {file.fileName}
+                                  </span>
+                                  <span className="text-xs text-gray-400 ml-2">
+                                    ({(file.fileSize / 1024).toFixed(1)} KB)
                                   </span>
                                 </div>
+                                <a
+                                  href={file.filePath}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-blue-600 hover:underline text-sm"
+                                >
+                                  Visualiser
+                                </a>
                               </div>
                             ))}
                           </div>
-                        ) : (
-                          <p className="text-sm text-gray-500 mt-2">
-                            Aucun fichier associé à ce document.
-                          </p>
                         )}
                       </div>
                     ))
@@ -470,48 +534,36 @@ export const ProcessDetails: React.FC = () => {
             Historique des commentaires
           </h2>
           <div className="space-y-4">
-            {receivedDocuments[0]?.comments
-              ?.filter(
-                (comment: {
-                  id: string;
-                  content: string;
-                  createdAt: string;
-                  user?: { id: string };
-                }) => comment.user?.id !== initiatorId
-              ) // Filtrer les commentaires des autres utilisateurs
-              .map(
-                (comment: {
-                  id: string;
-                  user?: { name: string };
-                  createdAt: string;
-                  content: string;
-                }) => (
-                  <div
-                    key={comment.id}
-                    className="flex space-x-3 p-4 bg-gray-50 rounded-lg"
-                  >
-                    <div className="flex-shrink-0">
-                      <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                        <MessageSquare className="h-5 w-5 text-blue-600" />
-                      </div>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900">
-                        {comment.user?.name || "Utilisateur inconnu"}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        {formatDateTime(comment.createdAt)}
-                      </p>
-                      <p className="mt-2 text-sm text-gray-700">
-                        {comment.content}
-                      </p>
+            {state.receivedDocuments[0]?.comments
+              ?.filter((comment) => comment.user?.id !== state.initiatorId)
+              .map((comment) => (
+                <div
+                  key={comment.id}
+                  className="flex space-x-3 p-4 bg-gray-50 rounded-lg"
+                >
+                  <div className="flex-shrink-0">
+                    <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                      <MessageSquare className="h-5 w-5 text-blue-600" />
                     </div>
                   </div>
-                )
-              )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900">
+                      {comment.user?.name || "Utilisateur inconnu"}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {formatDateTime(comment.createdAt)}
+                    </p>
+                    <p className="mt-2 text-sm text-gray-700">
+                      {comment.content}
+                    </p>
+                  </div>
+                </div>
+              ))}
           </div>
         </div>
       </div>
     </div>
   );
 };
+
+export default memo(ProcessDetails);

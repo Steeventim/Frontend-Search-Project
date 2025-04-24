@@ -1,107 +1,157 @@
-import { useState, useEffect, useCallback } from "react";
-import type { Process } from "../types";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import type { Process, NextEtape } from "../types/process";
 import api from "../services/api";
 import Cookies from "js-cookie";
-import { AxiosError } from "axios"; // Importer AxiosError
-// import { userService } from "../services/userService"; // Importer userService
+import { AxiosError } from "axios";
 
-export const useProcessData = (processId?: string) => {
+// Interface pour typage strict
+// interface Etape {
+//   idEtape: string;
+//   LibelleEtape: string;
+//   typeProjets?: { Libelle: string }[];
+// }
+
+interface ProcessData {
+  process: Process | null;
+  loading: boolean;
+  error: string | null;
+  latestEtapeId: string | null;
+}
+
+export const useProcessData = (processId?: string): ProcessData => {
   const [process, setProcess] = useState<Process | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [latestEtapeId, setLatestEtapeId] = useState<string | null>(null);
 
   // Fonction pour récupérer le dernier document
   const fetchLatestDocument = useCallback(async () => {
+    console.log("useProcessData: fetchLatestDocument called");
     setLoading(true);
-    setError(null); // Réinitialiser l'erreur avant de commencer
+    setError(null);
 
     try {
-      const { data } = await api.get("/latest-document");
-      setProcess(data.data); // Assurez-vous que la structure des données est correcte
-      setLatestEtapeId(data.data.etape?.idEtape || null); // Stocker l'idEtape
-    } catch (error) {
-      // Vérifier si l'erreur est une AxiosError
-      if (error instanceof AxiosError) {
-        const errorMessage =
-          error.response?.data?.message ||
-          "Erreur lors du chargement du dernier document";
-        setError(errorMessage);
-      } else {
-        setError("Erreur inconnue lors du chargement du dernier document");
-      }
-      console.error(
-        "Erreur lors de la récupération du dernier document:",
-        error
+      const { data } = await api.get<{ success: boolean; data: Process }>(
+        "/latest-document"
       );
+      if (data.success && data.data) {
+        console.log("useProcessData: latest document fetched:", data.data);
+        setProcess(data.data);
+        setLatestEtapeId(data.data.etape?.idEtape || null);
+      } else {
+        setError("Aucun document récent trouvé");
+        console.log("useProcessData: no recent document found");
+      }
+    } catch (error) {
+      const errorMessage =
+        error instanceof AxiosError
+          ? error.response?.data?.message ||
+            "Erreur lors du chargement du dernier document"
+          : "Erreur inconnue lors du chargement du dernier document";
+      setError(errorMessage);
+      console.error("useProcessData: fetchLatestDocument error:", error);
     } finally {
       setLoading(false);
     }
-  }, []); // Pas de dépendances, car cette fonction ne dépend d'aucune variable externe
+  }, []);
 
   // Fonction pour récupérer les données du processus
   const fetchProcessData = useCallback(async () => {
+    console.log(
+      "useProcessData: fetchProcessData called for id:",
+      processId || latestEtapeId
+    );
     setLoading(true);
-    setError(null); // Réinitialiser l'erreur avant de commencer
+    setError(null);
 
-    const roleName = Cookies.get("roleName"); // Récupérer le rôle depuis les cookies
+    const roleName = Cookies.get("roleName");
+    console.log("useProcessData: roleName from cookies:", roleName);
 
     try {
+      let processData: Process | null = null;
+
       if (processId || latestEtapeId) {
-        // Utiliser processId ou latestEtapeId pour récupérer les données
         const etapeIdToUse = processId || latestEtapeId;
+        console.log("useProcessData: fetching for etapeId:", etapeIdToUse);
 
-        // Si un processId est fourni, on récupère les infos de l'étape actuelle
-        const { data: currentData } = await api.get(`/etapes/${etapeIdToUse}`);
-        const { data: nextData } = await api.get(
-          `/etapes/${etapeIdToUse}/next-users`
-        );
+        const [currentResponse, nextResponse] = await Promise.all([
+          api.get<{ data: Process }>(`/etapes/${etapeIdToUse}`),
+          api.get<{ data: { nextEtape: NextEtape } }>(
+            `/etapes/${etapeIdToUse}/next-users`
+          ),
+        ]);
 
-        // Assurez-vous que les données sont correctement intégrées
-        setProcess({
-          ...currentData.data,
-          nextEtape: nextData.data.nextEtape, // Ajout des données de l'étape suivante
-        });
+        processData = {
+          ...currentResponse.data.data,
+          nextEtape: nextResponse.data.data.nextEtape,
+        };
+        console.log("useProcessData: process data fetched:", processData);
       } else if (roleName) {
-        // Si un roleName est fourni, on récupère les processus associés à ce rôle
-        const { data } = await api.get(`/etapes/role/${roleName}`);
-        setProcess(data.data);
+        console.log("useProcessData: fetching for role:", roleName);
+        const { data } = await api.get<{ data: Process }>(
+          `/etapes/role/${roleName}`
+        );
+        processData = data.data;
+        console.log(
+          "useProcessData: role-based process data fetched:",
+          processData
+        );
       } else {
-        // Sinon, on récupère tous les processus
-        const { data } = await api.get("/etapes/all");
-        setProcess(data.data);
+        console.log("useProcessData: fetching all processes");
+        const { data } = await api.get<{ data: Process }>("/etapes/all");
+        processData = data.data;
+        console.log("useProcessData: all processes fetched:", processData);
       }
+
+      setProcess((prev) => {
+        if (JSON.stringify(prev) === JSON.stringify(processData)) {
+          console.log("useProcessData: process unchanged, skipping setProcess");
+          return prev;
+        }
+        console.log("useProcessData: updating process");
+        return processData;
+      });
     } catch (error) {
-      // Vérifier si l'erreur est une AxiosError
-      if (error instanceof AxiosError) {
-        const errorMessage =
-          error.response?.data?.message ||
-          "Erreur lors du chargement des processus";
-        setError(errorMessage);
-      } else {
-        setError("Erreur inconnue lors du chargement des processus");
-      }
-      console.error("Erreur lors de la récupération des données:", error);
+      const errorMessage =
+        error instanceof AxiosError
+          ? error.response?.data?.message ||
+            "Erreur lors du chargement des processus"
+          : "Erreur inconnue lors du chargement des processus";
+      setError(errorMessage);
+      console.error("useProcessData: fetchProcessData error:", error);
     } finally {
       setLoading(false);
     }
-  }, [processId, latestEtapeId]); // Ajoutez processId comme dépendance
+  }, [processId, latestEtapeId]);
 
+  // useEffect consolidé
   useEffect(() => {
+    console.log(
+      "useProcessData: useEffect triggered with processId:",
+      processId
+    );
     if (processId) {
-      fetchProcessData(); // Appeler la fonction pour récupérer les données du processus
+      fetchProcessData();
     } else {
       fetchLatestDocument().then(() => {
-        fetchProcessData();
+        if (latestEtapeId) {
+          fetchProcessData();
+        }
       });
-      // fetchReceivedDocuments(); // Appeler la fonction pour récupérer les documents reçus
     }
-  }, [
-    processId,
-    fetchProcessData,
-    // fetchReceivedDocuments,
-    fetchLatestDocument,
-  ]); // Inclure fetchProcessData et fetchReceivedDocuments
+  }, [processId, fetchProcessData, fetchLatestDocument, latestEtapeId]);
 
-  return { process, loading, error };
+  // Mémorisation du résultat pour éviter des re-rendus inutiles
+  const result = useMemo(
+    () => ({
+      process,
+      loading,
+      error,
+      latestEtapeId,
+    }),
+    [process, loading, error, latestEtapeId]
+  );
+
+  console.log("useProcessData: returning result:", result);
+  return result;
 };

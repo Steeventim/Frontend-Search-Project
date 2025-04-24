@@ -4,12 +4,14 @@ import { Card } from "../common/Card";
 import { Button } from "../common/Button";
 import { userService } from "../../services/userService";
 import type { User as UserType } from "../../types/auth";
+import Cookies from "js-cookie"; // Importez js-cookie
 
 export const UserProfile: React.FC = () => {
   const [user, setUser] = useState<UserType | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [roleUser, setRoleUser] = useState<string>(""); // État pour stocker le rôle
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -17,6 +19,11 @@ export const UserProfile: React.FC = () => {
         const userData = await userService.getUserById("me"); // Assuming 'me' returns the current user
         setUser(userData);
         setEmail(userData.email);
+        // Récupérer le rôle depuis les cookies
+        const roleFromCookie = Cookies.get("roleUser");
+        if (roleFromCookie) {
+          setRoleUser(roleFromCookie);
+        }
       } catch (error) {
         console.error(
           "Erreur lors du chargement des informations utilisateur:",
@@ -81,19 +88,21 @@ export const UserProfile: React.FC = () => {
                   </dt>
                   <dd className="text-sm text-gray-900">{user.email}</dd>
                 </div>
-                <div className="flex items-center">
+                {/* <div className="flex items-center">
                   <dt className="flex items-center text-sm font-medium text-gray-500 w-1/3">
                     <Building className="h-5 w-5 mr-2" />
                     Département
                   </dt>
                   <dd className="text-sm text-gray-900">DEL</dd>
-                </div>
+                </div> */}
                 <div className="flex items-center">
                   <dt className="flex items-center text-sm font-medium text-gray-500 w-1/3">
                     <Briefcase className="h-5 w-5 mr-2" />
                     Poste
                   </dt>
-                  <dd className="text-sm text-gray-900">Chef de Projet</dd>
+                  <dd className="text-sm text-gray-900">
+                    {roleUser || "Rôle non défini"}
+                  </dd>
                 </div>
               </dl>
             </div>

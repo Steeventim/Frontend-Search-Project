@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Shield, Plus, Trash2, Save, Loader2 } from "lucide-react";
+import { Shield, Plus, Trash2, Save, Loader2, X } from "lucide-react";
 import { Card } from "../common/Card";
 import { Button } from "../common/Button";
 import api from "../../services/api";
@@ -62,6 +62,16 @@ export const RolesManagement: React.FC = () => {
   const [roles, setRoles] = useState<Role[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showModal, setShowModal] = useState(false); // État pour afficher/masquer la modale
+  const [newRole, setNewRole] = useState<Role>({
+    idRole: "",
+    name: "",
+    description: "",
+    isSystemRole: false,
+    permissions: [],
+    createdAt: "",
+    updatedAt: "",
+  });
 
   useEffect(() => {
     const fetchRoles = async () => {
@@ -79,57 +89,38 @@ export const RolesManagement: React.FC = () => {
     fetchRoles();
   }, []);
 
-  const addRole = () => {
-    setRoles([
-      ...roles,
-      {
-        idRole: Date.now().toString(),
-        name: "",
-        description: "",
-        isSystemRole: false,
-        permissions: [],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
-    ]);
+  const handleAddRoleClick = () => {
+    setNewRole({
+      idRole: Date.now().toString(),
+      name: "",
+      description: "",
+      isSystemRole: false,
+      permissions: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+    setShowModal(true); // Afficher la modale
   };
 
-  const removeRole = (idRole: string) => {
-    setRoles(roles.filter((r) => r.idRole !== idRole));
+  const handleModalClose = () => {
+    setShowModal(false); // Masquer la modale
   };
 
-  const updateRole = (
-    idRole: string,
-    field: keyof Role,
-    value: string | string[] | boolean
-  ) => {
-    setRoles(
-      roles.map((r) => (r.idRole === idRole ? { ...r, [field]: value } : r))
-    );
-  };
+  const handleSaveRole = () => {
+    if (!newRole.name.trim() || !newRole.description.trim()) {
+      alert("Veuillez remplir tous les champs obligatoires.");
+      return;
+    }
 
-  const togglePermission = (roleId: string, permissionId: string) => {
-    const role = roles.find((r) => r.idRole === roleId);
-    if (!role) return;
-
-    const newPermissions = role.permissions?.includes(permissionId)
-      ? role.permissions.filter((p) => p !== permissionId)
-      : [...(role.permissions || []), permissionId];
-
-    updateRole(roleId, "permissions", newPermissions);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    // TODO: Implement roles update
-    console.log("Roles:", roles);
+    setRoles([...roles, newRole]); // Ajouter le rôle à la liste
+    setShowModal(false); // Masquer la modale
   };
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900">Gestion des rôles</h1>
-        <Button variant="primary" icon={Plus} onClick={addRole}>
+        <Button variant="primary" icon={Plus} onClick={handleAddRoleClick}>
           Ajouter un rôle
         </Button>
       </div>
@@ -182,7 +173,9 @@ export const RolesManagement: React.FC = () => {
                   <td className="px-6 py-4 border-b border-gray-200 text-sm text-gray-900">
                     <button
                       type="button"
-                      onClick={() => removeRole(role.idRole)}
+                      onClick={() =>
+                        setRoles(roles.filter((r) => r.idRole !== role.idRole))
+                      }
                       className="text-red-600 hover:text-red-700"
                     >
                       <Trash2 className="h-5 w-5" />
@@ -195,106 +188,104 @@ export const RolesManagement: React.FC = () => {
         </div>
       )}
 
-      <form onSubmit={handleSubmit}>
-        <div className="space-y-4">
-          {roles.map((role) => (
-            <Card key={role.idRole}>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-blue-100 rounded-lg">
-                      <Shield className="h-5 w-5 text-blue-600" />
+      {/* Modale pour ajouter un rôle */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-lg">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">Ajouter un rôle</h2>
+              <button
+                onClick={handleModalClose}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Nom du rôle
+                </label>
+                <input
+                  type="text"
+                  value={newRole.name}
+                  onChange={(e) =>
+                    setNewRole({ ...newRole, name: e.target.value })
+                  }
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Description
+                </label>
+                <textarea
+                  value={newRole.description}
+                  onChange={(e) =>
+                    setNewRole({ ...newRole, description: e.target.value })
+                  }
+                  rows={2}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Permissions
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {availablePermissions.map((permission) => (
+                    <div key={permission.id} className="flex items-start">
+                      <div className="flex items-center h-5">
+                        <input
+                          type="checkbox"
+                          checked={
+                            newRole.permissions?.includes(permission.id) ||
+                            false
+                          }
+                          onChange={() => {
+                            const newPermissions =
+                              newRole.permissions?.includes(permission.id)
+                                ? newRole.permissions.filter(
+                                    (p) => p !== permission.id
+                                  )
+                                : [
+                                    ...(newRole.permissions || []),
+                                    permission.id,
+                                  ];
+                            setNewRole({
+                              ...newRole,
+                              permissions: newPermissions,
+                            });
+                          }}
+                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        />
+                      </div>
+                      <div className="ml-3 text-sm">
+                        <label className="font-medium text-gray-700">
+                          {permission.name}
+                        </label>
+                        <p className="text-gray-500">
+                          {permission.description}
+                        </p>
+                      </div>
                     </div>
-                    <h3 className="text-lg font-medium text-gray-900">
-                      {role.name || "Nouveau rôle"}
-                    </h3>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => removeRole(role.idRole)}
-                    className="text-red-600 hover:text-red-700"
-                  >
-                    <Trash2 className="h-5 w-5" />
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-1 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Nom du rôle
-                    </label>
-                    <input
-                      type="text"
-                      value={role.name}
-                      onChange={(e) =>
-                        updateRole(role.idRole, "name", e.target.value)
-                      }
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Description
-                    </label>
-                    <textarea
-                      value={role.description}
-                      onChange={(e) =>
-                        updateRole(role.idRole, "description", e.target.value)
-                      }
-                      rows={2}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Permissions
-                    </label>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {availablePermissions.map((permission) => (
-                        <div key={permission.id} className="flex items-start">
-                          <div className="flex items-center h-5">
-                            <input
-                              type="checkbox"
-                              checked={
-                                role.permissions?.includes(permission.id) ||
-                                false
-                              }
-                              onChange={() =>
-                                togglePermission(role.idRole, permission.id)
-                              }
-                              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                            />
-                          </div>
-                          <div className="ml-3 text-sm">
-                            <label className="font-medium text-gray-700">
-                              {permission.name}
-                            </label>
-                            <p className="text-gray-500">
-                              {permission.description}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                  ))}
                 </div>
               </div>
-            </Card>
-          ))}
-        </div>
-
-        {roles.length > 0 && (
-          <div className="mt-6 flex justify-end">
-            <Button type="submit" variant="primary" icon={Save}>
-              Enregistrer les modifications
-            </Button>
+            </div>
+            <div className="mt-6 flex justify-end space-x-2">
+              <Button variant="secondary" onClick={handleModalClose}>
+                Annuler
+              </Button>
+              <Button variant="primary" onClick={handleSaveRole}>
+                Ajouter
+              </Button>
+            </div>
           </div>
-        )}
-      </form>
+        </div>
+      )}
     </div>
   );
 };

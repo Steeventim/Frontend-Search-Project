@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { AxiosError } from "axios";
-import { Search, FileText, Plus, Paperclip, XCircle } from "lucide-react";
+import { Search, FileText, Plus, XCircle } from "lucide-react";
+import { FixedSizeList as List } from "react-window";
+import debounce from "lodash/debounce";
 import { Card } from "../common/Card";
 import { Button } from "../common/Button";
 import { searchService } from "../../services/searchService";
@@ -10,14 +12,9 @@ import { Dialog } from "../common/Dialog";
 import { SearchNavbar } from "../layout/SearchNavbar";
 import { userService } from "../../services/userService";
 import { useProcessData } from "../../hooks/useProcessData";
+import type { Etape, Process, ProcessData } from "../../types/process";
 
-// Interface pour l'étape
-interface Etape {
-  idEtape: string;
-  LibelleEtape: string;
-  typeProjets: { Libelle: string }[];
-}
-
+// Interfaces pour typage strict (déplacées vers types/process.ts)
 const SearchInterface: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [results, setResults] = useState<Hit[]>([]);
@@ -35,7 +32,7 @@ const SearchInterface: React.FC = () => {
   const [assignLoading, setAssignLoading] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
-  const { process } = useProcessData();
+  const { process }: ProcessData = useProcessData();
   const [userDestinatorName, setUserDestinatorName] = useState<string | null>(
     null
   );
@@ -43,148 +40,190 @@ const SearchInterface: React.FC = () => {
     id: string;
     name: string;
   } | null>(null);
+  const [etapes, setEtapes] = useState<Etape[]>([]);
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [currentEtape, setCurrentEtape] = useState<Etape | null>(null);
 
+  // Consolidation des fetchs initiaux
   useEffect(() => {
-    const fetchUserId = async () => {
+    const fetchInitialData = async () => {
       try {
-        const user = await userService.getUserById("me");
-        setUserId(user.id);
-      } catch (error) {
-        console.error(
-          "Erreur lors de la récupération de l'utilisateur connecté :",
-          error
-        );
-      }
-    };
-
-    fetchUserId();
-  }, []);
-
-  useEffect(() => {
-    if (process?.nextEtape) {
-      setNextEtape({
-        id: process.nextEtape.id,
-        name: process.nextEtape.name,
-      });
-    }
-  }, [process]);
-
-  useEffect(() => {
-    if (process?.nextEtape?.users && process.nextEtape.users.length > 0) {
-      const nextUser = process.nextEtape.users[0];
-      setUserDestinatorName(nextUser.name);
-    }
-  }, [process]);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [etapesResponse, latestDocumentResponse] = await Promise.all([
-          api.get<{ success: boolean; count: number; data: Etape[] }>(
-            "/etapes/all"
-          ),
-          api.get<{ success: boolean; data: LatestDocument }>(
-            "/latest-document"
-          ),
-        ]);
-
+        const [userResponse, etapesResponse, latestDocumentResponse] =
+          await Promise.all([
+            userService.getUserById("me"),
+            api.get<{ success: boolean; count: number; data: Etape[] }>(
+              "/etapes/all"
+            ),
+            api.get<{ success: boolean; data: LatestDocument }>(
+              "/latest-document"
+            ),
+          ]);
+        setUserId(userResponse.id);
         if (etapesResponse.data.success) {
-          // setEtapes(etapesResponse.data.data);
+          setEtapes(etapesResponse.data.data);
         } else {
           setError("Erreur lors de la récupération des étapes");
         }
-
         if (latestDocumentResponse.data.success) {
           setLatestDocument(latestDocumentResponse.data.data);
         } else {
           setError("Erreur lors de la récupération du dernier document");
         }
       } catch (err) {
-        console.error("Erreur lors de la récupération des données", err);
+        console.error(
+          "Erreur lors de la récupération des données initiales",
+          err
+        );
         setError(err instanceof Error ? err.message : "Erreur inconnue");
       }
     };
-
-    fetchData();
+    fetchInitialData();
   }, []);
 
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) return;
-
-    setLoading(true);
-    setError(null);
-    try {
-      const response: SearchResponse = await searchService.search(searchQuery);
-      if (
-        response.success &&
-        response.data.hits &&
-        response.data.hits.total.value > 0
-      ) {
-        setResults(response.data.hits.hits);
-      } else {
-        setResults([]);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Une erreur est survenue");
-    } finally {
-      setLoading(false);
+  // Déterminer l'étape actuelle
+  useEffect(() => {
+    if (latestDocument?.etape) {
+      setCurrentEtape(latestDocument.etape);
+    } else if (process?.etape) {
+      setCurrentEtape(process.etape);
+    } else {
+      setCurrentEtape(null);
     }
-  };
+  }, [latestDocument, process]);
 
-  const handlePreview = (documentName: string) => {
-    const searchTerm = searchQuery;
-    const previewUrl = `${
-      api.defaults.baseURL
-    }/highlightera2/${encodeURIComponent(documentName)}/${encodeURIComponent(
-      searchTerm
-    )}`;
-    window.open(previewUrl, "_blank");
-  };
+  // Déterminer l'étape suivante
+  useEffect(() => {
+    if (process?.nextEtape) {
+      setNextEtape({
+        id: process.nextEtape.id,
+        name: process.nextEtape.name,
+      });
+      if (process.nextEtape.users && process.nextEtape.users.length > 0) {
+        setUserDestinatorName(process.nextEtape.users[0].name);
+      }
+    } else if (currentEtape && etapes.length > 0) {
+      const sortedEtapes = [...etapes].sort(
+        (a, b) => a.sequenceNumber - b.sequenceNumber
+      );
+      const nextEtapeIndex = sortedEtapes.findIndex(
+        (etape) => etape.idEtape === currentEtape.idEtape
+      );
+      const nextEtapeCandidate = sortedEtapes[nextEtapeIndex + 1];
+      if (nextEtapeCandidate) {
+        setNextEtape({
+          id: nextEtapeCandidate.idEtape,
+          name: nextEtapeCandidate.LibelleEtape,
+        });
+        // Supposer que userDestinatorName doit être défini ailleurs ou via une API
+        setUserDestinatorName(null); // À ajuster si une logique existe
+      } else {
+        setNextEtape(null);
+        setUserDestinatorName(null);
+      }
+    } else {
+      setNextEtape(null);
+      setUserDestinatorName(null);
+    }
+  }, [currentEtape, etapes, process]);
 
-  const openAssignDialog = (document: Hit) => {
+  // Recherche avec debounce
+  const debouncedSearch = useCallback(
+    debounce(async (query: string) => {
+      if (!query.trim()) return;
+      setLoading(true);
+      setError(null);
+      try {
+        const response: SearchResponse = await searchService.search(query);
+        if (
+          response.success &&
+          response.data.hits &&
+          response.data.hits.total.value > 0
+        ) {
+          setResults(response.data.hits.hits);
+        } else {
+          setResults([]);
+        }
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Une erreur est survenue"
+        );
+      } finally {
+        setLoading(false);
+      }
+    }, 500),
+    []
+  );
+
+  const handleSearch = useCallback(() => {
+    debouncedSearch(searchQuery);
+  }, [searchQuery]);
+
+  const handlePreview = useCallback(
+    (documentName: string) => {
+      const searchTerm = searchQuery;
+      const previewUrl = `${
+        api.defaults.baseURL
+      }/highlightera2/${encodeURIComponent(documentName)}/${encodeURIComponent(
+        searchTerm
+      )}`;
+      window.open(previewUrl, "_blank");
+    },
+    [searchQuery]
+  );
+
+  const openAssignDialog = useCallback((document: Hit) => {
     setSelectedDocument(document);
     setShowDialog(true);
-  };
+  }, []);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setAttachments(Array.from(e.target.files));
-    }
-  };
+  const handleFileChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files) {
+        setAttachments(Array.from(e.target.files));
+      }
+    },
+    []
+  );
 
-  const removeAttachment = (index: number) => {
+  const removeAttachment = useCallback((index: number) => {
     setAttachments((prev) => prev.filter((_, i) => i !== index));
-  };
+  }, []);
 
-  // Fonction pour encoder un fichier en Base64
-  const fileToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => {
-        if (typeof reader.result === "string") {
-          // Supprimer le préfixe "data:application/pdf;base64," (ou autre type MIME)
-          const base64String = reader.result.split(",")[1];
-          resolve(base64String);
-        } else {
+  const fileToBase64 = useCallback(
+    (file: File): Promise<string> =>
+      new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => {
+          if (typeof reader.result === "string") {
+            const base64String = reader.result.split(",")[1];
+            resolve(base64String);
+          } else {
+            reject(new Error("Erreur lors de la lecture du fichier"));
+          }
+        };
+        reader.onerror = () =>
           reject(new Error("Erreur lors de la lecture du fichier"));
-        }
-      };
-      reader.onerror = () =>
-        reject(new Error("Erreur lors de la lecture du fichier"));
-    });
-  };
+      }),
+    []
+  );
 
-  const handleAssign = async () => {
-    if (!nextEtape || !selectedDocument || !latestDocument?.idDocument) {
-      setError("L'ID du document est manquant ou invalide.");
+  const handleAssign = useCallback(async () => {
+    const newErrors: { [key: string]: string } = {};
+    if (!nextEtape?.name) newErrors.etape = "Aucune étape suivante disponible.";
+    if (!userId) newErrors.userId = "Utilisateur non identifié.";
+    if (!latestDocument?.idDocument)
+      newErrors.document = "Document non sélectionné.";
+    if (!userDestinatorName)
+      newErrors.userDestinatorName = "Destinataire non spécifié.";
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
-
+    setErrors({});
     setAssignLoading(true);
 
     try {
-      // Encoder les fichiers en Base64
       const encodedFiles = await Promise.all(
         attachments.map(async (file) => ({
           name: file.name,
@@ -192,63 +231,157 @@ const SearchInterface: React.FC = () => {
         }))
       );
 
-      // Créer le payload JSON
       const payload = {
-        documentId: String(latestDocument.idDocument),
+        documentId: latestDocument?.idDocument
+          ? String(latestDocument.idDocument)
+          : "",
         userId: userId || "",
-        commentaire: comment,
-        etapeId: latestDocument.etape?.idEtape || "",
+        comments: comment.trim() ? [{ content: comment }] : [],
+        etapeId: latestDocument?.etape?.idEtape || "",
         UserDestinatorName: userDestinatorName || "",
-        nextEtapeName: nextEtape.name || "",
-        files: encodedFiles, // Tableau de { name, content }
+        nextEtapeName: nextEtape?.name || "",
+        files: encodedFiles,
       };
 
-      console.log("Envoi de payload JSON :", payload);
-
       const response = await api.post("/etapes/affect", payload, {
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
       });
-
-      console.log("Réponse :", response.data);
 
       if (response.data.success) {
         const idDocument = response.data.data.document.idDocument;
         localStorage.setItem("idDocument", idDocument);
         setConfirmationMessage("Document affecté avec succès.");
         setShowDialog(false);
-        setTimeout(() => {
-          setConfirmationMessage(null);
-        }, 3000);
+        setComment("");
+        setAttachments([]);
+        setTimeout(() => setConfirmationMessage(null), 3000);
       } else {
         setError(response.data.message || "Erreur lors de l'affectation.");
       }
     } catch (err: unknown) {
       if (err instanceof AxiosError) {
-        console.error("Erreur lors de l'affectation du document :", {
-          message: err.message,
-          response: err.response?.data,
-          status: err.response?.status,
-        });
         setError(
           err.response?.data?.message ||
             "Erreur lors de l'affectation du document"
         );
       } else {
-        console.error("Erreur inattendue :", err);
         setError("Erreur inattendue lors de l'affectation du document");
       }
-      setTimeout(() => {
-        setError(null);
-      }, 9000);
+      setTimeout(() => setError(null), 9000);
     } finally {
       setAssignLoading(false);
     }
+  }, [
+    nextEtape,
+    userId,
+    latestDocument,
+    comment,
+    attachments,
+    userDestinatorName,
+    fileToBase64,
+  ]);
+
+  const transformHighlight = useCallback((highlight: string): string => {
+    return highlight.replace(
+      /<strong style="font-weight:bold;color:black;">(.*?)<\/strong>/g,
+      '<span style="background-color: #fef08a; font-weight: bold;">$1</span>'
+    );
+  }, []);
+
+  const highlightText = useCallback((text: string, query: string): string => {
+    if (!text || !query.trim()) return text;
+    const words = query
+      .split(/\s+/)
+      .filter((word) => word.length > 0)
+      .map((word) => word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+    let highlightedText = text;
+    words.forEach((word) => {
+      const regex = new RegExp(`(${word})`, "gi");
+      highlightedText = highlightedText.replace(
+        regex,
+        '<span style="background-color: #fef08a; font-weight: bold;">$1</span>'
+      );
+    });
+    return highlightedText;
+  }, []);
+
+  // Mémorisation des résultats surlignés
+  const highlightedResults = useMemo(() => {
+    return results.map((hit) => ({
+      ...hit,
+      highlightedContent:
+        hit.highlight?.content && hit.highlight.content.length > 0
+          ? hit.highlight.content.map(transformHighlight)
+          : [
+              highlightText(
+                hit._source.content || "Aucun contenu disponible",
+                searchQuery
+              ),
+            ],
+    }));
+  }, [results, searchQuery, transformHighlight, highlightText]);
+
+  // Composant pour virtualisation
+  const Row = ({
+    index,
+    style,
+  }: {
+    index: number;
+    style: React.CSSProperties;
+  }) => {
+    const hit = highlightedResults[index];
+    return (
+      <div style={style} className="border border-gray-200 rounded-lg p-4">
+        <div className="flex items-start justify-between">
+          <div className="flex items-center space-x-3">
+            <FileText className="h-6 w-6 text-gray-500" />
+            <div>
+              <h4 className="text-lg font-medium text-blue-600 hover:underline">
+                <a
+                  href="#"
+                  onClick={() => handlePreview(hit._source.file.filename)}
+                >
+                  {hit._source.file.filename}
+                </a>
+              </h4>
+              <p className="text-sm text-gray-500">
+                {hit._source.file.filename} ({hit._source.file.extension})
+              </p>
+              <div className="text-sm text-gray-700 mt-1">
+                {hit.highlightedContent.map((highlight, index) => (
+                  <div
+                    key={index}
+                    dangerouslySetInnerHTML={{ __html: highlight }}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+          <Button
+            variant="secondary"
+            size="sm"
+            icon={Plus}
+            className="text-sm px-4 py-2"
+            onClick={() => openAssignDialog(hit)}
+          >
+            Affecter
+          </Button>
+        </div>
+      </div>
+    );
   };
 
   return (
     <div className="space-y-6 p-6 bg-gray-100 min-h-screen">
+      <style>
+        {`
+          strong[style*="font-weight:bold;color:black;"] {
+            background-color: #fef08a !important;
+            font-weight: bold !important;
+            color: black !important;
+          }
+        `}
+      </style>
       <SearchNavbar />
       <Card className="shadow-lg p-6 bg-white rounded-xl">
         <h2 className="text-2xl font-semibold text-gray-900 text-center mb-4">
@@ -278,6 +411,22 @@ const SearchInterface: React.FC = () => {
           </Button>
         </div>
 
+        {searchQuery.trim() && (
+          <div className="mt-2 flex flex-wrap gap-2">
+            {searchQuery.split(/\s+/).map(
+              (word, index) =>
+                word.length > 0 && (
+                  <span
+                    key={index}
+                    className="inline-flex items-center px-2 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800"
+                  >
+                    {word}
+                  </span>
+                )
+            )}
+          </div>
+        )}
+
         {error && (
           <div className="mt-4 bg-red-50 border border-red-200 rounded-md p-4 text-sm text-red-600 text-center">
             {error}
@@ -290,94 +439,57 @@ const SearchInterface: React.FC = () => {
           </div>
         )}
 
-        {results.length > 0 && (
+        {highlightedResults.length > 0 && (
           <div className="mt-6 space-y-4">
             <h3 className="text-lg font-medium text-gray-900 border-b pb-2">
-              Résultats ({results.length})
+              Résultats ({highlightedResults.length})
             </h3>
-            <div className="grid gap-4">
-              {results.map((hit) => (
-                <div
-                  key={hit._id}
-                  className="border border-gray-200 rounded-lg p-4"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center space-x-3">
-                      <FileText className="h-6 w-6 text-gray-500" />
-                      <div>
-                        <h4 className="text-lg font-medium text-blue-600 hover:underline">
-                          <a
-                            href="#"
-                            onClick={() =>
-                              handlePreview(hit._source.file.filename)
-                            }
-                          >
-                            {hit._source.file.filename}
-                          </a>
-                        </h4>
-                        <p className="text-sm text-gray-500">
-                          {hit._source.file.filename} (
-                          {hit._source.file.extension})
-                        </p>
-                        <div className="text-sm text-gray-700 mt-1">
-                          {hit.highlight?.content &&
-                          hit.highlight.content.length > 0 ? (
-                            hit.highlight.content.map((highlight, index) => (
-                              <p
-                                key={index}
-                                dangerouslySetInnerHTML={{ __html: highlight }}
-                              />
-                            ))
-                          ) : (
-                            <p>{hit._source.content}</p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      icon={Plus}
-                      className="text-sm px-4 py-2"
-                      onClick={() => openAssignDialog(hit)}
-                    >
-                      Affecter
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <List
+              height={400}
+              itemCount={highlightedResults.length}
+              itemSize={150}
+              width="100%"
+            >
+              {Row}
+            </List>
           </div>
         )}
       </Card>
 
       {showDialog && (
         <Dialog onClose={() => setShowDialog(false)}>
-          {nextEtape ? (
-            <div className="mt-4">
-              <label className="block text-sm font-medium text-gray-700">
-                Étape suivante
-              </label>
-              <input
-                type="text"
-                value={nextEtape.name}
-                readOnly
-                className="mt-2 block w-full text-sm text-gray-500 border-gray-300 rounded-md"
-              />
-            </div>
-          ) : (
-            <p className="text-sm text-gray-500 mt-2">
-              Aucune étape suivante disponible.
-            </p>
-          )}
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-700">
+              Étape suivante
+            </label>
+            {nextEtape ? (
+              <p className="mt-2 text-sm text-gray-900 border border-gray-300 rounded-md px-3 py-2 bg-gray-50">
+                {nextEtape.name}
+              </p>
+            ) : (
+              <p className="mt-2 text-sm text-red-600">
+                Aucune étape suivante disponible. Il s'agit peut-être de la
+                dernière étape.
+              </p>
+            )}
+            {errors.etape && (
+              <p className="text-sm text-red-600 mt-1">{errors.etape}</p>
+            )}
+          </div>
 
-          <textarea
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            placeholder="Ajouter un commentaire..."
-            rows={4}
-            className="w-full border p-2 mt-4 rounded"
-          />
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-700">
+              Commentaire
+            </label>
+            <textarea
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              placeholder="Ajouter un commentaire..."
+              rows={4}
+              className="w-full border p-2 mt-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+
           <div className="mt-4">
             <label className="block text-sm font-medium text-gray-700">
               Joindre des fichiers
@@ -396,8 +508,19 @@ const SearchInterface: React.FC = () => {
                     className="flex items-center justify-between p-2 bg-gray-50 rounded-md"
                   >
                     <div className="flex items-center">
-                      <Paperclip className="h-4 w-4 text-gray-400 mr-2" />
+                      {file.type.startsWith("image/") ? (
+                        <img
+                          src={URL.createObjectURL(file)}
+                          alt={file.name}
+                          className="h-8 w-8 mr-2 object-cover rounded"
+                        />
+                      ) : (
+                        <FileText className="h-8 w-8 text-gray-400 mr-2" />
+                      )}
                       <span className="text-sm text-gray-600">{file.name}</span>
+                      <span className="text-xs text-gray-400 ml-2">
+                        ({(file.size / 1024).toFixed(1)} KB)
+                      </span>
                     </div>
                     <button
                       onClick={() => removeAttachment(index)}
@@ -411,6 +534,18 @@ const SearchInterface: React.FC = () => {
             )}
           </div>
 
+          {errors.userId && (
+            <p className="text-sm text-red-600 mt-2">{errors.userId}</p>
+          )}
+          {errors.document && (
+            <p className="text-sm text-red-600 mt-2">{errors.document}</p>
+          )}
+          {errors.userDestinatorName && (
+            <p className="text-sm text-red-600 mt-2">
+              {errors.userDestinatorName}
+            </p>
+          )}
+
           <div className="flex justify-end mt-4 space-x-2">
             <Button variant="secondary" onClick={() => setShowDialog(false)}>
               Annuler
@@ -418,7 +553,7 @@ const SearchInterface: React.FC = () => {
             <Button
               variant="primary"
               onClick={handleAssign}
-              disabled={!nextEtape?.name || assignLoading}
+              disabled={assignLoading || !nextEtape || !userDestinatorName}
               loading={assignLoading}
             >
               Affecter

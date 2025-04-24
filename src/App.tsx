@@ -1,4 +1,3 @@
-// import React from "react";
 import {
   BrowserRouter,
   Routes,
@@ -9,17 +8,13 @@ import {
 import { ROUTES } from "./constants/routes";
 import Cookies from "js-cookie";
 import LoginForm from "./components/auth/LoginForm";
-// import RegisterForm from "./components/auth/RegisterForm";
 import SetupWizard from "./components/setup/SetupWizard";
 import { AdminLayout } from "./components/layout/AdminLayout";
 import { UserLayout } from "./components/layout/UserLayout";
 import { Dashboard } from "./components/dashboard/Dashboard";
 import AdminDashboard from "./components/admin/AdminDashboard";
-// import { DepartmentsList } from "./components/admin/DepartmentsList";
-// import { ProcessTemplatesList } from "./components/admin/ProcessTemplatesList";
 import { Settings } from "./components/admin/Settings";
-// import { ProcessList } from "./components/process/ProcessList";
-import { ProcessDetails } from "./components/process/ProcessDetails";
+import ProcessDetails from "./components/process/ProcessDetails";
 import { NewProcess } from "./components/process/NewProcess";
 import { UserProfile } from "./components/user/UserProfile";
 import { UserSettings } from "./components/user/UserSettings";
@@ -32,37 +27,45 @@ import { RolesManagement } from "./components/admin/RolesManagement";
 import { UsersList } from "./components/admin/UsersList";
 import SearchInterface from "./components/process/SearchInterface";
 import { ErrorBoundary } from "./components/error/ErrorBoundary";
+import NotFound from "./components/error/NotFound";
+
 const ProtectedRoute = ({ roles }: { roles?: string[] }) => {
   const token = Cookies.get("token");
-  const roleUser = Cookies.get("roleUser"); // Assurez-vous que c'est "role" et non "roleUser "
+  const roleUser = Cookies.get("roleUser");
+  // console.log(
+  //   "ProtectedRoute: token=",
+  //   token,
+  //   "roleUser=",
+  //   roleUser,
+  //   "roles=",
+  //   roles
+  // );
 
-  // Vérifiez si l'utilisateur est authentifié
   if (!token) {
+    console.log("Redirecting to login: No token");
     return <Navigate to={ROUTES.AUTH.LOGIN} />;
   }
 
-  // Si des rôles sont spécifiés, vérifiez si le rôle de l'utilisateur est inclus
   if (roles && roleUser && !roles.includes(roleUser)) {
+    console.log("Redirecting to login: Role not authorized");
     return <Navigate to={ROUTES.AUTH.LOGIN} />;
   }
 
+  console.log("ProtectedRoute: rendering Outlet");
   return <Outlet />;
 };
 
 const App = () => {
   return (
     <ErrorBoundary>
-      <BrowserRouter>
+      <BrowserRouter
+        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+      >
         <Routes>
-          {/* Redirection de la racine vers la page de connexion si non authentifié */}
           <Route path="/" element={<Navigate to={ROUTES.AUTH.LOGIN} />} />
-
-          {/* Auth Routes */}
           <Route path={ROUTES.AUTH.LOGIN} element={<LoginForm />} />
-          {/* <Route path={ROUTES.AUTH.REGISTER} element={<RegisterForm />} /> */}
           <Route path={ROUTES.AUTH.SETUP} element={<SetupWizard />} />
 
-          {/* Admin Routes */}
           <Route element={<ProtectedRoute roles={["superadmin", "admin"]} />}>
             <Route path={ROUTES.ADMIN.ROOT} element={<AdminLayout />}>
               <Route
@@ -95,12 +98,9 @@ const App = () => {
             </Route>
           </Route>
 
-          {/* User Routes - Allow any authenticated user */}
-
           <Route element={<ProtectedRoute />}>
             <Route path={ROUTES.USER.ROOT} element={<UserLayout />}>
               <Route path={ROUTES.USER.DASHBOARD} element={<Dashboard />} />
-              {/* <Route path={ROUTES.USER.PROCESSES} element={<ProcessList />} /> */}
               <Route path={ROUTES.USER.NEW_PROCESS} element={<NewProcess />} />
               <Route
                 path={ROUTES.USER.PROCESS_DETAILS}
@@ -111,7 +111,6 @@ const App = () => {
             </Route>
           </Route>
 
-          {/* SearchInterface Route - Indépendante */}
           <Route element={<ProtectedRoute />}>
             <Route
               path={ROUTES.SEARCH.INTERFACE}
@@ -119,12 +118,7 @@ const App = () => {
             />
           </Route>
 
-          {/* Catch-all route for 404 */}
-
-          <Route
-            path="*"
-            element={<Navigate to={ROUTES.AUTH.LOGIN} replace />}
-          />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </ErrorBoundary>

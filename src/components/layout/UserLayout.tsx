@@ -3,6 +3,7 @@ import { Outlet } from "react-router-dom";
 import { UserNavbar } from "./UserNavbar";
 
 export const UserLayout: React.FC = () => {
+  console.log("UserLayout rendered");
   return (
     <div className="min-h-screen bg-gray-100">
       <UserNavbar />

@@ -1,3 +1,5 @@
+// types/process.ts
+
 export type ProcessStatus = "pending" | "approved" | "rejected" | "in_progress";
 
 export interface Comment {
@@ -5,7 +7,7 @@ export interface Comment {
   text: string;
   userId: string;
   userName: string;
-  timestamp: string; // Utilisez string si vous ne parsez pas en Date
+  timestamp: string; // ISO string (ex: "2025-04-17T12:00:00Z")
 }
 
 export interface Attachment {
@@ -14,7 +16,7 @@ export interface Attachment {
   fileUrl: string;
   fileType: string;
   fileSize: number;
-  uploadedAt: Date;
+  uploadedAt: string; // ISO string pour cohérence
 }
 
 export interface Step {
@@ -32,28 +34,54 @@ export interface Step {
   nextEtapeName: string;
 }
 
-export interface Process {
+export interface Etape {
   idEtape: string;
   LibelleEtape: string;
   Description: string;
   Validation: string;
   sequenceNumber: number;
-  createdAt: string; // ou Date
-  updatedAt: string; // ou Date
-  documents: Attachment[]; // ou un type spécifique pour les documents
+  createdAt: string;
+  updatedAt: string;
+  typeProjets?: { Libelle: string }[];
+  hasTransfer?: boolean; // Optionnel, ajouté pour compatibilité
+}
+
+export interface NextEtape {
+  id: string;
+  name: string;
+  users?: { name: string }[];
+}
+
+export interface EtapeTypeProjet {
+  id: string;
+  etapeId: string;
+  idType: string;
+  createdAt: string;
+  updatedAt: string;
+  comments: Comment[];
+}
+
+export interface Process {
+  id: string;
+  name: string;
+  title: string;
+  description: string;
+  createdAt: Date;
+  status: ProcessStatus;
   typeProjets: {
     idType: string;
     Libelle: string;
     Description: string;
-    EtapeTypeProjet: {
-      id: string;
-      etapeId: string;
-      idType: string;
-      createdAt: string; // ou Date
-      updatedAt: string; // ou Date
-      comments: Comment[]; // Assurez-vous que les commentaires sont ici
-    };
+    createdAt: Date; // Changé de string à Date
+    updatedAt: Date; // Changé de string à Date
+    EtapeTypeProjet: { etapeId: string };
   }[];
+  nextEtape?: NextEtape;
+  Validation?: string;
+  sequenceNumber?: number;
+  LibelleEtape?: string;
+  Description?: string;
+  etape?: Etape; // Pour latestDocument
 }
 
 export interface ProcessStep {
@@ -68,21 +96,14 @@ export interface ProcessStep {
   status: string;
 }
 
-export interface Etape {
-  idEtape: string;
-  LibelleEtape: string;
-  Description: string;
-  Validation: string;
-  sequenceNumber: number;
-  createdAt: string;
-  updatedAt: string;
+export interface LatestDocument {
+  idDocument: string;
+  etape?: Etape;
 }
 
-export interface EtapeTypeProjet {
-  id: string;
-  etapeId: string; // Assurez-vous que cette propriété existe
-  idType: string;
-  createdAt: string; // ou Date
-  updatedAt: string; // ou Date
-  comments: Comment[]; // Assurez-vous que les commentaires sont ici
+export interface ProcessData {
+  process: Process | null;
+  loading: boolean;
+  error: string | null;
+  latestEtapeId: string | null;
 }
