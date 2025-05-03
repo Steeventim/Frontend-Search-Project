@@ -1,23 +1,40 @@
-import React from 'react';
+import React, { forwardRef } from "react";
 
-interface InputFieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  icon?: React.ReactNode;
+export interface InputFieldProps {
+  id?: string;
+  placeholder?: string;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  type?: string;
+  required?: boolean;
+  "aria-invalid"?: boolean;
+  "aria-describedby"?: string;
+  className?: string;
 }
 
-export const InputField: React.FC<InputFieldProps> = ({ icon, ...props }) => {
-  return (
-    <div className="relative">
-      {icon && (
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          {icon}
-        </div>
-      )}
+const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
+  (
+    { id, placeholder, value, onChange, type = "text", required, ...props },
+    ref
+  ) => {
+    return (
       <input
-        {...props}
-        className={`appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm ${
-          icon ? 'pl-10' : ''
+        id={id}
+        type={type}
+        placeholder={placeholder}
+        value={value}
+        onChange={onChange}
+        required={required}
+        ref={ref}
+        className={`block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm ${
+          props.className || ""
         }`}
+        {...props}
       />
-    </div>
-  );
-};
+    );
+  }
+);
+
+InputField.displayName = "InputField";
+
+export { InputField };

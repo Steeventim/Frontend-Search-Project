@@ -50,11 +50,11 @@ export const userService = {
   // Créer un nouvel utilisateur
   createUser: async (userData: CreateUserData): Promise<User> => {
     try {
-      const { data } = await api.post("/users", userData);
+      const { data } = await api.post("/users/register", userData);
       return {
         id: data.id || data.idUser,
         email: data.email || data.Email,
-        Nom: data.nomUser || data.NomUser,
+        NomUser: data.NomUser || data.NomUser,
         Prenom: data.prenomUser || data.PrenomUser,
         roles: data.roles || data.Roles || [],
         IsActive: data.IsActive ?? true,

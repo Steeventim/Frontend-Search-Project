@@ -1,22 +1,38 @@
-// ../common/form/Select.tsx
 import React from "react";
-
-interface SelectProps {
+export interface SelectProps {
+  id?: string;
   value: string;
   onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
-  placeholder?: string;
   children: React.ReactNode;
+  placeholder?: string;
+  required?: boolean;
+  className?: string;
 }
 
 const Select: React.FC<SelectProps> = ({
+  id,
   value,
   onChange,
-  placeholder,
   children,
+  placeholder,
+  required,
+  className,
 }) => {
   return (
-    <select value={value} onChange={onChange} className="border rounded p-2">
-      {placeholder && <option value="">{placeholder}</option>}
+    <select
+      id={id}
+      value={value}
+      onChange={onChange}
+      required={required}
+      className={`block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm ${
+        className || ""
+      }`}
+    >
+      {placeholder && (
+        <option value="" disabled>
+          {placeholder}
+        </option>
+      )}
       {children}
     </select>
   );

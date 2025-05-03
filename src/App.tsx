@@ -29,17 +29,13 @@ import SearchInterface from "./components/process/SearchInterface";
 import { ErrorBoundary } from "./components/error/ErrorBoundary";
 import NotFound from "./components/error/NotFound";
 
+// Import du contexte global pour les permissions
+import { RolePermissionsProvider } from "./context/RolePermissionsContext";
+
+// Composant pour protéger les routes
 const ProtectedRoute = ({ roles }: { roles?: string[] }) => {
   const token = Cookies.get("token");
   const roleUser = Cookies.get("roleUser");
-  // console.log(
-  //   "ProtectedRoute: token=",
-  //   token,
-  //   "roleUser=",
-  //   roleUser,
-  //   "roles=",
-  //   roles
-  // );
 
   if (!token) {
     console.log("Redirecting to login: No token");
@@ -55,72 +51,85 @@ const ProtectedRoute = ({ roles }: { roles?: string[] }) => {
   return <Outlet />;
 };
 
+// Composant principal de l'application
 const App = () => {
   return (
     <ErrorBoundary>
-      <BrowserRouter
-        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
-      >
-        <Routes>
-          <Route path="/" element={<Navigate to={ROUTES.AUTH.LOGIN} />} />
-          <Route path={ROUTES.AUTH.LOGIN} element={<LoginForm />} />
-          <Route path={ROUTES.AUTH.SETUP} element={<SetupWizard />} />
+      {/* Fournisseur de contexte pour les permissions */}
+      <RolePermissionsProvider>
+        <BrowserRouter>
+          <Routes>
+            {/* Routes publiques */}
+            <Route path="/" element={<Navigate to={ROUTES.AUTH.LOGIN} />} />
+            <Route path={ROUTES.AUTH.LOGIN} element={<LoginForm />} />
+            <Route path={ROUTES.AUTH.SETUP} element={<SetupWizard />} />
 
-          <Route element={<ProtectedRoute roles={["superadmin", "admin"]} />}>
-            <Route path={ROUTES.ADMIN.ROOT} element={<AdminLayout />}>
-              <Route
-                path={ROUTES.ADMIN.DASHBOARD}
-                element={<AdminDashboard />}
-              />
-              <Route
-                path={ROUTES.ADMIN.CREATE_ADMIN}
-                element={<CreateAdminForm />}
-              />
-              <Route
-                path={ROUTES.ADMIN.COMPANY}
-                element={<CompanyManagement />}
-              />
-              <Route
-                path={ROUTES.ADMIN.PROCESS_STEPS}
-                element={<ProcessTemplatesList />}
-              />
-              <Route
-                path={ROUTES.ADMIN.PROJECTS}
-                element={<ProjectsManagement />}
-              />
-              <Route
-                path={ROUTES.ADMIN.PROCESS_STEPS}
-                element={<ProcessStepsManagement />}
-              />
-              <Route path={ROUTES.ADMIN.ROLES} element={<RolesManagement />} />
-              <Route path={ROUTES.ADMIN.USERS} element={<UsersList />} />
-              <Route path={ROUTES.ADMIN.SETTINGS} element={<Settings />} />
+            {/* Routes protégées pour les administrateurs */}
+            <Route element={<ProtectedRoute roles={["superadmin", "admin"]} />}>
+              <Route path={ROUTES.ADMIN.ROOT} element={<AdminLayout />}>
+                <Route
+                  path={ROUTES.ADMIN.DASHBOARD}
+                  element={<AdminDashboard />}
+                />
+                <Route
+                  path={ROUTES.ADMIN.CREATE_ADMIN}
+                  element={<CreateAdminForm />}
+                />
+                <Route
+                  path={ROUTES.ADMIN.COMPANY}
+                  element={<CompanyManagement />}
+                />
+                <Route
+                  path={ROUTES.ADMIN.PROCESS_STEPS}
+                  element={<ProcessTemplatesList />}
+                />
+                <Route
+                  path={ROUTES.ADMIN.PROJECTS}
+                  element={<ProjectsManagement />}
+                />
+                <Route
+                  path={ROUTES.ADMIN.PROCESS_STEPS}
+                  element={<ProcessStepsManagement />}
+                />
+                <Route
+                  path={ROUTES.ADMIN.ROLES}
+                  element={<RolesManagement />}
+                />
+                <Route path={ROUTES.ADMIN.USERS} element={<UsersList />} />
+                <Route path={ROUTES.ADMIN.SETTINGS} element={<Settings />} />
+              </Route>
             </Route>
-          </Route>
 
-          <Route element={<ProtectedRoute />}>
-            <Route path={ROUTES.USER.ROOT} element={<UserLayout />}>
-              <Route path={ROUTES.USER.DASHBOARD} element={<Dashboard />} />
-              <Route path={ROUTES.USER.NEW_PROCESS} element={<NewProcess />} />
-              <Route
-                path={ROUTES.USER.PROCESS_DETAILS}
-                element={<ProcessDetails />}
-              />
-              <Route path={ROUTES.USER.PROFILE} element={<UserProfile />} />
-              <Route path={ROUTES.USER.SETTINGS} element={<UserSettings />} />
+            {/* Routes protégées pour les utilisateurs */}
+            <Route element={<ProtectedRoute />}>
+              <Route path={ROUTES.USER.ROOT} element={<UserLayout />}>
+                <Route path={ROUTES.USER.DASHBOARD} element={<Dashboard />} />
+                <Route
+                  path={ROUTES.USER.NEW_PROCESS}
+                  element={<NewProcess />}
+                />
+                <Route
+                  path={ROUTES.USER.PROCESS_DETAILS}
+                  element={<ProcessDetails />}
+                />
+                <Route path={ROUTES.USER.PROFILE} element={<UserProfile />} />
+                <Route path={ROUTES.USER.SETTINGS} element={<UserSettings />} />
+              </Route>
             </Route>
-          </Route>
 
-          <Route element={<ProtectedRoute />}>
-            <Route
-              path={ROUTES.SEARCH.INTERFACE}
-              element={<SearchInterface />}
-            />
-          </Route>
+            {/* Route pour l'interface de recherche */}
+            <Route element={<ProtectedRoute />}>
+              <Route
+                path={ROUTES.SEARCH.INTERFACE}
+                element={<SearchInterface />}
+              />
+            </Route>
 
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+            {/* Route pour les pages non trouvées */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </RolePermissionsProvider>
     </ErrorBoundary>
   );
 };

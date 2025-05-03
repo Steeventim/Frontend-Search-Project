@@ -16,6 +16,9 @@ import { useProcessData } from "../../hooks/useProcessData";
 import { userService } from "../../services/userService";
 import { formatDateTime } from "../../utils/date";
 import api from "../../services/api";
+import { useRolePermissions } from "../../context/RolePermissionsContext";
+import { useNavigate } from "react-router-dom";
+import Cookies from "js-cookie";
 
 interface ReceivedDocument {
   documentId: string;
@@ -60,6 +63,14 @@ const ProcessDetails: React.FC = () => {
   const [attachments, setAttachments] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const idDocument = localStorage.getItem("idDocument");
+
+  const { permissions } = useRolePermissions();
+  const userRole = Cookies.get("roleUser") || "Guest"; // Récupérer dynamiquement le rôle de l'utilisateur
+  const canSearch = permissions[userRole]?.includes("Rechercher"); // Vérifie si l'utilisateur peut rechercher
+  const canApprove = permissions[userRole]?.includes("Valider"); // Vérifie si l'utilisateur peut approuver
+  const canReject = permissions[userRole]?.includes("Rejeter"); // Vérifie si l'utilisateur peut rejeter
+  const canTransfer = permissions[userRole]?.includes("Transférer"); // Vérifie si l'utilisateur peut transférer
+  const navigate = useNavigate(); // Pour naviguer vers la page de recherche
 
   useEffect(() => {
     console.log("ProcessDetails mounted");
@@ -410,29 +421,34 @@ const ProcessDetails: React.FC = () => {
               </div>
 
               <div className="flex space-x-3">
-                <Button
-                  variant="primary"
-                  icon={CheckCircle2}
-                  onClick={handleApproveClick}
-                >
-                  Approuver
-                </Button>
-                <Button
-                  variant="danger"
-                  icon={XCircle}
-                  onClick={handleRejectClick}
-                >
-                  Rejeter
-                </Button>
-                {(process?.nextEtape?.users ?? []).length > 0 && (
+                {canApprove && (
                   <Button
-                    variant="secondary"
-                    icon={Navigation}
-                    onClick={handleTransferClick}
+                    variant="primary"
+                    icon={CheckCircle2}
+                    onClick={handleApproveClick}
                   >
-                    Transférer
+                    Approuver
                   </Button>
                 )}
+                {canReject && (
+                  <Button
+                    variant="danger"
+                    icon={XCircle}
+                    onClick={handleRejectClick}
+                  >
+                    Rejeter
+                  </Button>
+                )}
+                {canTransfer &&
+                  (process?.nextEtape?.users ?? []).length > 0 && (
+                    <Button
+                      variant="secondary"
+                      icon={Navigation}
+                      onClick={handleTransferClick}
+                    >
+                      Transférer
+                    </Button>
+                  )}
               </div>
 
               {attachments.length > 0 && (

@@ -248,7 +248,7 @@ export const Dashboard: React.FC = () => {
             </button>
 
             <button
-              onClick={() => navigate(ROUTES.USER.SEARCH)}
+              onClick={() => navigate(ROUTES.SEARCH.INTERFACE || "#")} // Remplacer par une route valide
               className="relative rounded-lg p-4 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 flex-1 ml-4"
             >
               <div className="flex items-center space-x-3">

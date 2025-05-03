@@ -26,7 +26,7 @@ export const useProcessData = (processId?: string): ProcessData => {
 
   // Fonction pour récupérer le dernier document
   const fetchLatestDocument = useCallback(async () => {
-    console.log("useProcessData: fetchLatestDocument called");
+    // console.log("useProcessData: fetchLatestDocument called");
     setLoading(true);
     setError(null);
 
@@ -35,12 +35,12 @@ export const useProcessData = (processId?: string): ProcessData => {
         "/latest-document"
       );
       if (data.success && data.data) {
-        console.log("useProcessData: latest document fetched:", data.data);
+        // console.log("useProcessData: latest document fetched:", data.data);
         setProcess(data.data);
         setLatestEtapeId(data.data.etape?.idEtape || null);
       } else {
         setError("Aucun document récent trouvé");
-        console.log("useProcessData: no recent document found");
+        // console.log("useProcessData: no recent document found");
       }
     } catch (error) {
       const errorMessage =
@@ -49,7 +49,7 @@ export const useProcessData = (processId?: string): ProcessData => {
             "Erreur lors du chargement du dernier document"
           : "Erreur inconnue lors du chargement du dernier document";
       setError(errorMessage);
-      console.error("useProcessData: fetchLatestDocument error:", error);
+      // console.error("useProcessData: fetchLatestDocument error:", error);
     } finally {
       setLoading(false);
     }
@@ -57,22 +57,22 @@ export const useProcessData = (processId?: string): ProcessData => {
 
   // Fonction pour récupérer les données du processus
   const fetchProcessData = useCallback(async () => {
-    console.log(
-      "useProcessData: fetchProcessData called for id:",
-      processId || latestEtapeId
-    );
+    // console.log(
+    //   "useProcessData: fetchProcessData called for id:",
+    //   processId || latestEtapeId
+    // );
     setLoading(true);
     setError(null);
 
     const roleName = Cookies.get("roleName");
-    console.log("useProcessData: roleName from cookies:", roleName);
+    // console.log("useProcessData: roleName from cookies:", roleName);
 
     try {
       let processData: Process | null = null;
 
       if (processId || latestEtapeId) {
         const etapeIdToUse = processId || latestEtapeId;
-        console.log("useProcessData: fetching for etapeId:", etapeIdToUse);
+        // console.log("useProcessData: fetching for etapeId:", etapeIdToUse);
 
         const [currentResponse, nextResponse] = await Promise.all([
           api.get<{ data: Process }>(`/etapes/${etapeIdToUse}`),
@@ -85,30 +85,30 @@ export const useProcessData = (processId?: string): ProcessData => {
           ...currentResponse.data.data,
           nextEtape: nextResponse.data.data.nextEtape,
         };
-        console.log("useProcessData: process data fetched:", processData);
+        // console.log("useProcessData: process data fetched:", processData);
       } else if (roleName) {
-        console.log("useProcessData: fetching for role:", roleName);
+        // console.log("useProcessData: fetching for role:", roleName);
         const { data } = await api.get<{ data: Process }>(
           `/etapes/role/${roleName}`
         );
         processData = data.data;
-        console.log(
-          "useProcessData: role-based process data fetched:",
-          processData
-        );
+        // console.log(
+        //   "useProcessData: role-based process data fetched:",
+        //   processData
+        // );
       } else {
-        console.log("useProcessData: fetching all processes");
+        // console.log("useProcessData: fetching all processes");
         const { data } = await api.get<{ data: Process }>("/etapes/all");
         processData = data.data;
-        console.log("useProcessData: all processes fetched:", processData);
+        // console.log("useProcessData: all processes fetched:", processData);
       }
 
       setProcess((prev) => {
         if (JSON.stringify(prev) === JSON.stringify(processData)) {
-          console.log("useProcessData: process unchanged, skipping setProcess");
+          // console.log("useProcessData: process unchanged, skipping setProcess");
           return prev;
         }
-        console.log("useProcessData: updating process");
+        // console.log("useProcessData: updating process");
         return processData;
       });
     } catch (error) {
@@ -118,7 +118,7 @@ export const useProcessData = (processId?: string): ProcessData => {
             "Erreur lors du chargement des processus"
           : "Erreur inconnue lors du chargement des processus";
       setError(errorMessage);
-      console.error("useProcessData: fetchProcessData error:", error);
+      // console.error("useProcessData: fetchProcessData error:", error);
     } finally {
       setLoading(false);
     }
@@ -126,10 +126,10 @@ export const useProcessData = (processId?: string): ProcessData => {
 
   // useEffect consolidé
   useEffect(() => {
-    console.log(
-      "useProcessData: useEffect triggered with processId:",
-      processId
-    );
+    // console.log(
+    //   "useProcessData: useEffect triggered with processId:",
+    //   processId
+    // );
     if (processId) {
       fetchProcessData();
     } else {
@@ -152,6 +152,6 @@ export const useProcessData = (processId?: string): ProcessData => {
     [process, loading, error, latestEtapeId]
   );
 
-  console.log("useProcessData: returning result:", result);
+  // console.log("useProcessData: returning result:", result);
   return result;
 };

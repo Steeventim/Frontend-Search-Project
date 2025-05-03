@@ -81,9 +81,9 @@ export const UsersList: React.FC = () => {
   const handleCreateUser = async () => {
     try {
       await userService.createUser({
-        email: newUser.email,
-        password: newUser.password || "",
-        nomUser: newUser.nomUser,
+        Email: newUser.email,
+        Password: newUser.password || "",
+        NomUser: newUser.nomUser,
         prenomUser: newUser.prenomUser,
         roles: newUser.roles,
         IsActive: newUser.IsActive,
