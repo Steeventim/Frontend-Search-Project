@@ -15,7 +15,8 @@ import {
 import api from "../../services/api";
 import Cookies from "js-cookie";
 import { NotificationCenter } from "../common/NotificationCenter";
-import { useNotifications } from "../../hooks/useNotifications";
+import { useNotifications } from "../../hooks/useNotification";
+import { useRolePermissions } from "../../context/RolePermissionsContext";
 
 interface Notification {
   id: string;
@@ -32,12 +33,13 @@ export const UserNavbar: React.FC = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
+  const { permissions } = useRolePermissions();
+  const userRole = Cookies.get("roleUser") || "Guest"; // Récupérer dynamiquement le rôle de l'utilisateur
+  const canSearch = permissions[userRole]?.includes("Rechercher"); // Vérifie si l'utilisateur peut rechercher
+
   useEffect(() => {
-    // Temporairement, on initialise avec un tableau vide
     setNotifications([]);
 
-    // Note: Le interval n'est plus nécessaire car nous n'appelons plus l'API
-    // mais on peut le garder pour une future implémentation
     const interval = setInterval(() => {
       setNotifications([]);
     }, 60000);
@@ -47,7 +49,9 @@ export const UserNavbar: React.FC = () => {
 
   const menuItems = [
     { icon: LayoutDashboard, label: "Tableau de bord", path: "/dashboard" },
-    // { icon: Search, label: "Recherche", path: "/search" },
+    ...(canSearch
+      ? [{ icon: Search, label: "Recherche", path: "/search" }]
+      : []), // Ajoute le lien "Recherche" uniquement si l'utilisateur a la permission
   ];
 
   const unreadCount = notifications.filter((n) => !n.read).length;
@@ -69,18 +73,12 @@ export const UserNavbar: React.FC = () => {
 
   const handleLogout = async () => {
     try {
-      // Supprimer le token et le refresh token des cookies
       Cookies.remove("token");
       Cookies.remove("refreshToken");
-
-      // Appeler l'API pour la déconnexion
       await api.post("/logout");
-
-      // Rediriger vers la page de connexion
       navigate("/login");
     } catch (err) {
       console.error("Erreur lors de la déconnexion:", err);
-      // En cas d'erreur, rediriger quand même vers la page de connexion
       navigate("/login");
     }
   };
@@ -106,7 +104,6 @@ export const UserNavbar: React.FC = () => {
                 </Link>
               ))}
             </div>
-            {/* Bouton Menu Mobile */}
             <button
               className="sm:hidden ml-4 p-1 text-gray-500 hover:text-gray-700"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -117,7 +114,6 @@ export const UserNavbar: React.FC = () => {
 
           {/* Groupe notifications et profil */}
           <div className="flex items-center space-x-4">
-            {/* Notifications */}
             <div className="relative">
               <button
                 type="button"
@@ -130,7 +126,6 @@ export const UserNavbar: React.FC = () => {
                   <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-400 ring-2 ring-white" />
                 )}
               </button>
-
               <AnimatePresence>
                 {showNotifications && (
                   <motion.div
@@ -147,7 +142,8 @@ export const UserNavbar: React.FC = () => {
                         </h3>
                         {notifications.length > 0 && (
                           <span className="text-xs text-gray-500">
-                            {unreadCount} non lu{unreadCount > 1 ? "s" : ""}
+                            {unreadCount} non lu
+                            {unreadCount > 1 ? "s" : ""}
                           </span>
                         )}
                       </div>

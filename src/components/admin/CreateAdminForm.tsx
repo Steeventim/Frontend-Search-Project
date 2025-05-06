@@ -10,10 +10,17 @@ const CreateAdminForm = () => {
   const [nomUser, setNomUser] = useState("");
   const [prenomUser, setPrenomUser] = useState("");
   const [countryCode, setCountryCode] = useState("+237");
-  const [PhoneNumber, setPhoneNumber] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
   const [success, setSuccess] = useState<string>("");
+  const [validationErrors, setValidationErrors] = useState({
+    email: "",
+    password: "",
+    nomUser: "",
+    prenomUser: "",
+    phoneNumber: "",
+  });
   const navigate = useNavigate();
 
   // Liste des indicatifs de pays avec drapeaux
@@ -35,8 +42,10 @@ const CreateAdminForm = () => {
     { code: "+243", flag: "🇨🇩", country: "RD Congo" },
   ];
 
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
+  // Fonctions de validation
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email) ? "" : "Veuillez entrer un email valide.";
   };
 
   const validatePassword = (password: string) => {
@@ -52,7 +61,76 @@ const CreateAdminForm = () => {
       specialCharacterCondition,
     ].filter(Boolean).length;
 
-    return conditionsMet >= 2; // Doit respecter au moins deux conditions
+    return conditionsMet >= 2
+      ? ""
+      : "Le mot de passe doit contenir au moins 8 caractères, dont au moins deux des éléments suivants : une lettre, un chiffre, un caractère spécial.";
+  };
+
+  const validateNomUser = (nom: string) => {
+    return nom.trim().length >= 2
+      ? ""
+      : "Le nom doit contenir au moins 2 caractères.";
+  };
+
+  const validatePrenomUser = (prenom: string) => {
+    return prenom.trim().length >= 2
+      ? ""
+      : "Le prénom doit contenir au moins 2 caractères.";
+  };
+
+  const validatePhoneNumber = (phone: string) => {
+    const phoneRegex = /^\d{9,}$/;
+    return phoneRegex.test(phone)
+      ? ""
+      : "Le numéro de téléphone doit contenir au moins 9 chiffres, sans espaces ni caractères spéciaux.";
+  };
+
+  // Validation en temps réel
+  const handleInputChange = (
+    field: keyof typeof validationErrors,
+    value: string,
+    setter: React.Dispatch<React.SetStateAction<string>>
+  ) => {
+    setter(value);
+    let error = "";
+    switch (field) {
+      case "email":
+        error = validateEmail(value);
+        break;
+      case "password":
+        error = validatePassword(value);
+        break;
+      case "nomUser":
+        error = validateNomUser(value);
+        break;
+      case "prenomUser":
+        error = validatePrenomUser(value);
+        break;
+      case "phoneNumber":
+        error = validatePhoneNumber(value);
+        break;
+    }
+    setValidationErrors((prev) => ({ ...prev, [field]: error }));
+  };
+
+  // Vérifier si le formulaire est valide
+  const isFormValid = () => {
+    return (
+      email &&
+      password &&
+      nomUser &&
+      prenomUser &&
+      phoneNumber &&
+      !validationErrors.email &&
+      !validationErrors.password &&
+      !validationErrors.nomUser &&
+      !validationErrors.prenomUser &&
+      !validationErrors.phoneNumber
+    );
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -61,16 +139,24 @@ const CreateAdminForm = () => {
     setError("");
     setSuccess("");
 
-    if (!validatePassword(password)) {
-      setError(
-        "Le mot de passe doit contenir au moins 8 caractères, dont au moins une lettre, un chiffre et un caractère spécial."
-      );
+    // Validation finale
+    const errors = {
+      email: validateEmail(email),
+      password: validatePassword(password),
+      nomUser: validateNomUser(nomUser),
+      prenomUser: validatePrenomUser(prenomUser),
+      phoneNumber: validatePhoneNumber(phoneNumber),
+    };
+    setValidationErrors(errors);
+
+    if (Object.values(errors).some((err) => err)) {
+      setError("Veuillez corriger les erreurs dans le formulaire.");
       setLoading(false);
       return;
     }
 
     // Concaténer le countryCode avec le numéro de téléphone
-    const fullPhoneNumber = `${countryCode}${PhoneNumber}`;
+    const fullPhoneNumber = `${countryCode}${phoneNumber}`;
 
     try {
       const response = await api.post("/init/admin", {
@@ -78,20 +164,14 @@ const CreateAdminForm = () => {
         password,
         nomUser,
         prenomUser,
-        telephone: fullPhoneNumber, // Utiliser le numéro de téléphone complet
+        telephone: fullPhoneNumber,
       });
 
       if (response.status === 201) {
         setSuccess("Administrateur créé avec succès");
-
-        // Détruire tous les tokens
         Cookies.remove("token");
         Cookies.remove("role");
-
-        // Rediriger vers la page de connexion
         navigate("/login");
-
-        // Réinitialiser le formulaire
         setEmail("");
         setPassword("");
         setNomUser("");
@@ -104,16 +184,13 @@ const CreateAdminForm = () => {
         );
       }
     } catch (error: unknown) {
-      // Gérer les erreurs de l'API
       if (error instanceof Error) {
-        // Vérifiez si l'erreur est une instance de l'objet Error
         setError(error.message || "Une erreur est survenue.");
       } else if (
         typeof error === "object" &&
         error !== null &&
         "response" in error
       ) {
-        // Si l'erreur a une propriété 'response', cela signifie qu'il s'agit d'une erreur d'API
         const apiError = error as { response: { data: { message?: string } } };
         setError(apiError.response.data.message || "Une erreur est survenue.");
       } else {
@@ -138,11 +215,22 @@ const CreateAdminForm = () => {
           <input
             type="email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) =>
+              handleInputChange("email", e.target.value, setEmail)
+            }
             placeholder="email@exemple.com"
             required
-            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+            className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+              validationErrors.email
+                ? "border-red-500 focus:ring-red-500"
+                : "focus:ring-blue-600"
+            }`}
           />
+          {validationErrors.email && (
+            <p className="text-red-500 text-sm mt-1">
+              {validationErrors.email}
+            </p>
+          )}
         </div>
 
         <div className="mb-4">
@@ -151,10 +239,16 @@ const CreateAdminForm = () => {
             <input
               type={showPassword ? "text" : "password"}
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) =>
+                handleInputChange("password", e.target.value, setPassword)
+              }
               placeholder="••••••••"
               required
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 pr-10"
+              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 pr-10 ${
+                validationErrors.password
+                  ? "border-red-500 focus:ring-red-500"
+                  : "focus:ring-blue-600"
+              }`}
             />
             <button
               type="button"
@@ -195,6 +289,11 @@ const CreateAdminForm = () => {
           <p className="text-xs text-gray-500 mt-1">
             Cliquez sur l'icône pour afficher/masquer le mot de passe
           </p>
+          {validationErrors.password && (
+            <p className="text-red-500 text-sm mt-1">
+              {validationErrors.password}
+            </p>
+          )}
         </div>
 
         <div className="mb-4">
@@ -202,11 +301,22 @@ const CreateAdminForm = () => {
           <input
             type="text"
             value={nomUser}
-            onChange={(e) => setNomUser(e.target.value)}
+            onChange={(e) =>
+              handleInputChange("nomUser", e.target.value, setNomUser)
+            }
             placeholder="Timnou Tchuinte"
             required
-            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+            className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+              validationErrors.nomUser
+                ? "border-red-500 focus:ring-red-500"
+                : "focus:ring-blue-600"
+            }`}
           />
+          {validationErrors.nomUser && (
+            <p className="text-red-500 text-sm mt-1">
+              {validationErrors.nomUser}
+            </p>
+          )}
         </div>
 
         <div className="mb-4">
@@ -214,11 +324,22 @@ const CreateAdminForm = () => {
           <input
             type="text"
             value={prenomUser}
-            onChange={(e) => setPrenomUser(e.target.value)}
+            onChange={(e) =>
+              handleInputChange("prenomUser", e.target.value, setPrenomUser)
+            }
             placeholder="Yvan Steeve"
             required
-            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+            className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+              validationErrors.prenomUser
+                ? "border-red-500 focus:ring-red-500"
+                : "focus:ring-blue-600"
+            }`}
           />
+          {validationErrors.prenomUser && (
+            <p className="text-red-500 text-sm mt-1">
+              {validationErrors.prenomUser}
+            </p>
+          )}
         </div>
 
         <div className="mb-6">
@@ -237,16 +358,27 @@ const CreateAdminForm = () => {
             </select>
             <input
               type="text"
-              value={PhoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value)}
+              value={phoneNumber}
+              onChange={(e) =>
+                handleInputChange("phoneNumber", e.target.value, setPhoneNumber)
+              }
               placeholder="612345678"
               required
-              className="flex-grow px-4 py-2 border border-l-0 rounded-r-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+              className={`flex-grow px-4 py-2 border border-l-0 rounded-r-lg focus:outline-none focus:ring-2 ${
+                validationErrors.phoneNumber
+                  ? "border-red-500 focus:ring-red-500"
+                  : "focus:ring-blue-600"
+              }`}
             />
           </div>
           <p className="text-xs text-gray-500 mt-1">
             Format attendu: Indicatif + Numéro sans le premier zéro
           </p>
+          {validationErrors.phoneNumber && (
+            <p className="text-red-500 text-sm mt-1">
+              {validationErrors.phoneNumber}
+            </p>
+          )}
         </div>
 
         {error && (
@@ -262,8 +394,12 @@ const CreateAdminForm = () => {
 
         <button
           type="submit"
-          disabled={loading}
-          className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-all duration-300 flex items-center justify-center"
+          disabled={loading || !isFormValid()}
+          className={`w-full py-2 rounded-lg transition-all duration-300 flex items-center justify-center ${
+            loading || !isFormValid()
+              ? "bg-gray-400 text-gray-700 cursor-not-allowed"
+              : "bg-blue-600 text-white hover:bg-blue-700"
+          }`}
         >
           {loading ? (
             <>
