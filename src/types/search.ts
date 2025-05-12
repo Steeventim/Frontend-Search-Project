@@ -2,40 +2,28 @@
 export interface SearchResponse {
   success: boolean;
   searchTerm: string; // Terme de recherche utilisé
+  query?: {
+    original: string;
+    encoded: string;
+  };
   data: {
-    took: number; // Temps pris pour la recherche
-    timed_out: boolean; // Indique si la recherche a expiré
-    _shards: {
-      total: number; // Nombre total de shards
-      successful: number; // Nombre de shards réussis
-      skipped: number; // Nombre de shards ignorés
-      failed: number; // Nombre de shards échoués
-    };
-    hits: {
-      total: {
-        value: number; // Nombre total de résultats
-        relation: string; // Relation (par exemple, "eq" pour égal)
-      };
-      max_score: number; // Score maximum
-      hits: Hit[]; // Tableau des résultats
-    };
+    total: number; // Nombre total de résultats
+    hits: Hit[]; // Tableau des résultats
   };
 }
 
 // Interface pour chaque élément de la réponse de recherche
 export interface Hit {
-  _index: string; // Index du document
-  _type: string; // Type du document
-  _id: string; // ID du document
-  _score: number; // Score du document
-  _source: DocumentSource; // Source du document
+  id: string; // ID du document
+  score: number; // Score du document
+  source: DocumentSource; // Source du document
   highlight?: HighlightData; // Données de surlignage (optionnel)
 }
 
 // Interface pour les données du document
 export interface DocumentSource {
   content: string; // Contenu du document
-  meta: MetaData; // Métadonnées du document
+  meta?: MetaData; // Métadonnées du document
   file: FileData; // Données du fichier
 }
 
@@ -87,6 +75,7 @@ export interface SearchResult {
   thumbnailUrls: string[]; // URL des vignettes
 }
 
+// Interface pour LatestDocument (conservée pour compatibilité)
 export interface LatestDocument {
   idDocument: string;
   Title: string;

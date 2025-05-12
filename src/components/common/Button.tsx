@@ -1,49 +1,47 @@
 import React from "react";
+import clsx from "clsx";
 
-export interface ButtonProps {
-  variant?: "primary" | "secondary" | "danger";
+interface ButtonProps {
+  variant: "primary" | "secondary";
   size?: "sm" | "md" | "lg";
-  onClick?: () => void;
-  children: React.ReactNode;
+  icon?: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   className?: string;
+  onClick?: () => void;
   disabled?: boolean;
-  "aria-label"?: string;
+  loading?: boolean; // Propriété loading ajoutée
+  children: React.ReactNode;
 }
 
 export const Button: React.FC<ButtonProps> = ({
-  variant = "primary",
+  variant,
   size = "md",
-  onClick,
-  children,
+  icon: Icon,
   className,
+  onClick,
   disabled,
-  ...props
+  loading, // Utilisation de la propriété loading
+  children,
 }) => {
-  const baseStyles =
-    "inline-flex items-center justify-center rounded-md font-medium focus:outline-none focus:ring-2 focus:ring-offset-2";
-  const variantStyles = {
-    primary: "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500",
-    secondary:
-      "bg-gray-100 text-gray-700 hover:bg-gray-200 focus:ring-gray-500",
-    danger: "bg-red-100 text-red-700 hover:bg-red-200 focus:ring-red-500",
-  };
-  const sizeStyles = {
-    sm: "px-3 py-1 text-sm",
-    md: "px-4 py-2 text-base",
-    lg: "px-6 py-3 text-lg",
-  };
-
   return (
     <button
-      type="button"
+      className={clsx(
+        "btn",
+        `btn-${variant}`,
+        `btn-${size}`,
+        className,
+        { "btn-disabled": disabled || loading } // Désactiver le bouton si loading est true
+      )}
       onClick={onClick}
-      disabled={disabled}
-      className={`${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${
-        className || ""
-      }`}
-      {...props}
+      disabled={disabled || loading} // Empêcher les clics si loading est true
     >
-      {children}
+      {loading ? (
+        <span className="loader" /> // Afficher un indicateur de chargement
+      ) : (
+        <>
+          {Icon && <Icon className="btn-icon" />}
+          {children}
+        </>
+      )}
     </button>
   );
 };

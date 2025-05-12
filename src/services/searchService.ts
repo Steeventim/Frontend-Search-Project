@@ -4,10 +4,32 @@ import { SearchResponse, DocumentSource } from "../types/search"; // Importer le
 export const searchService = {
   // Méthode pour effectuer une recherche avec un terme
   search: async (searchTerm: string): Promise<SearchResponse> => {
-    const { data } = await api.get(
-      `/search1Highligth/${encodeURIComponent(searchTerm)}`
-    );
-    return data;
+    try {
+      const { data } = await api.get(
+        `/search1Highligth/${encodeURIComponent(searchTerm)}`
+      );
+      console.log("Raw API response:", JSON.stringify(data, null, 2));
+
+      if (data.success) {
+        const hits = data.data.hits || [];
+        console.log("Hits received:", JSON.stringify(hits, null, 2));
+
+        return data; // Renvoyer les données brutes
+      } else {
+        console.log("API response unsuccessful:", data);
+        return {
+          success: false,
+          searchTerm,
+          data: {
+            total: 0,
+            hits: [],
+          },
+        };
+      }
+    } catch (error) {
+      console.error("Search error:", error);
+      throw new Error("Failed to perform search");
+    }
   },
 
   // Méthode pour obtenir un aperçu d'un document

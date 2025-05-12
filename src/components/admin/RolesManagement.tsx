@@ -156,33 +156,39 @@ export const RolesManagement: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {roles.map((role) => (
-                <tr key={role.idRole} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 border-b border-gray-200 text-sm text-gray-900">
-                    {role.name}
-                  </td>
-                  <td className="px-6 py-4 border-b border-gray-200 text-sm text-gray-900">
-                    {role.description}
-                  </td>
-                  <td className="px-6 py-4 border-b border-gray-200 text-sm text-gray-900">
-                    {role.isSystemRole ? "Oui" : "Non"}
-                  </td>
-                  <td className="px-6 py-4 border-b border-gray-200 text-sm text-gray-900">
-                    {role.permissions ? role.permissions.join(", ") : "Aucune"}
-                  </td>
-                  <td className="px-6 py-4 border-b border-gray-200 text-sm text-gray-900">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setRoles(roles.filter((r) => r.idRole !== role.idRole))
-                      }
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      <Trash2 className="h-5 w-5" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {roles
+                .filter((role) => role.name.toLowerCase() !== "superadmin") // Exclure le rôle "Super Admin"
+                .map((role) => (
+                  <tr key={role.idRole} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 border-b border-gray-200 text-sm text-gray-900">
+                      {role.name}
+                    </td>
+                    <td className="px-6 py-4 border-b border-gray-200 text-sm text-gray-900">
+                      {role.description}
+                    </td>
+                    <td className="px-6 py-4 border-b border-gray-200 text-sm text-gray-900">
+                      {role.isSystemRole ? "Oui" : "Non"}
+                    </td>
+                    <td className="px-6 py-4 border-b border-gray-200 text-sm text-gray-900">
+                      {role.permissions
+                        ? role.permissions.join(", ")
+                        : "Aucune"}
+                    </td>
+                    <td className="px-6 py-4 border-b border-gray-200 text-sm text-gray-900">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setRoles(
+                            roles.filter((r) => r.idRole !== role.idRole)
+                          )
+                        }
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        <Trash2 className="h-5 w-5" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
             </tbody>
           </table>
         </div>

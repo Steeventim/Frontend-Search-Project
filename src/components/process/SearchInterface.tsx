@@ -14,7 +14,6 @@ import { userService } from "../../services/userService";
 import { useProcessData } from "../../hooks/useProcessData";
 import type { Etape, Process, ProcessData } from "../../types/process";
 
-// Interfaces pour typage strict (déplacées vers types/process.ts)
 const SearchInterface: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [results, setResults] = useState<Hit[]>([]);
@@ -114,8 +113,7 @@ const SearchInterface: React.FC = () => {
           id: nextEtapeCandidate.idEtape,
           name: nextEtapeCandidate.LibelleEtape,
         });
-        // Supposer que userDestinatorName doit être défini ailleurs ou via une API
-        setUserDestinatorName(null); // À ajuster si une logique existe
+        setUserDestinatorName(null);
       } else {
         setNextEtape(null);
         setUserDestinatorName(null);
@@ -134,12 +132,16 @@ const SearchInterface: React.FC = () => {
       setError(null);
       try {
         const response: SearchResponse = await searchService.search(query);
+        console.log(
+          "Search response in component:",
+          JSON.stringify(response, null, 2)
+        );
         if (
           response.success &&
           response.data.hits &&
-          response.data.hits.total.value > 0
+          response.data.hits.length > 0
         ) {
-          setResults(response.data.hits.hits);
+          setResults(response.data.hits);
         } else {
           setResults([]);
         }
@@ -156,7 +158,7 @@ const SearchInterface: React.FC = () => {
 
   const handleSearch = useCallback(() => {
     debouncedSearch(searchQuery);
-  }, [searchQuery]);
+  }, [searchQuery, debouncedSearch]);
 
   const handlePreview = useCallback(
     (documentName: string) => {
@@ -166,6 +168,7 @@ const SearchInterface: React.FC = () => {
       }/highlightera2/${encodeURIComponent(documentName)}/${encodeURIComponent(
         searchTerm
       )}`;
+      console.log("Opening preview:", previewUrl);
       window.open(previewUrl, "_blank");
     },
     [searchQuery]
@@ -284,7 +287,7 @@ const SearchInterface: React.FC = () => {
   const transformHighlight = useCallback((highlight: string): string => {
     return highlight.replace(
       /<strong style="font-weight:bold;color:black;">(.*?)<\/strong>/g,
-      '<span style="background-color: #fef08a; font-weight: bold;">$1</span>'
+      '<span style="font-weight: bold;">$1</span>'
     );
   }, []);
 
@@ -299,29 +302,39 @@ const SearchInterface: React.FC = () => {
       const regex = new RegExp(`(${word})`, "gi");
       highlightedText = highlightedText.replace(
         regex,
-        '<span style="background-color: #fef08a; font-weight: bold;">$1</span>'
+        '<span style="font-weight: bold;">$1</span>'
       );
     });
     return highlightedText;
   }, []);
 
-  // Mémorisation des résultats surlignés
   const highlightedResults = useMemo(() => {
-    return results.map((hit) => ({
+    console.log("Results before processing:", JSON.stringify(results, null, 2));
+    const processedResults = results.map((hit) => ({
       ...hit,
-      highlightedContent:
-        hit.highlight?.content && hit.highlight.content.length > 0
-          ? hit.highlight.content.map(transformHighlight)
-          : [
-              highlightText(
-                hit._source.content || "Aucun contenu disponible",
-                searchQuery
-              ),
-            ],
+      highlightedContent: hit.highlight?.content?.length
+        ? hit.highlight.content.map((text) => {
+            const transformed = transformHighlight(text);
+            return transformed.length > 150
+              ? transformed.slice(0, 150) + "..."
+              : transformed;
+          })
+        : [
+            highlightText(
+              hit.source.content || "Aucun extrait disponible",
+              searchQuery
+            ).slice(0, 150) + "...",
+          ],
+      filename: hit.source?.file?.filename || "Nom inconnu",
+      extension: hit.source?.file?.extension || "Inconnu",
     }));
+    console.log(
+      "Highlighted results:",
+      JSON.stringify(processedResults, null, 2)
+    );
+    return processedResults;
   }, [results, searchQuery, transformHighlight, highlightText]);
 
-  // Composant pour virtualisation
   const Row = ({
     index,
     style,
@@ -331,60 +344,61 @@ const SearchInterface: React.FC = () => {
   }) => {
     const hit = highlightedResults[index];
     return (
-      <div style={style} className="border border-gray-200 rounded-lg p-4">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center space-x-3">
-            <FileText className="h-6 w-6 text-gray-500" />
-            <div>
-              <h4 className="text-lg font-medium text-blue-600 hover:underline">
-                <a
-                  href="#"
-                  onClick={() => handlePreview(hit._source.file.filename)}
-                >
-                  {hit._source.file.filename}
-                </a>
-              </h4>
-              <p className="text-sm text-gray-500">
-                {hit._source.file.filename} ({hit._source.file.extension})
-              </p>
-              <div className="text-sm text-gray-700 mt-1">
-                {hit.highlightedContent.map((highlight, index) => (
+      <div
+        style={{ ...style, padding: "8px 0" }}
+        className="w-full result-container hover:bg-gray-50 transition-all"
+      >
+        <div className="max-w-full py-3 border-b border-gray-100">
+          <div className="flex items-start justify-between space-y-1">
+            <div className="space-y-1 max-w-[75%]">
+              {/* Titre tronqué */}
+              <a
+                href="#"
+                onClick={() => handlePreview(hit.filename)}
+                className="text-google-blue hover:text-google-blue-hover text-lg font-medium truncate inline-block"
+                title={hit.filename}
+              >
+                {hit.filename}
+              </a>
+
+              {/* Extension tronquée */}
+              <div className="text-google-meta text-sm truncate">
+                Extension: {hit.extension}
+              </div>
+
+              {/* Extraits pertinents tronqués */}
+              <div className="text-google-text text-base line-clamp-2">
+                {hit.highlightedContent.map((highlight, idx) => (
                   <div
-                    key={index}
+                    key={idx}
                     dangerouslySetInnerHTML={{ __html: highlight }}
                   />
                 ))}
               </div>
             </div>
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={Plus}
+              className="text-sm px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-full transition-all"
+              onClick={() => openAssignDialog(hit)}
+            >
+              Affecter
+            </Button>
           </div>
-          <Button
-            variant="secondary"
-            size="sm"
-            icon={Plus}
-            className="text-sm px-4 py-2"
-            onClick={() => openAssignDialog(hit)}
-          >
-            Affecter
-          </Button>
         </div>
       </div>
     );
   };
 
   return (
-    <div className="space-y-6 p-6 bg-gray-100 min-h-screen">
-      <style>
-        {`
-          strong[style*="font-weight:bold;color:black;"] {
-            background-color: #fef08a !important;
-            font-weight: bold !important;
-            color: black !important;
-          }
-        `}
-      </style>
-      <SearchNavbar />
-      <Card className="shadow-lg p-6 bg-white rounded-xl">
-        <h2 className="text-2xl font-semibold text-gray-900 text-center mb-4">
+    <div className="flex flex-col justify-center items-center min-h-screen bg-gray-50">
+      <nav className="w-full bg-white shadow-md border-b border-gray-200">
+        {" "}
+        <SearchNavbar />
+      </nav>
+      <Card className="modern-card p-8 bg-white max-w-6xl w-full my-8">
+        <h2 className="text-2xl font-semibold text-gray-900 text-center mb-6">
           Recherche de documents
         </h2>
         <div className="flex space-x-4 items-center">
@@ -395,30 +409,30 @@ const SearchInterface: React.FC = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyPress={(e) => e.key === "Enter" && handleSearch()}
               placeholder="Rechercher dans les documents..."
-              className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg shadow-sm"
+              className="modern-input block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
             />
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="h-6 w-6 text-gray-400" />
+              <Search className="h-5 w-5 text-gray-400" />
             </div>
           </div>
           <Button
             variant="primary"
             onClick={handleSearch}
             loading={loading}
-            className="text-lg px-6 py-3"
+            className="text-base px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all"
           >
             Rechercher
           </Button>
         </div>
 
         {searchQuery.trim() && (
-          <div className="mt-2 flex flex-wrap gap-2">
+          <div className="mt-4 flex flex-wrap gap-2">
             {searchQuery.split(/\s+/).map(
               (word, index) =>
                 word.length > 0 && (
                   <span
                     key={index}
-                    className="inline-flex items-center px-2 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800"
+                    className="inline-flex items-center px-2.5 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 transition-all hover:bg-blue-200"
                   >
                     {word}
                   </span>
@@ -428,30 +442,38 @@ const SearchInterface: React.FC = () => {
         )}
 
         {error && (
-          <div className="mt-4 bg-red-50 border border-red-200 rounded-md p-4 text-sm text-red-600 text-center">
+          <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-4 text-sm text-red-600 text-center">
             {error}
           </div>
         )}
 
         {confirmationMessage && (
-          <div className="mt-4 bg-green-50 border border-green-200 rounded-md p-4 text-sm text-green-600 text-center">
+          <div className="mt-4 bg-green-50 border border-green-200 rounded-lg p-4 text-sm text-green-600 text-center">
             {confirmationMessage}
           </div>
         )}
 
         {highlightedResults.length > 0 && (
-          <div className="mt-6 space-y-4">
-            <h3 className="text-lg font-medium text-gray-900 border-b pb-2">
-              Résultats ({highlightedResults.length})
-            </h3>
-            <List
-              height={400}
-              itemCount={highlightedResults.length}
-              itemSize={150}
-              width="100%"
-            >
-              {Row}
-            </List>
+          <div className="mt-8 max-w-3xl mx-auto">
+            <div className="text-sm text-gray-500 mb-3">
+              Environ {highlightedResults.length} résultats
+            </div>
+            <div className="fixed-size-list-container">
+              <List
+                height={600}
+                itemCount={highlightedResults.length}
+                itemSize={180} // Augmenté pour éviter le chevauchement
+                width="100%"
+              >
+                {Row}
+              </List>
+            </div>
+          </div>
+        )}
+
+        {searchQuery.trim() && !loading && highlightedResults.length === 0 && (
+          <div className="mt-8 text-center text-gray-500 max-w-3xl mx-auto">
+            Aucun résultat trouvé pour "{searchQuery}"
           </div>
         )}
       </Card>
@@ -463,7 +485,7 @@ const SearchInterface: React.FC = () => {
               Étape suivante
             </label>
             {nextEtape ? (
-              <p className="mt-2 text-sm text-gray-900 border border-gray-300 rounded-md px-3 py-2 bg-gray-50">
+              <p className="mt-2 text-sm text-gray-900 border border-gray-200 rounded-md px-3 py-2 bg-gray-50">
                 {nextEtape.name}
               </p>
             ) : (
@@ -486,7 +508,7 @@ const SearchInterface: React.FC = () => {
               onChange={(e) => setComment(e.target.value)}
               placeholder="Ajouter un commentaire..."
               rows={4}
-              className="w-full border p-2 mt-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full border border-gray-200 p-3 mt-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
             />
           </div>
 
@@ -498,14 +520,14 @@ const SearchInterface: React.FC = () => {
               type="file"
               multiple
               onChange={handleFileChange}
-              className="mt-2 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              className="mt-2 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all"
             />
             {attachments.length > 0 && (
               <div className="mt-3 space-y-2">
                 {attachments.map((file, index) => (
                   <div
                     key={index}
-                    className="flex items-center justify-between p-2 bg-gray-50 rounded-md"
+                    className="flex items-center justify-between p-2 bg-gray-50 rounded-md transition-all hover:bg-gray-100"
                   >
                     <div className="flex items-center">
                       {file.type.startsWith("image/") ? (
@@ -524,7 +546,7 @@ const SearchInterface: React.FC = () => {
                     </div>
                     <button
                       onClick={() => removeAttachment(index)}
-                      className="text-gray-400 hover:text-gray-600"
+                      className="text-gray-400 hover:text-gray-600 transition-all"
                     >
                       <XCircle className="h-4 w-4" />
                     </button>
@@ -546,8 +568,12 @@ const SearchInterface: React.FC = () => {
             </p>
           )}
 
-          <div className="flex justify-end mt-4 space-x-2">
-            <Button variant="secondary" onClick={() => setShowDialog(false)}>
+          <div className="flex justify-end mt-6 space-x-3">
+            <Button
+              variant="secondary"
+              onClick={() => setShowDialog(false)}
+              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-all"
+            >
               Annuler
             </Button>
             <Button
@@ -555,6 +581,7 @@ const SearchInterface: React.FC = () => {
               onClick={handleAssign}
               disabled={assignLoading || !nextEtape || !userDestinatorName}
               loading={assignLoading}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all"
             >
               Affecter
             </Button>

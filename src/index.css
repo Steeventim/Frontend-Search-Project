@@ -1,3 +1,71 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    --google-blue: #1a0dab;
+    --google-text: #4b4b4b;
+    --google-meta: #006621;
+  }
+}
+
+@layer utilities {
+  .text-google-blue {
+    color: var(--google-blue);
+  }
+  .text-google-text {
+    color: var(--google-text);
+  }
+  .text-google-meta {
+    color: var(--google-meta);
+  }
+  .hover\:text-google-blue-hover:hover {
+    color: #660099;
+  }
+}
+
+@layer components {
+  .result-container {
+    max-width: 100%;
+    overflow-x: hidden;
+    margin-bottom: 16px;
+    transition: all 0.2s ease-in-out;
+  }
+  .fixed-size-list-container {
+    max-width: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+  .modern-card {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  }
+  .modern-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  }
+  .modern-input {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: box-shadow 0.2s ease-in-out;
+  }
+  .modern-input:focus {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+  .modern-dialog {
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    animation: slideIn 0.3s ease-in-out;
+  }
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}

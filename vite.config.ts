@@ -24,7 +24,7 @@ export default defineConfig({
   server: {
     host: "0.0.0.0", // Permettre l'accès depuis d'autres appareils
     port: 5173, // Port du serveur de développement
-    open: true, // Ouvrir automatiquement le navigateur sur l'appareil local
+    open: false, // Ouvrir automatiquement le navigateur sur l'appareil local
     // Removed invalid 'sourcemap' property
     hmr: {
       protocol: "ws", // Utiliser WebSocket pour le rechargement à chaud

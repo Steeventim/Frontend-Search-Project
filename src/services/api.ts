@@ -21,7 +21,7 @@ const TOKEN_EXPIRATION = 3 / 24; // 3 heures
 const REFRESH_TOKEN_EXPIRATION = 7; // 7 jours
 
 const API_CONFIG = {
-  baseURL: import.meta.env.VITE_API_BASE_URL,
+  baseURL: "http://10.100.212.176:3003/" || "http://localhost:3003/", // Remplacez par l'URL de votre API
   headers: {
     "Content-Type": "application/json",
   },
