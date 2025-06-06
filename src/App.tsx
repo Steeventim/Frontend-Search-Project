@@ -7,27 +7,30 @@ import {
 } from "react-router-dom";
 import { ROUTES } from "./constants/routes";
 import Cookies from "js-cookie";
-import LoginForm from "./components/auth/LoginForm";
-import SetupWizard from "./components/setup/SetupWizard";
-import { AdminLayout } from "./components/layout/AdminLayout";
-import { UserLayout } from "./components/layout/UserLayout";
-import { Dashboard } from "./components/dashboard/Dashboard";
-import AdminDashboard from "./components/admin/AdminDashboard";
-import { Settings } from "./components/admin/Settings";
-import ProcessDetails from "./components/process/ProcessDetails";
-import { NewProcess } from "./components/process/NewProcess";
-import { UserProfile } from "./components/user/UserProfile";
-import { UserSettings } from "./components/user/UserSettings";
-import CreateAdminForm from "./components/admin/CreateAdminForm";
-import { CompanyManagement } from "./components/admin/CompanyManagement";
-import { ProjectsManagement } from "./components/admin/ProjectsManagement";
-import { ProcessStepsManagement } from "./components/admin/ProcessStepsManagement";
-import { ProcessTemplatesList } from "./components/admin/ProcessTemplatesList";
-import { RolesManagement } from "./components/admin/RolesManagement";
-import { UsersList } from "./components/admin/UsersList";
-import SearchInterface from "./components/process/SearchInterface";
 import { ErrorBoundary } from "./components/error/ErrorBoundary";
-import NotFound from "./components/error/NotFound";
+import { SuspenseWrapper } from "./components/common/SuspenseWrapper";
+import {
+  LazyLoginForm,
+  LazySetupWizard,
+  LazyAdminLayout,
+  LazyUserLayout,
+  LazyDashboard,
+  LazyAdminDashboard,
+  LazySettings,
+  LazyProcessDetails,
+  LazyNewProcess,
+  LazyUserProfile,
+  LazyUserSettings,
+  LazyCreateAdminForm,
+  LazyCompanyManagement,
+  LazyProjectsManagement,
+  LazyProcessStepsManagement,
+  LazyProcessTemplatesList,
+  LazyRolesManagement,
+  LazyUsersList,
+  LazySearchInterface,
+  LazyNotFound,
+} from "./components/lazy/LazyComponents";
 
 // Import du contexte global pour les permissions
 import { RolePermissionsProvider } from "./context/RolePermissionsContext";
@@ -61,59 +64,158 @@ const App = () => {
           <Routes>
             {/* Routes publiques */}
             <Route path="/" element={<Navigate to={ROUTES.AUTH.LOGIN} />} />
-            <Route path={ROUTES.AUTH.LOGIN} element={<LoginForm />} />
-            <Route path={ROUTES.AUTH.SETUP} element={<SetupWizard />} />
+            <Route
+              path={ROUTES.AUTH.LOGIN}
+              element={
+                <SuspenseWrapper>
+                  <LazyLoginForm />
+                </SuspenseWrapper>
+              }
+            />
+            <Route
+              path={ROUTES.AUTH.SETUP}
+              element={
+                <SuspenseWrapper>
+                  <LazySetupWizard />
+                </SuspenseWrapper>
+              }
+            />
 
             {/* Routes protégées pour les administrateurs */}
             <Route element={<ProtectedRoute roles={["superadmin", "admin"]} />}>
-              <Route path={ROUTES.ADMIN.ROOT} element={<AdminLayout />}>
+              <Route
+                path={ROUTES.ADMIN.ROOT}
+                element={
+                  <SuspenseWrapper>
+                    <LazyAdminLayout />
+                  </SuspenseWrapper>
+                }
+              >
                 <Route
                   path={ROUTES.ADMIN.DASHBOARD}
-                  element={<AdminDashboard />}
+                  element={
+                    <SuspenseWrapper>
+                      <LazyAdminDashboard />
+                    </SuspenseWrapper>
+                  }
                 />
                 <Route
                   path={ROUTES.ADMIN.CREATE_ADMIN}
-                  element={<CreateAdminForm />}
+                  element={
+                    <SuspenseWrapper>
+                      <LazyCreateAdminForm />
+                    </SuspenseWrapper>
+                  }
                 />
                 <Route
                   path={ROUTES.ADMIN.COMPANY}
-                  element={<CompanyManagement />}
+                  element={
+                    <SuspenseWrapper>
+                      <LazyCompanyManagement />
+                    </SuspenseWrapper>
+                  }
                 />
                 <Route
                   path={ROUTES.ADMIN.PROCESS_STEPS}
-                  element={<ProcessTemplatesList />}
+                  element={
+                    <SuspenseWrapper>
+                      <LazyProcessTemplatesList />
+                    </SuspenseWrapper>
+                  }
                 />
                 <Route
                   path={ROUTES.ADMIN.PROJECTS}
-                  element={<ProjectsManagement />}
+                  element={
+                    <SuspenseWrapper>
+                      <LazyProjectsManagement />
+                    </SuspenseWrapper>
+                  }
                 />
                 <Route
                   path={ROUTES.ADMIN.PROCESS_STEPS}
-                  element={<ProcessStepsManagement />}
+                  element={
+                    <SuspenseWrapper>
+                      <LazyProcessStepsManagement />
+                    </SuspenseWrapper>
+                  }
                 />
                 <Route
                   path={ROUTES.ADMIN.ROLES}
-                  element={<RolesManagement />}
+                  element={
+                    <SuspenseWrapper>
+                      <LazyRolesManagement />
+                    </SuspenseWrapper>
+                  }
                 />
-                <Route path={ROUTES.ADMIN.USERS} element={<UsersList />} />
-                <Route path={ROUTES.ADMIN.SETTINGS} element={<Settings />} />
+                <Route
+                  path={ROUTES.ADMIN.USERS}
+                  element={
+                    <SuspenseWrapper>
+                      <LazyUsersList />
+                    </SuspenseWrapper>
+                  }
+                />
+                <Route
+                  path={ROUTES.ADMIN.SETTINGS}
+                  element={
+                    <SuspenseWrapper>
+                      <LazySettings />
+                    </SuspenseWrapper>
+                  }
+                />
               </Route>
             </Route>
 
             {/* Routes protégées pour les utilisateurs */}
             <Route element={<ProtectedRoute />}>
-              <Route path={ROUTES.USER.ROOT} element={<UserLayout />}>
-                <Route path={ROUTES.USER.DASHBOARD} element={<Dashboard />} />
+              <Route
+                path={ROUTES.USER.ROOT}
+                element={
+                  <SuspenseWrapper>
+                    <LazyUserLayout />
+                  </SuspenseWrapper>
+                }
+              >
+                <Route
+                  path={ROUTES.USER.DASHBOARD}
+                  element={
+                    <SuspenseWrapper>
+                      <LazyDashboard />
+                    </SuspenseWrapper>
+                  }
+                />
                 <Route
                   path={ROUTES.USER.NEW_PROCESS}
-                  element={<NewProcess />}
+                  element={
+                    <SuspenseWrapper>
+                      <LazyNewProcess />
+                    </SuspenseWrapper>
+                  }
                 />
                 <Route
                   path={ROUTES.USER.PROCESS_DETAILS}
-                  element={<ProcessDetails />}
+                  element={
+                    <SuspenseWrapper>
+                      <LazyProcessDetails />
+                    </SuspenseWrapper>
+                  }
                 />
-                <Route path={ROUTES.USER.PROFILE} element={<UserProfile />} />
-                <Route path={ROUTES.USER.SETTINGS} element={<UserSettings />} />
+                <Route
+                  path={ROUTES.USER.PROFILE}
+                  element={
+                    <SuspenseWrapper>
+                      <LazyUserProfile />
+                    </SuspenseWrapper>
+                  }
+                />
+                <Route
+                  path={ROUTES.USER.SETTINGS}
+                  element={
+                    <SuspenseWrapper>
+                      <LazyUserSettings />
+                    </SuspenseWrapper>
+                  }
+                />
               </Route>
             </Route>
 
@@ -121,12 +223,23 @@ const App = () => {
             <Route element={<ProtectedRoute />}>
               <Route
                 path={ROUTES.SEARCH.INTERFACE}
-                element={<SearchInterface />}
+                element={
+                  <SuspenseWrapper>
+                    <LazySearchInterface />
+                  </SuspenseWrapper>
+                }
               />
             </Route>
 
             {/* Route pour les pages non trouvées */}
-            <Route path="*" element={<NotFound />} />
+            <Route
+              path="*"
+              element={
+                <SuspenseWrapper>
+                  <LazyNotFound />
+                </SuspenseWrapper>
+              }
+            />
           </Routes>
         </BrowserRouter>
       </RolePermissionsProvider>

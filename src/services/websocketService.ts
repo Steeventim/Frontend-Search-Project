@@ -1,4 +1,4 @@
-type MessageHandler = (data: any) => void;
+type MessageHandler = (data: unknown) => void;
 type ConnectionHandler = () => void;
 
 class WebSocketService {
@@ -104,7 +104,7 @@ class WebSocketService {
     this.onDisconnectHandlers.push(handler);
   }
 
-  send(type: string, payload: any) {
+  send(type: string, payload: unknown) {
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
       this.socket.send(JSON.stringify({ type, payload }));
     } else {

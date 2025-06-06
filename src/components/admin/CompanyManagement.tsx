@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Building, Save } from "lucide-react";
+import { Save } from "lucide-react";
 import { Card } from "../common/Card";
 import { Button } from "../common/Button";
 import { TextArea } from "../common/form/TextArea";

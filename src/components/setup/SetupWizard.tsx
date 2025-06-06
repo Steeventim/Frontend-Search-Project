@@ -21,11 +21,11 @@ import { v4 as uuidv4 } from "uuid";
 import api from "../../services/api";
 
 // Hook personnalisé pour gérer les formulaires
-const useForm = <T extends Record<string, any>>(initialValues: T) => {
+const useForm = <T extends Record<string, unknown>>(initialValues: T) => {
   const [values, setValues] = useState<T>(initialValues);
   const [errors, setErrors] = useState<Partial<Record<keyof T, string>>>({});
 
-  const handleChange = (field: keyof T, value: any) => {
+  const handleChange = (field: keyof T, value: unknown) => {
     console.log(
       `handleChange called for ${String(field)} with value: ${value}`
     );
@@ -34,7 +34,7 @@ const useForm = <T extends Record<string, any>>(initialValues: T) => {
   };
 
   const validate = (
-    validators: Partial<Record<keyof T, (value: any) => string>>
+    validators: Partial<Record<keyof T, (value: unknown) => string>>
   ) => {
     const newErrors: Partial<Record<keyof T, string>> = {};
     Object.entries(validators).forEach(([field, validator]) => {
@@ -67,10 +67,12 @@ const validatePhone = (phone: string) =>
     : "";
 
 // Schéma de validation pour les données sauvegardées
-const validateSavedProgress = (data: any) => {
+const validateSavedProgress = (data: unknown) => {
   try {
     if (!data || typeof data !== "object") return false;
-    const { currentStep, company, projects, processSteps, roles, users } = data;
+    const typedData = data as Record<string, unknown>;
+    const { currentStep, company, projects, processSteps, roles, users } =
+      typedData;
     if (
       typeof currentStep !== "number" ||
       !company ||
@@ -162,7 +164,7 @@ const SetupWizard: React.FC = () => {
         localStorage.removeItem("setupWizardProgress");
       }
     }
-  }, []);
+  }, [companyForm]);
 
   // Nettoyer localStorage après la fin du processus (facultatif)
   const clearProgress = () => {
@@ -198,6 +200,7 @@ const SetupWizard: React.FC = () => {
       projects,
       processSteps,
       roles,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       users: users.map(({ tempPassword, ...user }) => user), // Exclure tempPassword
     };
     try {
@@ -1100,8 +1103,11 @@ const SetupWizard: React.FC = () => {
       }
     } catch (error) {
       setGeneralError(
-        (error as any)?.response?.data?.message ||
-          "Une erreur est survenue lors de la sauvegarde."
+        error instanceof Error && "response" in error
+          ? (error as { response?: { data?: { message?: string } } }).response
+              ?.data?.message ||
+              "Une erreur est survenue lors de la sauvegarde."
+          : "Une erreur est survenue lors de la sauvegarde."
       );
     } finally {
       setLoading(false);

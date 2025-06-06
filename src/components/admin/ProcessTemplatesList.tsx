@@ -24,7 +24,6 @@ interface Etape {
 
 export const ProcessTemplatesList: React.FC = () => {
   const [etapes, setEtapes] = useState<Etape[]>([]);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchEtapes = async () => {
@@ -32,8 +31,7 @@ export const ProcessTemplatesList: React.FC = () => {
         const response = await api.get("/etapes/all");
         setEtapes(response.data.data);
       } catch (err) {
-        setError("Erreur lors du chargement des étapes");
-        console.error(err);
+        console.error("Erreur lors du chargement des étapes:", err);
       }
     };
 

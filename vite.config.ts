@@ -3,23 +3,56 @@ import react from "@vitejs/plugin-react";
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  // Note: 'allowedHosts' is not a valid property in Vite configuration.
-  // If you need to restrict hosts, consider using a middleware or proxy configuration.
   plugins: [react()],
   optimizeDeps: {
-    exclude: ["lucide-react"], // Exclure les dépendances spécifiques de l'optimisation
+    include: ["react", "react-dom", "react-router-dom"], // Pre-bundle critical dependencies
+    exclude: ["lucide-react"], // Exclude large icon libraries
   },
   build: {
-    outDir: "build", // Répertoire de sortie pour les fichiers de production
-    sourcemap: "hidden", // Générer des sourcemaps pour faciliter le débogage
-    minify: "esbuild", // Utiliser esbuild pour la minification
+    outDir: "build",
+    sourcemap: false, // Disable sourcemaps in production for smaller builds
+    minify: "esbuild",
+    target: "es2020", // Modern target for better optimization
+    cssCodeSplit: true, // Split CSS for better caching
     rollupOptions: {
       output: {
         manualChunks: {
-          vendor: ["react", "react-dom"], // Séparer les dépendances principales dans un chunk "vendor"
+          // Core React libraries
+          vendor: ["react", "react-dom"],
+
+          // Router and navigation
+          router: ["react-router-dom"],
+
+          // UI libraries
+          ui: ["@headlessui/react", "framer-motion"],
+
+          // Utilities and HTTP
+          utils: ["axios", "js-cookie", "lodash", "uuid"],
+
+          // Icons (lazy loaded)
+          icons: ["lucide-react"],
+
+          // Date and form utilities
+          forms: ["react-hook-form", "joi"],
+        },
+        // Optimize chunk names for better caching
+        chunkFileNames: () => {
+          return `js/[name]-[hash].js`;
+        },
+        assetFileNames: (assetInfo) => {
+          if (/\.(png|jpe?g|svg|gif|tiff|bmp|ico)$/i.test(assetInfo.name!)) {
+            return `images/[name]-[hash][extname]`;
+          }
+          if (/\.(css)$/i.test(assetInfo.name!)) {
+            return `css/[name]-[hash][extname]`;
+          }
+          return `assets/[name]-[hash][extname]`;
         },
       },
     },
+    // Performance optimizations
+    reportCompressedSize: false, // Disable to speed up build
+    chunkSizeWarningLimit: 1000, // Increase chunk size warning limit
   },
   server: {
     host: "0.0.0.0", // Permettre l'accès depuis d'autres appareils

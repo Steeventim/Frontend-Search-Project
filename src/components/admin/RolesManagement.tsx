@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Shield, Plus, Trash2, Save, Loader2, X } from "lucide-react";
-import { Card } from "../common/Card";
+import { Plus, Trash2, Loader2, X } from "lucide-react";
 import { Button } from "../common/Button";
 import api from "../../services/api";
 

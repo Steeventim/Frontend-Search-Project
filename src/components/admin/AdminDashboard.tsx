@@ -7,7 +7,6 @@ import {
   CheckCircle,
   AlertCircle,
   ArrowUpRight,
-  Building,
 } from "lucide-react";
 
 interface CardProps {
@@ -23,25 +22,6 @@ const Card: React.FC<CardProps> = ({ children, className = "" }) => {
 
 const AdminDashboard = () => {
   const [timeRange, setTimeRange] = useState("week");
-
-  // Stats data
-  const stats = [
-    {
-      title: "Utilisateurs",
-      value: "24",
-      icon: Users,
-      active: 18,
-      growth: 12.5,
-    },
-    {
-      title: "Etapes Projets",
-      value: "12",
-      icon: FileText,
-      active: 8,
-      growth: 5.2,
-    },
-    { title: "Projets", value: "5", icon: Building, active: 3, growth: 20 },
-  ];
 
   // Extended stats data
   const extendedStats = {

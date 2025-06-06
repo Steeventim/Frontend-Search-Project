@@ -18,7 +18,7 @@ export const useAuth = () => {
           const currentUser = await authService.getCurrentUser();
           setUser(currentUser);
         }
-      } catch (err) {
+      } catch {
         localStorage.removeItem("token");
       } finally {
         setLoading(false);

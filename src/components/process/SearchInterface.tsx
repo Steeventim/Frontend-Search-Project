@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { AxiosError } from "axios";
 import { Search, FileText, Plus, XCircle } from "lucide-react";
 import { FixedSizeList as List } from "react-window";
-import debounce from "lodash/debounce";
 import { Card } from "../common/Card";
 import { Button } from "../common/Button";
 import { searchService } from "../../services/searchService";
@@ -12,14 +11,13 @@ import { Dialog } from "../common/Dialog";
 import { SearchNavbar } from "../layout/SearchNavbar";
 import { userService } from "../../services/userService";
 import { useProcessData } from "../../hooks/useProcessData";
-import type { Etape, Process, ProcessData } from "../../types/process";
+import type { Etape, ProcessData } from "../../types/process";
 
 const SearchInterface: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [results, setResults] = useState<Hit[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedDocument, setSelectedDocument] = useState<Hit | null>(null);
   const [latestDocument, setLatestDocument] = useState<LatestDocument | null>(
     null
   );
@@ -113,7 +111,7 @@ const SearchInterface: React.FC = () => {
           id: nextEtapeCandidate.idEtape,
           name: nextEtapeCandidate.LibelleEtape,
         });
-        setUserDestinatorName(null);
+        setUserDestinatorName(null); // À ajuster si une logique existe
       } else {
         setNextEtape(null);
         setUserDestinatorName(null);
@@ -125,11 +123,12 @@ const SearchInterface: React.FC = () => {
   }, [currentEtape, etapes, process]);
 
   // Recherche avec debounce
-  const debouncedSearch = useCallback(
-    debounce(async (query: string) => {
-      if (!query.trim()) return;
-      setLoading(true);
-      setError(null);
+  const debouncedSearch = useCallback((query: string) => {
+    if (!query.trim()) return;
+    setLoading(true);
+    setError(null);
+
+    const timeoutId = setTimeout(async () => {
       try {
         const response: SearchResponse = await searchService.search(query);
         console.log(
@@ -152,9 +151,10 @@ const SearchInterface: React.FC = () => {
       } finally {
         setLoading(false);
       }
-    }, 500),
-    []
-  );
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, []);
 
   const handleSearch = useCallback(() => {
     debouncedSearch(searchQuery);
@@ -321,7 +321,7 @@ const SearchInterface: React.FC = () => {
           })
         : [
             highlightText(
-              hit.source.content || "Aucun extrait disponible",
+              hit._source.content || "Aucun extrait disponible",
               searchQuery
             ).slice(0, 150) + "...",
           ],
@@ -343,6 +343,7 @@ const SearchInterface: React.FC = () => {
     style: React.CSSProperties;
   }) => {
     const hit = highlightedResults[index];
+    console.log("Row hit:", JSON.stringify(hit, null, 2));
     return (
       <div
         style={{ ...style, padding: "8px 0" }}
@@ -351,7 +352,6 @@ const SearchInterface: React.FC = () => {
         <div className="max-w-full py-3 border-b border-gray-100">
           <div className="flex items-start justify-between space-y-1">
             <div className="space-y-1 max-w-[75%]">
-              {/* Titre tronqué */}
               <a
                 href="#"
                 onClick={() => handlePreview(hit.filename)}
@@ -360,18 +360,15 @@ const SearchInterface: React.FC = () => {
               >
                 {hit.filename}
               </a>
-
-              {/* Extension tronquée */}
               <div className="text-google-meta text-sm truncate">
                 Extension: {hit.extension}
               </div>
-
-              {/* Extraits pertinents tronqués */}
               <div className="text-google-text text-base line-clamp-2">
                 {hit.highlightedContent.map((highlight, idx) => (
                   <div
                     key={idx}
                     dangerouslySetInnerHTML={{ __html: highlight }}
+                    className="truncate overflow-hidden text-ellipsis whitespace-nowrap"
                   />
                 ))}
               </div>
@@ -392,13 +389,10 @@ const SearchInterface: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col justify-center items-center min-h-screen bg-gray-50">
-      <nav className="w-full bg-white shadow-md border-b border-gray-200">
-        {" "}
-        <SearchNavbar />
-      </nav>
-      <Card className="modern-card p-8 bg-white max-w-6xl w-full my-8">
-        <h2 className="text-2xl font-semibold text-gray-900 text-center mb-6">
+    <div className="space-y-6 p-6 bg-white min-h-screen">
+      <SearchNavbar />
+      <Card className="border border-gray-200 p-6 bg-white rounded-md max-w-3xl mx-auto">
+        <h2 className="text-xl font-normal text-gray-900 text-center mb-4">
           Recherche de documents
         </h2>
         <div className="flex space-x-4 items-center">
@@ -409,7 +403,7 @@ const SearchInterface: React.FC = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyPress={(e) => e.key === "Enter" && handleSearch()}
               placeholder="Rechercher dans les documents..."
-              className="modern-input block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
+              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md bg-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-base"
             />
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <Search className="h-5 w-5 text-gray-400" />
@@ -419,20 +413,20 @@ const SearchInterface: React.FC = () => {
             variant="primary"
             onClick={handleSearch}
             loading={loading}
-            className="text-base px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all"
+            className="text-base px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md"
           >
             Rechercher
           </Button>
         </div>
 
         {searchQuery.trim() && (
-          <div className="mt-4 flex flex-wrap gap-2">
+          <div className="mt-2 flex flex-wrap gap-2">
             {searchQuery.split(/\s+/).map(
               (word, index) =>
                 word.length > 0 && (
                   <span
                     key={index}
-                    className="inline-flex items-center px-2.5 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 transition-all hover:bg-blue-200"
+                    className="inline-flex items-center px-2 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800"
                   >
                     {word}
                   </span>
@@ -442,27 +436,27 @@ const SearchInterface: React.FC = () => {
         )}
 
         {error && (
-          <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-4 text-sm text-red-600 text-center">
+          <div className="mt-4 bg-red-50 border border-red-200 rounded-md p-4 text-sm text-red-600 text-center">
             {error}
           </div>
         )}
 
         {confirmationMessage && (
-          <div className="mt-4 bg-green-50 border border-green-200 rounded-lg p-4 text-sm text-green-600 text-center">
+          <div className="mt-4 bg-green-50 border border-green-200 rounded-md p-4 text-sm text-green-600 text-center">
             {confirmationMessage}
           </div>
         )}
 
         {highlightedResults.length > 0 && (
-          <div className="mt-8 max-w-3xl mx-auto">
-            <div className="text-sm text-gray-500 mb-3">
+          <div className="mt-6 max-w-3xl mx-auto">
+            <div className="text-sm text-gray-500 mb-2">
               Environ {highlightedResults.length} résultats
             </div>
             <div className="fixed-size-list-container">
               <List
                 height={600}
                 itemCount={highlightedResults.length}
-                itemSize={180} // Augmenté pour éviter le chevauchement
+                itemSize={160} // Augmenté pour éviter le chevauchement
                 width="100%"
               >
                 {Row}
@@ -472,7 +466,7 @@ const SearchInterface: React.FC = () => {
         )}
 
         {searchQuery.trim() && !loading && highlightedResults.length === 0 && (
-          <div className="mt-8 text-center text-gray-500 max-w-3xl mx-auto">
+          <div className="mt-6 text-center text-gray-500 max-w-3xl mx-auto">
             Aucun résultat trouvé pour "{searchQuery}"
           </div>
         )}
@@ -485,7 +479,7 @@ const SearchInterface: React.FC = () => {
               Étape suivante
             </label>
             {nextEtape ? (
-              <p className="mt-2 text-sm text-gray-900 border border-gray-200 rounded-md px-3 py-2 bg-gray-50">
+              <p className="mt-2 text-sm text-gray-900 border border-gray-300 rounded-md px-3 py-2 bg-gray-50">
                 {nextEtape.name}
               </p>
             ) : (
@@ -508,7 +502,7 @@ const SearchInterface: React.FC = () => {
               onChange={(e) => setComment(e.target.value)}
               placeholder="Ajouter un commentaire..."
               rows={4}
-              className="w-full border border-gray-200 p-3 mt-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+              className="w-full border p-2 mt-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
 
@@ -520,14 +514,14 @@ const SearchInterface: React.FC = () => {
               type="file"
               multiple
               onChange={handleFileChange}
-              className="mt-2 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all"
+              className="mt-2 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
             />
             {attachments.length > 0 && (
               <div className="mt-3 space-y-2">
                 {attachments.map((file, index) => (
                   <div
                     key={index}
-                    className="flex items-center justify-between p-2 bg-gray-50 rounded-md transition-all hover:bg-gray-100"
+                    className="flex items-center justify-between p-2 bg-gray-50 rounded-md"
                   >
                     <div className="flex items-center">
                       {file.type.startsWith("image/") ? (
@@ -546,7 +540,7 @@ const SearchInterface: React.FC = () => {
                     </div>
                     <button
                       onClick={() => removeAttachment(index)}
-                      className="text-gray-400 hover:text-gray-600 transition-all"
+                      className="text-gray-400 hover:text-gray-600"
                     >
                       <XCircle className="h-4 w-4" />
                     </button>
@@ -568,12 +562,8 @@ const SearchInterface: React.FC = () => {
             </p>
           )}
 
-          <div className="flex justify-end mt-6 space-x-3">
-            <Button
-              variant="secondary"
-              onClick={() => setShowDialog(false)}
-              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-all"
-            >
+          <div className="flex justify-end mt-4 space-x-2">
+            <Button variant="secondary" onClick={() => setShowDialog(false)}>
               Annuler
             </Button>
             <Button
@@ -581,7 +571,6 @@ const SearchInterface: React.FC = () => {
               onClick={handleAssign}
               disabled={assignLoading || !nextEtape || !userDestinatorName}
               loading={assignLoading}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all"
             >
               Affecter
             </Button>

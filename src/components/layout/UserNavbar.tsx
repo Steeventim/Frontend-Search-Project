@@ -14,8 +14,6 @@ import {
 } from "lucide-react";
 import api from "../../services/api";
 import Cookies from "js-cookie";
-import { NotificationCenter } from "../common/NotificationCenter";
-import { useNotifications } from "../../hooks/useNotification";
 import { useRolePermissions } from "../../context/RolePermissionsContext";
 
 interface Notification {

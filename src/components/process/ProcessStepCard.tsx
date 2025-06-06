@@ -1,14 +1,8 @@
 import React, { useState } from "react";
-import {
-  CheckCircle2,
-  XCircle,
-  MessageSquare,
-  Paperclip,
-  X,
-} from "lucide-react";
+import { CheckCircle2, XCircle, Paperclip, X } from "lucide-react";
 import { Button } from "../common/Button";
 import { Card } from "../common/Card";
-import type { Step, Attachment } from "../../types/process";
+import type { Step } from "../../types/process";
 
 interface ProcessStepCardProps {
   step: Step;

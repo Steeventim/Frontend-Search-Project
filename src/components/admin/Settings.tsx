@@ -1,6 +1,6 @@
-import React from 'react';
-import { Settings as SettingsIcon, Bell, Lock, Globe } from 'lucide-react';
-import { Card } from '../common/Card';
+import React from "react";
+import { Bell, Lock, Globe } from "lucide-react";
+import { Card } from "../common/Card";
 
 export const Settings: React.FC = () => {
   return (
@@ -14,20 +14,34 @@ export const Settings: React.FC = () => {
               <div className="p-2 rounded-full bg-blue-100">
                 <Bell className="h-5 w-5 text-blue-600" />
               </div>
-              <h3 className="ml-3 text-lg font-medium text-gray-900">Notifications</h3>
+              <h3 className="ml-3 text-lg font-medium text-gray-900">
+                Notifications
+              </h3>
             </div>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-700">Notifications par email</span>
+                <span className="text-sm text-gray-700">
+                  Notifications par email
+                </span>
                 <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" className="sr-only peer" defaultChecked />
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
+                    defaultChecked
+                  />
                   <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                 </label>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-700">Notifications système</span>
+                <span className="text-sm text-gray-700">
+                  Notifications système
+                </span>
                 <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" className="sr-only peer" defaultChecked />
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
+                    defaultChecked
+                  />
                   <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                 </label>
               </div>
@@ -41,20 +55,30 @@ export const Settings: React.FC = () => {
               <div className="p-2 rounded-full bg-blue-100">
                 <Lock className="h-5 w-5 text-blue-600" />
               </div>
-              <h3 className="ml-3 text-lg font-medium text-gray-900">Sécurité</h3>
+              <h3 className="ml-3 text-lg font-medium text-gray-900">
+                Sécurité
+              </h3>
             </div>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-700">Authentification à deux facteurs</span>
+                <span className="text-sm text-gray-700">
+                  Authentification à deux facteurs
+                </span>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input type="checkbox" className="sr-only peer" />
                   <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                 </label>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-700">Connexions simultanées</span>
+                <span className="text-sm text-gray-700">
+                  Connexions simultanées
+                </span>
                 <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" className="sr-only peer" defaultChecked />
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
+                    defaultChecked
+                  />
                   <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                 </label>
               </div>
@@ -68,11 +92,15 @@ export const Settings: React.FC = () => {
               <div className="p-2 rounded-full bg-blue-100">
                 <Globe className="h-5 w-5 text-blue-600" />
               </div>
-              <h3 className="ml-3 text-lg font-medium text-gray-900">Général</h3>
+              <h3 className="ml-3 text-lg font-medium text-gray-900">
+                Général
+              </h3>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Langue par défaut</label>
+                <label className="block text-sm font-medium text-gray-700">
+                  Langue par défaut
+                </label>
                 <select className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
                   <option>Français</option>
                   <option>English</option>
@@ -80,7 +108,9 @@ export const Settings: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Fuseau horaire</label>
+                <label className="block text-sm font-medium text-gray-700">
+                  Fuseau horaire
+                </label>
                 <select className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
                   <option>Europe/Paris</option>
                   <option>UTC</option>

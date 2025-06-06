@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { Clock, AlertCircle, ChevronRight, Calendar } from "lucide-react";
 import { formatDate } from "../../utils/date";
 
@@ -14,15 +14,9 @@ interface Process {
 
 interface ProcessListProps {
   processes: Process[];
-  onProcessSelect: (process: Process) => void;
 }
 
-export const ProcessList: React.FC<ProcessListProps> = ({
-  processes,
-  onProcessSelect,
-}) => {
-  const [sortOrder, setSortOrder] = useState("newest");
-
+export const ProcessList: React.FC<ProcessListProps> = ({ processes }) => {
   if (!processes.length)
     return (
       <div className="text-center p-8 bg-gray-50 rounded-lg">
@@ -30,8 +24,6 @@ export const ProcessList: React.FC<ProcessListProps> = ({
         <p className="text-gray-600">Aucun processus en cours</p>
       </div>
     );
-
-  
 
   const trierProcessus = () => {
     return [...processusExemple].sort((a, b) =>
