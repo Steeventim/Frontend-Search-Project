@@ -14,6 +14,7 @@ import {
   Menu as HamburgerMenu,
 } from "lucide-react";
 import Logo from "../common/Logo";
+import { NotificationButton } from "../common/NotificationButton";
 
 export const AdminNavbar: React.FC = () => {
   const navigate = useNavigate();
@@ -77,8 +78,10 @@ export const AdminNavbar: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center">
-            <Menu as="div" className="ml-3 relative">
+          <div className="flex items-center space-x-4">
+            <NotificationButton />
+            
+            <Menu as="div" className="relative">
               <Menu.Button className="flex rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                 <span className="sr-only">Open user menu</span>
                 <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">

@@ -1,50 +1,28 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Menu, Transition } from "@headlessui/react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard,
-  Bell,
   User,
   LogOut,
   Settings,
   Search,
-  Clock,
   Menu as HamburgerMenu,
 } from "lucide-react";
 import api from "../../services/api";
 import Cookies from "js-cookie";
 import { useRolePermissions } from "../../context/RolePermissionsContext";
 import Logo from "../common/Logo";
-
-interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  processId: string;
-  timestamp: Date;
-  read: boolean;
-}
+import { NotificationButton } from "../common/NotificationButton";
 
 export const UserNavbar: React.FC = () => {
   const navigate = useNavigate();
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [showNotifications, setShowNotifications] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const { permissions } = useRolePermissions();
   const userRole = Cookies.get("roleUser") || "Guest"; // Récupérer dynamiquement le rôle de l'utilisateur
   const canSearch = permissions[userRole]?.includes("Rechercher"); // Vérifie si l'utilisateur peut rechercher
-
-  useEffect(() => {
-    setNotifications([]);
-
-    const interval = setInterval(() => {
-      setNotifications([]);
-    }, 60000);
-
-    return () => clearInterval(interval);
-  }, []);
 
   const menuItems = [
     { icon: LayoutDashboard, label: "Tableau de bord", path: "/dashboard" },
@@ -52,23 +30,6 @@ export const UserNavbar: React.FC = () => {
       ? [{ icon: Search, label: "Recherche", path: "/search" }]
       : []), // Ajoute le lien "Recherche" uniquement si l'utilisateur a la permission
   ];
-
-  const unreadCount = notifications.filter((n) => !n.read).length;
-
-  const handleNotificationClick = async (notification: Notification) => {
-    try {
-      await api.put(`/notifications/${notification.id}/read`);
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === notification.id ? { ...n, read: true } : n))
-      );
-      navigate(`/process/${notification.processId}`);
-    } catch (err) {
-      console.error(
-        "Erreur lors du marquage de la notification comme lue:",
-        err
-      );
-    }
-  };
 
   const handleLogout = async () => {
     try {
@@ -111,80 +72,7 @@ export const UserNavbar: React.FC = () => {
 
           {/* Groupe notifications et profil */}
           <div className="flex items-center space-x-4">
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setShowNotifications(!showNotifications)}
-                className="relative p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                <span className="sr-only">Voir les notifications</span>
-                <Bell className="h-6 w-6" />
-                {unreadCount > 0 && (
-                  <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-400 ring-2 ring-white" />
-                )}
-              </button>
-              <AnimatePresence>
-                {showNotifications && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ duration: 0.2 }}
-                    className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
-                  >
-                    <div className="p-4">
-                      <div className="flex justify-between items-center">
-                        <h3 className="text-sm font-medium text-gray-900">
-                          Notifications
-                        </h3>
-                        {notifications.length > 0 && (
-                          <span className="text-xs text-gray-500">
-                            {unreadCount} non lu
-                            {unreadCount > 1 ? "s" : ""}
-                          </span>
-                        )}
-                      </div>
-                      <div className="mt-2 divide-y divide-gray-100">
-                        {notifications.length === 0 ? (
-                          <p className="text-sm text-gray-500 py-2">
-                            Aucune notification
-                          </p>
-                        ) : (
-                          notifications.map((notification) => (
-                            <div
-                              key={notification.id}
-                              onClick={() =>
-                                handleNotificationClick(notification)
-                              }
-                              className={`py-3 flex items-start cursor-pointer hover:bg-gray-50 ${
-                                !notification.read ? "bg-blue-50" : ""
-                              }`}
-                            >
-                              <div className="flex-shrink-0 pt-0.5">
-                                <Clock className="h-5 w-5 text-gray-400" />
-                              </div>
-                              <div className="ml-3 w-0 flex-1">
-                                <p className="text-sm font-medium text-gray-900">
-                                  {notification.title}
-                                </p>
-                                <p className="mt-1 text-sm text-gray-500">
-                                  {notification.message}
-                                </p>
-                                <p className="mt-1 text-xs text-gray-400">
-                                  {new Date(
-                                    notification.timestamp
-                                  ).toLocaleString()}
-                                </p>
-                              </div>
-                            </div>
-                          ))
-                        )}
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+            <NotificationButton />
 
             {/* Menu Utilisateur */}
             <Menu as="div" className="relative">
