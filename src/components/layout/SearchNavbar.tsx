@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Menu, Transition } from "@headlessui/react";
 import { User, LogOut, Settings } from "lucide-react";
 import Cookies from "js-cookie";
+import Logo from "../common/Logo";
 
 export const SearchNavbar: React.FC = () => {
   const navigate = useNavigate();
@@ -27,7 +28,11 @@ export const SearchNavbar: React.FC = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex items-center">
-            <Link to="/search/interface" className="text-xl font-bold text-blue-600">
+            <Logo variant="navbar" size="md" to="/search/interface" />
+            <Link
+              to="/search/interface"
+              className="ml-4 text-sm font-medium text-gray-500 hover:text-gray-900"
+            >
               Recherche
             </Link>
           </div>

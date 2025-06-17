@@ -5,6 +5,7 @@ import api from "../../services/api";
 import { Eye, EyeOff, Lock, Mail, User, Key, AlertCircle } from "lucide-react";
 import { ROUTES } from "../../constants/routes";
 import Cookies from "js-cookie";
+import Logo from "../common/Logo";
 
 const AuthForm = () => {
   const [formState, setFormState] = useState({
@@ -87,18 +88,28 @@ const AuthForm = () => {
         const etapesResponse = await api.get(`/etapes/role/${userRole}`);
         const etapes: { sequenceNumber: number }[] = etapesResponse.data.data;
 
-        const firstEtape = etapes.find((etape) => etape.sequenceNumber === 1);
+        // Vérifier si l'utilisateur a une étape avec sequenceNumber = 1
+        const hasFirstSequence = etapes.some((etape) => etape.sequenceNumber === 1);
+        console.log("User role:", userRole);
+        console.log("User etapes:", etapes);
+        console.log("Has sequenceNumber = 1:", hasFirstSequence);
 
         setAuthenticated(true);
 
         setTimeout(() => {
           if (userRole === "superadmin") {
+            console.log("Redirection: superadmin → CREATE_ADMIN");
             navigate(ROUTES.ADMIN.CREATE_ADMIN);
           } else if (userRole === "admin") {
+            console.log("Redirection: admin → SETUP");
             navigate(ROUTES.AUTH.SETUP);
-          } else if (firstEtape) {
+          } else if (hasFirstSequence) {
+            // Si l'utilisateur a sequenceNumber = 1, rediriger vers la recherche
+            console.log("Redirection: sequenceNumber = 1 → SEARCH.INTERFACE");
             navigate(ROUTES.SEARCH.INTERFACE);
           } else {
+            // Si l'utilisateur n'a PAS de sequenceNumber = 1, rediriger vers le dashboard
+            console.log("Redirection: sequenceNumber ≠ 1 → USER.DASHBOARD");
             navigate(ROUTES.USER.DASHBOARD);
           }
         }, 500);
@@ -176,6 +187,7 @@ const AuthForm = () => {
         <div className="max-w-md mx-auto w-full">
           {authenticated ? (
             <div className="text-center py-16 flex flex-col items-center justify-center">
+              <Logo variant="auth" size="lg" className="mb-6" />
               <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mb-6">
                 <svg
                   className="w-10 h-10 text-green-600"
@@ -198,6 +210,9 @@ const AuthForm = () => {
             </div>
           ) : (
             <>
+              <div className="text-center mb-8">
+                <Logo variant="auth" size="xl" className="mb-4" />
+              </div>
               <h2 className="text-3xl font-bold mb-2 text-gray-800">
                 {loginStep === 1 ? "Bonjour 👋" : "Entrez votre mot de passe"}
               </h2>

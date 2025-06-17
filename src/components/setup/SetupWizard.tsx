@@ -7,6 +7,7 @@ import { TextArea } from "../common/form/TextArea";
 import Select from "../common/form/Select";
 import Tooltip from "../common/Tooltip";
 import Modal from "../common/Modal";
+import Logo from "../common/Logo";
 import {
   Plus,
   Trash2,
@@ -1139,6 +1140,23 @@ const SetupWizard: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100 p-4 md:p-8">
       <div className="max-w-4xl mx-auto space-y-8">
+        {/* Header avec Logo */}
+        <div className="text-center space-y-4">
+          <Logo
+            variant="auth"
+            size="xl"
+            customText="SearchEngine - Configuration"
+            noLink={true}
+          />
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
+            Assistant de Configuration
+          </h1>
+          <p className="text-gray-600 max-w-2xl mx-auto">
+            Configurez votre système de gestion des processus en 5 étapes
+            simples. Vous pouvez sauvegarder et reprendre à tout moment.
+          </p>
+        </div>
+
         <div className="space-y-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             {steps.map((step, index) => (

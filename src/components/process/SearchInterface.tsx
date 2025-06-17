@@ -80,7 +80,14 @@ const SearchInterface: React.FC = () => {
   // Déterminer l'étape actuelle
   useEffect(() => {
     if (latestDocument?.etape) {
-      setCurrentEtape(latestDocument.etape);
+      // Adapter le type de latestDocument.etape vers Etape
+      const adaptedEtape: Etape = {
+        ...latestDocument.etape,
+        Validation: "pending", // Valeur par défaut string
+        createdAt: new Date().toISOString(), // Valeur par défaut
+        updatedAt: new Date().toISOString(), // Valeur par défaut
+      };
+      setCurrentEtape(adaptedEtape);
     } else if (process?.etape) {
       setCurrentEtape(process.etape);
     } else {
@@ -174,8 +181,7 @@ const SearchInterface: React.FC = () => {
     [searchQuery]
   );
 
-  const openAssignDialog = useCallback((document: Hit) => {
-    setSelectedDocument(document);
+  const openAssignDialog = useCallback(() => {
     setShowDialog(true);
   }, []);
 
@@ -321,7 +327,7 @@ const SearchInterface: React.FC = () => {
           })
         : [
             highlightText(
-              hit._source.content || "Aucun extrait disponible",
+              hit.source?.content || "Aucun extrait disponible",
               searchQuery
             ).slice(0, 150) + "...",
           ],
@@ -378,7 +384,7 @@ const SearchInterface: React.FC = () => {
               size="sm"
               icon={Plus}
               className="text-sm px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-full transition-all"
-              onClick={() => openAssignDialog(hit)}
+              onClick={() => openAssignDialog()}
             >
               Affecter
             </Button>

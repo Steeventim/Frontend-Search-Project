@@ -15,6 +15,7 @@ import {
 import api from "../../services/api";
 import Cookies from "js-cookie";
 import { useRolePermissions } from "../../context/RolePermissionsContext";
+import Logo from "../common/Logo";
 
 interface Notification {
   id: string;
@@ -87,9 +88,7 @@ export const UserNavbar: React.FC = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo et menu principal */}
           <div className="flex items-center">
-            <Link to="/dashboard" className="text-xl font-bold text-blue-600">
-              ProcessFlow
-            </Link>
+            <Logo variant="navbar" size="md" to="/dashboard" />
             <div className="hidden sm:flex sm:ml-6 sm:space-x-8">
               {menuItems.map((item) => (
                 <Link

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import Cookies from "js-cookie";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
+import Logo from "../common/Logo";
 
 const CreateAdminForm = () => {
   const [email, setEmail] = useState("");
@@ -204,232 +205,250 @@ const CreateAdminForm = () => {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-8 bg-white p-8 rounded-lg shadow-md">
-      <h2 className="text-3xl font-bold mb-6 text-gray-800">
-        Créer un Administrateur
-      </h2>
-
-      <form onSubmit={handleSubmit}>
-        <div className="mb-4">
-          <label className="block text-gray-700 mb-2">Email</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) =>
-              handleInputChange("email", e.target.value, setEmail)
-            }
-            placeholder="email@exemple.com"
-            required
-            className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
-              validationErrors.email
-                ? "border-red-500 focus:ring-red-500"
-                : "focus:ring-blue-600"
-            }`}
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100 p-4 md:p-8 flex items-center justify-center">
+      <div className="max-w-md w-full bg-white p-8 rounded-lg shadow-lg">
+        {/* Header avec Logo */}
+        <div className="text-center mb-6">
+          <Logo
+            variant="auth"
+            size="lg"
+            customText="SearchEngine"
+            noLink={true}
           />
-          {validationErrors.email && (
-            <p className="text-red-500 text-sm mt-1">
-              {validationErrors.email}
-            </p>
-          )}
+          <h2 className="text-2xl font-bold mt-4 text-gray-800">
+            Créer un Administrateur
+          </h2>
+          <p className="text-gray-600 mt-2 text-sm">
+            Configuration initiale du système
+          </p>
         </div>
 
-        <div className="mb-4">
-          <label className="block text-gray-700 mb-2">Mot de passe</label>
-          <div className="relative">
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <label className="block text-gray-700 mb-2">Email</label>
             <input
-              type={showPassword ? "text" : "password"}
-              value={password}
+              type="email"
+              value={email}
               onChange={(e) =>
-                handleInputChange("password", e.target.value, setPassword)
+                handleInputChange("email", e.target.value, setEmail)
               }
-              placeholder="••••••••"
+              placeholder="email@exemple.com"
               required
-              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 pr-10 ${
-                validationErrors.password
+              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                validationErrors.email
                   ? "border-red-500 focus:ring-red-500"
                   : "focus:ring-blue-600"
               }`}
             />
-            <button
-              type="button"
-              onClick={togglePasswordVisibility}
-              className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700"
-            >
-              {showPassword ? (
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z"
-                    clipRule="evenodd"
-                  />
-                  <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
-                </svg>
-              ) : (
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                  <path
-                    fillRule="evenodd"
-                    d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              )}
-            </button>
+            {validationErrors.email && (
+              <p className="text-red-500 text-sm mt-1">
+                {validationErrors.email}
+              </p>
+            )}
           </div>
-          <p className="text-xs text-gray-500 mt-1">
-            Cliquez sur l'icône pour afficher/masquer le mot de passe
-          </p>
-          {validationErrors.password && (
-            <p className="text-red-500 text-sm mt-1">
-              {validationErrors.password}
-            </p>
-          )}
-        </div>
 
-        <div className="mb-4">
-          <label className="block text-gray-700 mb-2">Nom</label>
-          <input
-            type="text"
-            value={nomUser}
-            onChange={(e) =>
-              handleInputChange("nomUser", e.target.value, setNomUser)
-            }
-            placeholder="Timnou Tchuinte"
-            required
-            className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
-              validationErrors.nomUser
-                ? "border-red-500 focus:ring-red-500"
-                : "focus:ring-blue-600"
-            }`}
-          />
-          {validationErrors.nomUser && (
-            <p className="text-red-500 text-sm mt-1">
-              {validationErrors.nomUser}
+          <div className="mb-4">
+            <label className="block text-gray-700 mb-2">Mot de passe</label>
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) =>
+                  handleInputChange("password", e.target.value, setPassword)
+                }
+                placeholder="••••••••"
+                required
+                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 pr-10 ${
+                  validationErrors.password
+                    ? "border-red-500 focus:ring-red-500"
+                    : "focus:ring-blue-600"
+                }`}
+              />
+              <button
+                type="button"
+                onClick={togglePasswordVisibility}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700"
+              >
+                {showPassword ? (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z"
+                      clipRule="evenodd"
+                    />
+                    <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
+                  </svg>
+                ) : (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                    <path
+                      fillRule="evenodd"
+                      d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                )}
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              Cliquez sur l'icône pour afficher/masquer le mot de passe
             </p>
-          )}
-        </div>
+            {validationErrors.password && (
+              <p className="text-red-500 text-sm mt-1">
+                {validationErrors.password}
+              </p>
+            )}
+          </div>
 
-        <div className="mb-4">
-          <label className="block text-gray-700 mb-2">Prénom</label>
-          <input
-            type="text"
-            value={prenomUser}
-            onChange={(e) =>
-              handleInputChange("prenomUser", e.target.value, setPrenomUser)
-            }
-            placeholder="Yvan Steeve"
-            required
-            className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
-              validationErrors.prenomUser
-                ? "border-red-500 focus:ring-red-500"
-                : "focus:ring-blue-600"
-            }`}
-          />
-          {validationErrors.prenomUser && (
-            <p className="text-red-500 text-sm mt-1">
-              {validationErrors.prenomUser}
-            </p>
-          )}
-        </div>
-
-        <div className="mb-6">
-          <label className="block text-gray-700 mb-2">Téléphone</label>
-          <div className="flex">
-            <select
-              value={countryCode}
-              onChange={(e) => setCountryCode(e.target.value)}
-              className="min-w-24 px-3 py-2 border rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-600 bg-white text-gray-700"
-            >
-              {countryCodes.map((country) => (
-                <option key={country.code} value={country.code}>
-                  {country.flag} {country.code}
-                </option>
-              ))}
-            </select>
+          <div className="mb-4">
+            <label className="block text-gray-700 mb-2">Nom</label>
             <input
               type="text"
-              value={phoneNumber}
+              value={nomUser}
               onChange={(e) =>
-                handleInputChange("phoneNumber", e.target.value, setPhoneNumber)
+                handleInputChange("nomUser", e.target.value, setNomUser)
               }
-              placeholder="612345678"
+              placeholder="Timnou Tchuinte"
               required
-              className={`flex-grow px-4 py-2 border border-l-0 rounded-r-lg focus:outline-none focus:ring-2 ${
-                validationErrors.phoneNumber
+              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                validationErrors.nomUser
                   ? "border-red-500 focus:ring-red-500"
                   : "focus:ring-blue-600"
               }`}
             />
+            {validationErrors.nomUser && (
+              <p className="text-red-500 text-sm mt-1">
+                {validationErrors.nomUser}
+              </p>
+            )}
           </div>
-          <p className="text-xs text-gray-500 mt-1">
-            Format attendu: Indicatif + Numéro sans le premier zéro
-          </p>
-          {validationErrors.phoneNumber && (
-            <p className="text-red-500 text-sm mt-1">
-              {validationErrors.phoneNumber}
+
+          <div className="mb-4">
+            <label className="block text-gray-700 mb-2">Prénom</label>
+            <input
+              type="text"
+              value={prenomUser}
+              onChange={(e) =>
+                handleInputChange("prenomUser", e.target.value, setPrenomUser)
+              }
+              placeholder="Yvan Steeve"
+              required
+              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                validationErrors.prenomUser
+                  ? "border-red-500 focus:ring-red-500"
+                  : "focus:ring-blue-600"
+              }`}
+            />
+            {validationErrors.prenomUser && (
+              <p className="text-red-500 text-sm mt-1">
+                {validationErrors.prenomUser}
+              </p>
+            )}
+          </div>
+
+          <div className="mb-6">
+            <label className="block text-gray-700 mb-2">Téléphone</label>
+            <div className="flex">
+              <select
+                value={countryCode}
+                onChange={(e) => setCountryCode(e.target.value)}
+                className="min-w-24 px-3 py-2 border rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-600 bg-white text-gray-700"
+              >
+                {countryCodes.map((country) => (
+                  <option key={country.code} value={country.code}>
+                    {country.flag} {country.code}
+                  </option>
+                ))}
+              </select>
+              <input
+                type="text"
+                value={phoneNumber}
+                onChange={(e) =>
+                  handleInputChange(
+                    "phoneNumber",
+                    e.target.value,
+                    setPhoneNumber
+                  )
+                }
+                placeholder="612345678"
+                required
+                className={`flex-grow px-4 py-2 border border-l-0 rounded-r-lg focus:outline-none focus:ring-2 ${
+                  validationErrors.phoneNumber
+                    ? "border-red-500 focus:ring-red-500"
+                    : "focus:ring-blue-600"
+                }`}
+              />
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              Format attendu: Indicatif + Numéro sans le premier zéro
+            </p>
+            {validationErrors.phoneNumber && (
+              <p className="text-red-500 text-sm mt-1">
+                {validationErrors.phoneNumber}
+              </p>
+            )}
+          </div>
+
+          {error && (
+            <p className="text-red-500 mb-4 p-2 bg-red-50 border border-red-100 rounded">
+              {error}
             </p>
           )}
-        </div>
-
-        {error && (
-          <p className="text-red-500 mb-4 p-2 bg-red-50 border border-red-100 rounded">
-            {error}
-          </p>
-        )}
-        {success && (
-          <p className="text-green-500 mb-4 p-2 bg-green-50 border border-green-100 rounded">
-            {success}
-          </p>
-        )}
-
-        <button
-          type="submit"
-          disabled={loading || !isFormValid()}
-          className={`w-full py-2 rounded-lg transition-all duration-300 flex items-center justify-center ${
-            loading || !isFormValid()
-              ? "bg-gray-400 text-gray-700 cursor-not-allowed"
-              : "bg-blue-600 text-white hover:bg-blue-700"
-          }`}
-        >
-          {loading ? (
-            <>
-              <svg
-                className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                ></circle>
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                ></path>
-              </svg>
-              Création en cours...
-            </>
-          ) : (
-            "Créer"
+          {success && (
+            <p className="text-green-500 mb-4 p-2 bg-green-50 border border-green-100 rounded">
+              {success}
+            </p>
           )}
-        </button>
-      </form>
+
+          <button
+            type="submit"
+            disabled={loading || !isFormValid()}
+            className={`w-full py-2 rounded-lg transition-all duration-300 flex items-center justify-center ${
+              loading || !isFormValid()
+                ? "bg-gray-400 text-gray-700 cursor-not-allowed"
+                : "bg-blue-600 text-white hover:bg-blue-700"
+            }`}
+          >
+            {loading ? (
+              <>
+                <svg
+                  className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                Création en cours...
+              </>
+            ) : (
+              "Créer"
+            )}
+          </button>
+        </form>
+      </div>
     </div>
   );
 };

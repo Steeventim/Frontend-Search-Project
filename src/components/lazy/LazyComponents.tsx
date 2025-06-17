@@ -70,6 +70,7 @@ export const LazyNewProcess = lazy(() =>
     default: module.NewProcess,
   }))
 );
+// Force le rechargement sans cache
 export const LazySearchInterface = lazy(
   () => import("../process/SearchInterface")
 );

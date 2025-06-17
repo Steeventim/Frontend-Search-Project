@@ -13,6 +13,7 @@ import {
   User,
   Menu as HamburgerMenu,
 } from "lucide-react";
+import Logo from "../common/Logo";
 
 export const AdminNavbar: React.FC = () => {
   const navigate = useNavigate();
@@ -42,12 +43,12 @@ export const AdminNavbar: React.FC = () => {
         <div className="flex justify-between h-16">
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
-              <Link
+              <Logo
+                variant="navbar"
+                size="md"
                 to="/admin/dashboard"
-                className="text-xl font-bold text-blue-600"
-              >
-                ProcessFlow Admin
-              </Link>
+                customText="SearchEngine Admin"
+              />
             </div>
             {/* Menu Hamburger pour petits écrans */}
             <div className="flex sm:hidden">

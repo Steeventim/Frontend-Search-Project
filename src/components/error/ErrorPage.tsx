@@ -1,7 +1,7 @@
 import React from "react";
 import { AlertTriangle, Home, RotateCcw } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import { Button } from "../common/Button";
+import Logo from "../common/Logo";
 
 interface ErrorPageProps {
   error?: Error;
@@ -9,13 +9,20 @@ interface ErrorPageProps {
 }
 
 export const ErrorPage: React.FC<ErrorPageProps> = ({ error, resetError }) => {
-  const navigate = useNavigate();
+  const handleGoHome = () => {
+    window.location.href = "/";
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow-xl rounded-lg sm:px-10">
           <div className="text-center">
+            {/* Logo en haut de la page d'erreur */}
+            <div className="mb-6">
+              <Logo variant="error" size="lg" color="blue" noLink={true} />
+            </div>
+
             <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100">
               <AlertTriangle className="h-10 w-10 text-red-600" />
             </div>
@@ -53,7 +60,7 @@ export const ErrorPage: React.FC<ErrorPageProps> = ({ error, resetError }) => {
               <Button
                 variant="secondary"
                 icon={Home}
-                onClick={() => navigate("/")}
+                onClick={handleGoHome}
                 className="w-full"
               >
                 Retour à l'accueil

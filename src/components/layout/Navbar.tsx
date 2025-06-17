@@ -1,7 +1,8 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Menu, Transition } from '@headlessui/react';
-import { User, LogOut, Settings, Bell } from 'lucide-react';
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import { Menu, Transition } from "@headlessui/react";
+import { User, LogOut, Settings, Bell } from "lucide-react";
+import Logo from "../common/Logo";
 
 export const Navbar: React.FC = () => {
   const navigate = useNavigate();
@@ -12,7 +13,7 @@ export const Navbar: React.FC = () => {
         <div className="flex justify-between h-16">
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
-              <h1 className="text-xl font-bold text-blue-600">ProcessBPM</h1>
+              <Logo variant="navbar" size="md" customText="SearchEngine" />
             </div>
           </div>
 
@@ -45,9 +46,9 @@ export const Navbar: React.FC = () => {
                   <Menu.Item>
                     {({ active }) => (
                       <button
-                        onClick={() => navigate('/settings')}
+                        onClick={() => navigate("/settings")}
                         className={`${
-                          active ? 'bg-gray-100' : ''
+                          active ? "bg-gray-100" : ""
                         } flex px-4 py-2 text-sm text-gray-700 w-full`}
                       >
                         <Settings className="mr-3 h-5 w-5 text-gray-400" />
@@ -58,9 +59,9 @@ export const Navbar: React.FC = () => {
                   <Menu.Item>
                     {({ active }) => (
                       <button
-                        onClick={() => navigate('/login')}
+                        onClick={() => navigate("/login")}
                         className={`${
-                          active ? 'bg-gray-100' : ''
+                          active ? "bg-gray-100" : ""
                         } flex px-4 py-2 text-sm text-gray-700 w-full`}
                       >
                         <LogOut className="mr-3 h-5 w-5 text-gray-400" />

@@ -11,10 +11,70 @@ export const searchService = {
       console.log("Raw API response:", JSON.stringify(data, null, 2));
 
       if (data.success) {
-        const hits = data.data.hits || [];
-        console.log("Hits received:", JSON.stringify(hits, null, 2));
+        // Extraire les hits de la structure Elasticsearch
+        const elasticsearchHits = data.data?.hits?.hits || [];
+        console.log(
+          "Elasticsearch hits:",
+          JSON.stringify(elasticsearchHits, null, 2)
+        );
 
-        return data; // Renvoyer les données brutes
+        // Transformer la structure Elasticsearch vers notre format
+        const transformedHits = elasticsearchHits.map(
+          (hit: {
+            _id: string;
+            _score: number;
+            _source?: {
+              content?: string;
+              file?: {
+                filename?: string;
+                extension?: string;
+                content_type?: string;
+                created?: string;
+                last_modified?: string;
+                filesize?: number;
+                url?: string;
+                path?: object;
+              };
+              meta?: object;
+            };
+            highlight?: {
+              content?: string[];
+            };
+          }) => ({
+            id: hit._id,
+            score: hit._score,
+            source: {
+              content: hit._source?.content || "",
+              file: {
+                filename: hit._source?.file?.filename || "Nom inconnu",
+                extension: hit._source?.file?.extension || "Inconnu",
+                content_type: hit._source?.file?.content_type || "",
+                created: hit._source?.file?.created || "",
+                last_modified: hit._source?.file?.last_modified || "",
+                filesize: hit._source?.file?.filesize || 0,
+                url: hit._source?.file?.url || "",
+                path: hit._source?.file?.path || {},
+              },
+              meta: hit._source?.meta || {},
+            },
+            highlight: hit.highlight || undefined,
+          })
+        );
+
+        console.log(
+          "Transformed hits:",
+          JSON.stringify(transformedHits, null, 2)
+        );
+
+        return {
+          success: true,
+          searchTerm,
+          query: data.query,
+          data: {
+            total: data.data?.hits?.total?.value || transformedHits.length,
+            hits: transformedHits,
+          },
+        };
       } else {
         console.log("API response unsuccessful:", data);
         return {

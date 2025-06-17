@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import Logo from "../common/Logo";
 
 const NotFound = () => {
   const [position, setPosition] = useState({ x: 50, y: 50 });
@@ -60,6 +61,13 @@ const NotFound = () => {
 
       {/* Content */}
       <div className="relative z-20 text-center px-4">
+        <Logo
+          variant="error"
+          size="lg"
+          color="white"
+          className="mb-6"
+          noLink={true}
+        />
         <h1 className="text-4xl font-bold mb-4">Page Not Found</h1>
         <p className="text-xl mb-8 text-gray-300">
           Oops! The page you're looking for seems to have wandered off.
