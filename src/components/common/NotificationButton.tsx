@@ -1,15 +1,15 @@
-import React, { useState } from 'react';
-import { Bell } from 'lucide-react';
-import { useNotificationSystem } from '../../hooks/useNotificationSystem';
-import { NotificationPanel } from './NotificationPanel';
-import { notificationService } from '../../services/notificationService';
+import React, { useState } from "react";
+import { Bell } from "lucide-react";
+import { useNotificationSystem } from "../../hooks/useNotificationSystem";
+import { NotificationPanel } from "./NotificationPanel";
+import { notificationService } from "../../services/notificationService";
 
 interface NotificationButtonProps {
   className?: string;
 }
 
 export const NotificationButton: React.FC<NotificationButtonProps> = ({
-  className = ''
+  className = "",
 }) => {
   const { unreadCount } = useNotificationSystem();
   const [isOpen, setIsOpen] = useState(false);
@@ -32,7 +32,7 @@ export const NotificationButton: React.FC<NotificationButtonProps> = ({
         <Bell className="h-6 w-6" />
         {unreadCount > 0 && (
           <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
-            {unreadCount > 99 ? '99+' : unreadCount}
+            {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         )}
       </button>

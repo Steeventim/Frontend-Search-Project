@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { Bell, X, Check, CheckCheck, Filter, Search } from 'lucide-react';
-import { useNotificationSystem } from '../../hooks/useNotificationSystem';
-import { NotificationItem } from './NotificationItem';
-import type { NotificationFilter } from '../../types/notification';
-import { NOTIFICATION_TYPES } from '../../types/notification';
+import React, { useState } from "react";
+import { Bell, X, Check, CheckCheck, Filter, Search } from "lucide-react";
+import { useNotificationSystem } from "../../hooks/useNotificationSystem";
+import { NotificationItem } from "./NotificationItem";
+import type { NotificationFilter } from "../../types/notification";
+import { NOTIFICATION_TYPES } from "../../types/notification";
 
 interface NotificationPanelProps {
   isOpen: boolean;
@@ -14,7 +14,7 @@ interface NotificationPanelProps {
 export const NotificationPanel: React.FC<NotificationPanelProps> = ({
   isOpen,
   onClose,
-  onNotificationClick
+  onNotificationClick,
 }) => {
   const {
     notifications,
@@ -26,11 +26,11 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
     markAllAsRead,
     deleteNotification,
     filterNotifications,
-    refreshNotifications
+    refreshNotifications,
   } = useNotificationSystem();
 
   const [currentFilter, setCurrentFilter] = useState<NotificationFilter>({});
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
 
   const handleFilterChange = async (filter: NotificationFilter) => {
     setCurrentFilter(filter);
@@ -41,7 +41,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
     try {
       await markAllAsRead();
     } catch (error) {
-      console.error('Erreur lors du marquage global:', error);
+      console.error("Erreur lors du marquage global:", error);
     }
   };
 
@@ -50,10 +50,13 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
     onClose();
   };
 
-  const filteredNotifications = notifications.filter(notification =>
-    searchTerm === '' || 
-    notification.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    notification.metadata?.documentTitle?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredNotifications = notifications.filter(
+    (notification) =>
+      searchTerm === "" ||
+      notification.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      notification.metadata?.documentTitle
+        ?.toLowerCase()
+        .includes(searchTerm.toLowerCase())
   );
 
   if (!isOpen) return null;
@@ -100,7 +103,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
               <CheckCheck className="h-4 w-4" />
               <span>Tout marquer comme lu</span>
             </button>
-            
+
             <button
               onClick={refreshNotifications}
               className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
@@ -127,7 +130,9 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
             <button
               onClick={() => handleFilterChange({})}
               className={`px-3 py-1 text-xs rounded-full transition-colors ${
-                !currentFilter.type ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                !currentFilter.type
+                  ? "bg-blue-100 text-blue-700"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >
               Toutes
@@ -135,7 +140,9 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
             <button
               onClick={() => handleFilterChange({ isRead: false })}
               className={`px-3 py-1 text-xs rounded-full transition-colors ${
-                currentFilter.isRead === false ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                currentFilter.isRead === false
+                  ? "bg-blue-100 text-blue-700"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >
               Non lues ({unreadCount})
@@ -145,7 +152,9 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
                 key={type}
                 onClick={() => handleFilterChange({ type })}
                 className={`px-3 py-1 text-xs rounded-full transition-colors ${
-                  currentFilter.type === type ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  currentFilter.type === type
+                    ? "bg-blue-100 text-blue-700"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
               >
                 {config.label} ({stats?.byType[type] || 0})

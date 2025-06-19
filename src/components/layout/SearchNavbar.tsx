@@ -41,7 +41,7 @@ export const SearchNavbar: React.FC = () => {
           {/* Zone utilisateur */}
           <div className="flex items-center space-x-4">
             <NotificationButton />
-            
+
             <Menu as="div" className="relative">
               <Menu.Button className="flex rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                 {/* <span className="sr-only">Ouvrir le menu utilisateur</span> */}

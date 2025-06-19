@@ -49,43 +49,46 @@ export interface NotificationFilter {
   offset?: number;
 }
 
-export type NotificationType = 
-  | 'document_received'
-  | 'document_pending' 
-  | 'document_approved'
-  | 'document_rejected'
-  | 'etape_assigned'
-  | 'system';
+export type NotificationType =
+  | "document_received"
+  | "document_pending"
+  | "document_approved"
+  | "document_rejected"
+  | "etape_assigned"
+  | "system";
 
-export const NOTIFICATION_TYPES: Record<NotificationType, { label: string; color: string; icon: string }> = {
+export const NOTIFICATION_TYPES: Record<
+  NotificationType,
+  { label: string; color: string; icon: string }
+> = {
   document_received: {
-    label: 'Document reçu',
-    color: 'blue',
-    icon: 'FileText'
+    label: "Document reçu",
+    color: "blue",
+    icon: "FileText",
   },
   document_pending: {
-    label: 'Document en attente',
-    color: 'yellow',
-    icon: 'Clock'
+    label: "Document en attente",
+    color: "yellow",
+    icon: "Clock",
   },
   document_approved: {
-    label: 'Document approuvé',
-    color: 'green',
-    icon: 'CheckCircle'
+    label: "Document approuvé",
+    color: "green",
+    icon: "CheckCircle",
   },
   document_rejected: {
-    label: 'Document rejeté',
-    color: 'red',
-    icon: 'XCircle'
+    label: "Document rejeté",
+    color: "red",
+    icon: "XCircle",
   },
   etape_assigned: {
-    label: 'Étape assignée',
-    color: 'purple',
-    icon: 'ArrowRight'
+    label: "Étape assignée",
+    color: "purple",
+    icon: "ArrowRight",
   },
   system: {
-    label: 'Système',
-    color: 'gray',
-    icon: 'Settings'
-  }
+    label: "Système",
+    color: "gray",
+    icon: "Settings",
+  },
 };

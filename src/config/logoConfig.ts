@@ -60,9 +60,9 @@ export interface LogoConfiguration {
 export const logoConfig: LogoConfiguration = {
   // 🎯 Configuration principale
   defaultText: "SearchEngine",
-  defaultImage: "/Logo_DGI_Cameroun.png",
-  altText: "Logo SearchEngine - Direction Générale des Impôts du Cameroun",
-  defaultLink: "/dashboard",
+  defaultImage: "/CCAA.jpeg", // Chemin vers l'image du logo
+  altText: "Logo SearchEngine - Autorité aéronautique du Cameroun",
+  defaultLink: "#",
 
   // 🎨 Variantes pour différents contextes
   variants: {
