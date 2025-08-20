@@ -4,7 +4,8 @@ export const LOGO_CONFIG = {
   defaultText: "SearchEngine",
 
   // URL de l'image par défaut (peut être changée ici)
-  defaultImage: "/Logo_DGI_Cameroun.png",
+  // Removed default DGI image - prefer no image by default or set a custom image in config
+  defaultImage: "",
 
   // URL de redirection par défaut
   defaultLink: "/dashboard",

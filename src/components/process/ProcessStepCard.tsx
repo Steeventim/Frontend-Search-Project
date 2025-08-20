@@ -43,7 +43,7 @@ export const ProcessStepCard: React.FC<ProcessStepCardProps> = ({
   };
 
   return (
-    <Card className={`${isCurrentStep ? "border-2 border-blue-500" : ""}`}>
+  <Card className={`${isCurrentStep ? "border-2 border-green-500" : ""}`}>
       <div className="flex items-center justify-between mb-4">
         <div>
           <h4 className="font-medium text-gray-900">{step.name}</h4>
@@ -59,7 +59,7 @@ export const ProcessStepCard: React.FC<ProcessStepCardProps> = ({
         </div>
       </div>
 
-      {step.comments.length > 0 && (
+          {step.comments.length > 0 && (
         <div className="space-y-2 mb-4">
           {step.comments.map((comment) => (
             <div key={comment.id} className="text-sm bg-gray-50 p-3 rounded">
@@ -72,18 +72,18 @@ export const ProcessStepCard: React.FC<ProcessStepCardProps> = ({
                 </span>
               </div>
               <p className="text-gray-600 mt-1">{comment.text}</p>
-              {comment.attachments && comment.attachments.length > 0 && (
+        {Array.isArray(comment.attachments) && comment.attachments.length > 0 && (
                 <div className="mt-2 space-y-1">
                   <p className="text-xs font-medium text-gray-500">
                     Pièces jointes:
                   </p>
-                  {comment.attachments.map((attachment) => (
+          {comment.attachments.map((attachment) => (
                     <a
                       key={attachment.id}
                       href={attachment.fileUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center text-sm text-blue-600 hover:text-blue-800"
+                      className="flex items-center text-sm text-green-600 hover:text-green-800"
                     >
                       <Paperclip className="w-4 h-4 mr-1" />
                       {attachment.fileName}
@@ -106,7 +106,7 @@ export const ProcessStepCard: React.FC<ProcessStepCardProps> = ({
             onChange={(e) => setComment(e.target.value)}
             placeholder="Ajouter un commentaire..."
             rows={3}
-            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm"
           />
 
           <div className="space-y-2">
@@ -153,15 +153,9 @@ export const ProcessStepCard: React.FC<ProcessStepCardProps> = ({
           </div>
 
           <div className="flex space-x-3">
+            {/* Approve button removed as per requirement */}
             <Button
-              variant="primary"
-              icon={CheckCircle2}
-              onClick={() => handleAction("approve")}
-            >
-              Approuver
-            </Button>
-            <Button
-              variant="danger"
+              variant="secondary"
               icon={XCircle}
               onClick={() => handleAction("reject")}
             >

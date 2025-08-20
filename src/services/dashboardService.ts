@@ -7,9 +7,10 @@ import type {
 } from "../types/dashboard";
 
 export const dashboardService = {
-  // Récupère toutes les données du dashboard
+  // Récupère toutes les données du dashboard (endpoint complet fourni par le backend)
   getDashboardData: async (): Promise<DashboardData> => {
-    const { data } = await api.get("/dashboard");
+    // Utilise l'endpoint complet demandé par le backend
+    const { data } = await api.get("/admin/dashboard/complete");
     return data;
   },
 

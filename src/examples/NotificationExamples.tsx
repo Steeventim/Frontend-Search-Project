@@ -10,7 +10,7 @@ import { useNotificationSystem } from "../hooks/useNotificationSystem";
 import { NotificationButton } from "../components/common/NotificationButton";
 import { NotificationPanel } from "../components/common/NotificationPanel";
 import { notificationService } from "../services/notificationService";
-import type { NotificationFilter } from "../types/notification";
+import type { NotificationFilter, Notification } from "../types/notification";
 
 // ===================================================================
 // 1. EXEMPLE BASIC - Bouton de notification simple
@@ -84,7 +84,7 @@ export const AdvancedNotificationExample: React.FC = () => {
 
       {/* Statistiques */}
       <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="bg-blue-100 p-4 rounded">
+  <div className="bg-green-100 p-4 rounded">
           <h3 className="font-semibold">Total</h3>
           <p className="text-2xl">{stats?.total || 0}</p>
         </div>
@@ -102,7 +102,7 @@ export const AdvancedNotificationExample: React.FC = () => {
       <div className="flex space-x-4 mb-6">
         <button
           onClick={refreshNotifications}
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
         >
           Actualiser
         </button>
@@ -121,7 +121,7 @@ export const AdvancedNotificationExample: React.FC = () => {
         <button
           onClick={() => handleFilter({})}
           className={`px-3 py-1 rounded ${
-            !filter.type ? "bg-blue-500 text-white" : "bg-gray-200"
+            !filter.type ? "bg-green-500 text-white" : "bg-gray-200"
           }`}
         >
           Toutes
@@ -130,7 +130,7 @@ export const AdvancedNotificationExample: React.FC = () => {
         <button
           onClick={() => handleFilter({ isRead: false })}
           className={`px-3 py-1 rounded ${
-            filter.isRead === false ? "bg-blue-500 text-white" : "bg-gray-200"
+            filter.isRead === false ? "bg-green-500 text-white" : "bg-gray-200"
           }`}
         >
           Non lues
@@ -140,7 +140,7 @@ export const AdvancedNotificationExample: React.FC = () => {
           onClick={() => handleFilter({ type: "document_received" })}
           className={`px-3 py-1 rounded ${
             filter.type === "document_received"
-              ? "bg-blue-500 text-white"
+              ? "bg-green-500 text-white"
               : "bg-gray-200"
           }`}
         >
@@ -155,7 +155,7 @@ export const AdvancedNotificationExample: React.FC = () => {
             key={notification.id}
             className={`p-4 border rounded ${
               !notification.isRead
-                ? "bg-blue-50 border-blue-200"
+                ? "bg-green-50 border-green-200"
                 : "bg-white border-gray-200"
             }`}
           >
@@ -184,7 +184,7 @@ export const AdvancedNotificationExample: React.FC = () => {
                 {!notification.isRead && (
                   <button
                     onClick={() => handleMarkAsRead(notification.id)}
-                    className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+                    className="px-2 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600"
                   >
                     Marquer comme lu
                   </button>
@@ -212,7 +212,7 @@ export const AdvancedNotificationExample: React.FC = () => {
 export const CustomNavbarWithNotifications: React.FC = () => {
   const [isPanelOpen, setIsPanelOpen] = useState(false);
 
-  const handleNotificationClick = (notification: any) => {
+  const handleNotificationClick = (notification: Notification) => {
     // Navigation personnalisée selon le type
     const url = notificationService.getNotificationUrl(notification);
 
@@ -265,7 +265,7 @@ export const CustomNavbarWithNotifications: React.FC = () => {
 // ===================================================================
 
 export const DirectServiceExample: React.FC = () => {
-  const [notifications, setNotifications] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
 
   // Charger les notifications manuellement
@@ -279,13 +279,12 @@ export const DirectServiceExample: React.FC = () => {
       const stats = await notificationService.getNotificationStats();
 
       // Récupérer les non lues
-      const { count, notifications: unread } =
-        await notificationService.getUnreadNotifications();
+  const { count } = await notificationService.getUnreadNotifications();
 
-      setNotifications(allNotifications);
+  setNotifications(allNotifications);
 
-      console.log("Statistiques:", stats);
-      console.log("Non lues:", count);
+  console.log("Statistiques:", stats);
+  console.log("Non lues:", count);
     } catch (error) {
       console.error("Erreur:", error);
     } finally {
@@ -322,7 +321,7 @@ export const DirectServiceExample: React.FC = () => {
       <button
         onClick={loadNotifications}
         disabled={loading}
-        className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-300"
+  className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:bg-gray-300"
       >
         {loading ? "Chargement..." : "Charger les notifications"}
       </button>
@@ -376,7 +375,7 @@ export const NotificationWidget: React.FC = () => {
       {/* Statistiques rapides */}
       <div className="grid grid-cols-3 gap-4 mb-4 text-center">
         <div>
-          <div className="text-2xl font-bold text-blue-600">
+          <div className="text-2xl font-bold text-green-600">
             {stats?.total || 0}
           </div>
           <div className="text-xs text-gray-500">Total</div>
@@ -405,7 +404,7 @@ export const NotificationWidget: React.FC = () => {
               key={notification.id}
               className={`p-3 rounded border-l-4 ${
                 !notification.isRead
-                  ? "border-blue-500 bg-blue-50"
+                  ? "border-green-500 bg-green-50"
                   : "border-gray-300 bg-gray-50"
               }`}
             >
@@ -420,7 +419,7 @@ export const NotificationWidget: React.FC = () => {
                 </div>
 
                 {!notification.isRead && (
-                  <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1"></div>
+                  <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0 mt-1"></div>
                 )}
               </div>
             </div>
@@ -431,7 +430,7 @@ export const NotificationWidget: React.FC = () => {
       {/* Lien vers toutes les notifications */}
       {notifications.length > 5 && (
         <div className="mt-4 text-center">
-          <button className="text-blue-600 text-sm hover:text-blue-800">
+          <button className="text-green-600 text-sm hover:text-green-800">
             Voir toutes les notifications ({notifications.length})
           </button>
         </div>

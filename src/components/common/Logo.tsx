@@ -63,7 +63,7 @@ const Logo: React.FC<LogoProps> = ({
 
   // Configuration des couleurs
   const colorClasses = {
-    blue: "text-blue-600 hover:text-blue-700",
+  blue: "text-green-600 hover:text-green-700",
     gray: "text-gray-800 hover:text-gray-900",
     white: "text-white hover:text-gray-100",
     black: "text-black hover:text-gray-800",
@@ -83,18 +83,21 @@ const Logo: React.FC<LogoProps> = ({
     <div className={`flex items-center ${currentSize.container} ${className}`}>
       {/* Image du logo */}
       {!textOnly && (
-        <div className="flex-shrink-0">
-          <img
-            src={displayImage}
-            alt={LOGO_CONFIG.altText}
-            className={`${currentSize.image} object-contain`}
-            onError={(e) => {
-              // Fallback en cas d'erreur de chargement de l'image
-              const target = e.target as HTMLImageElement;
-              target.style.display = "none";
-            }}
-          />
-        </div>
+        // Only render image if a valid path was provided
+        displayImage ? (
+          <div className="flex-shrink-0">
+            <img
+              src={displayImage}
+              alt={LOGO_CONFIG.altText}
+              className={`${currentSize.image} object-contain`}
+              onError={(e) => {
+                // Fallback en cas d'erreur de chargement de l'image
+                const target = e.target as HTMLImageElement;
+                target.style.display = "none";
+              }}
+            />
+          </div>
+        ) : null
       )}
 
       {/* Texte du logo */}

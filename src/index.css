@@ -4,7 +4,8 @@
 
 @layer base {
   :root {
-    --google-blue: #1a0dab;
+  /* Primary brand color changed from blue to green */
+  --google-blue: #0b7a4d;
     --google-text: #4b4b4b;
     --google-meta: #006621;
   }
@@ -21,7 +22,7 @@
     color: var(--google-meta);
   }
   .hover\:text-google-blue-hover:hover {
-    color: #660099;
+  color: #065f46;
   }
 }
 

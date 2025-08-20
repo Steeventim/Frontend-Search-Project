@@ -8,6 +8,7 @@ export interface Comment {
   userId: string;
   userName: string;
   timestamp: string; // ISO string (ex: "2025-04-17T12:00:00Z")
+  attachments?: Attachment[];
 }
 
 export interface Attachment {

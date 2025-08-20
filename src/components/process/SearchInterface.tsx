@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { AxiosError } from "axios";
 import { Search, FileText, Plus, XCircle } from "lucide-react";
-import { FixedSizeList as List } from "react-window";
+// Removed react-window List to allow page scrollbar to handle result scrolling
 import { Card } from "../common/Card";
 import { Button } from "../common/Button";
 import { searchService } from "../../services/searchService";
@@ -167,6 +167,21 @@ const SearchInterface: React.FC = () => {
     debouncedSearch(searchQuery);
   }, [searchQuery, debouncedSearch]);
 
+  // Run search as user types (debounced). Clear results immediately when input is empty.
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setResults([]);
+      setError(null);
+      setLoading(false);
+      return;
+    }
+
+    const cancel = debouncedSearch(searchQuery);
+    return () => {
+      if (typeof cancel === "function") cancel();
+    };
+  }, [searchQuery, debouncedSearch]);
+
   const handlePreview = useCallback(
     (documentName: string) => {
       const searchTerm = searchQuery;
@@ -297,49 +312,62 @@ const SearchInterface: React.FC = () => {
     );
   }, []);
 
-  const highlightText = useCallback((text: string, query: string): string => {
-    if (!text || !query.trim()) return text;
-    const words = query
-      .split(/\s+/)
-      .filter((word) => word.length > 0)
-      .map((word) => word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
-    let highlightedText = text;
-    words.forEach((word) => {
-      const regex = new RegExp(`(${word})`, "gi");
-      highlightedText = highlightedText.replace(
-        regex,
-        '<span style="font-weight: bold;">$1</span>'
-      );
-    });
-    return highlightedText;
-  }, []);
+  // highlightText removed; highlighting handled when building snippets
 
   const highlightedResults = useMemo(() => {
     console.log("Results before processing:", JSON.stringify(results, null, 2));
-    const processedResults = results.map((hit) => ({
-      ...hit,
-      highlightedContent: hit.highlight?.content?.length
-        ? hit.highlight.content.map((text) => {
-            const transformed = transformHighlight(text);
-            return transformed.length > 150
-              ? transformed.slice(0, 150) + "..."
-              : transformed;
-          })
-        : [
-            highlightText(
-              hit.source?.content || "Aucun extrait disponible",
-              searchQuery
-            ).slice(0, 150) + "...",
-          ],
-      filename: hit.source?.file?.filename || "Nom inconnu",
-      extension: hit.source?.file?.extension || "Inconnu",
-    }));
+    type HitLike = {
+      filename?: string;
+      source?: { file?: { filename?: string; extension?: string }; content?: string };
+      highlight?: { content?: string[] } | { content?: string[] }[];
+    };
+
+    const processedResults = results.map((hit) => {
+      const h = hit as unknown as HitLike;
+      const filename = h.filename || h.source?.file?.filename || "Nom inconnu";
+
+      // If backend provided highlights, use them (trimmed). Otherwise compute centered snippet.
+      let snippets: string[] = [];
+      if (hit.highlight?.content && hit.highlight.content.length > 0) {
+        snippets = hit.highlight.content.map((text) => {
+          const transformed = transformHighlight(text);
+          return transformed.length > 300 ? transformed.slice(0, 300) + "..." : transformed;
+        });
+      } else {
+        const full = hit.source?.content || "Aucun extrait disponible";
+        const q = searchQuery.trim();
+        if (q.length === 0) {
+          snippets = [full.slice(0, 300) + (full.length > 300 ? "..." : "")];
+        } else {
+          const idx = full.toLowerCase().indexOf(q.toLowerCase());
+          if (idx === -1) {
+            // No direct match; fallback to the start
+            snippets = [full.slice(0, 300) + (full.length > 300 ? "..." : "")];
+          } else {
+            const windowSize = 120;
+            const start = Math.max(0, idx - Math.floor((windowSize - q.length) / 2));
+            const snippet = full.substring(start, start + windowSize);
+            // Highlight occurrences of the query in the snippet using a simple replacement (case-insensitive)
+            const safeQ = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+            const regex = new RegExp(`(${safeQ})`, "ig");
+            const highlighted = snippet.replace(regex, '<span style="background: #fff59d; font-weight:700;">$1</span>');
+            snippets = [ (start > 0 ? "..." : "") + highlighted + (start + windowSize < full.length ? "..." : "") ];
+          }
+        }
+      }
+
+      return {
+        ...hit,
+        highlightedContent: snippets,
+        filename,
+      };
+    });
     console.log(
       "Highlighted results:",
       JSON.stringify(processedResults, null, 2)
     );
     return processedResults;
-  }, [results, searchQuery, transformHighlight, highlightText]);
+  }, [results, searchQuery, transformHighlight]);
 
   const Row = ({
     index,
@@ -361,20 +389,18 @@ const SearchInterface: React.FC = () => {
               <a
                 href="#"
                 onClick={() => handlePreview(hit.filename)}
-                className="text-google-blue hover:text-google-blue-hover text-lg font-medium truncate inline-block"
+                className="text-google-green hover:text-google-green-hover text-lg font-medium truncate inline-block"
                 title={hit.filename}
               >
                 {hit.filename}
               </a>
-              <div className="text-google-meta text-sm truncate">
-                Extension: {hit.extension}
-              </div>
-              <div className="text-google-text text-base line-clamp-2">
+              {/* extension removed per request */}
+              <div className="text-google-text text-base">
                 {hit.highlightedContent.map((highlight, idx) => (
                   <div
                     key={idx}
                     dangerouslySetInnerHTML={{ __html: highlight }}
-                    className="truncate overflow-hidden text-ellipsis whitespace-nowrap"
+                    className="mb-1 text-sm"
                   />
                 ))}
               </div>
@@ -383,7 +409,7 @@ const SearchInterface: React.FC = () => {
               variant="secondary"
               size="sm"
               icon={Plus}
-              className="text-sm px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-full transition-all"
+              className="text-sm px-4 py-2 bg-green-100 hover:bg-green-200 text-green-700 rounded-full transition-all"
               onClick={() => openAssignDialog()}
             >
               Affecter
@@ -395,7 +421,7 @@ const SearchInterface: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 p-6 bg-white min-h-screen">
+    <div className="space-y-6 p-6 bg-white min-h-[80vh]">
       <SearchNavbar />
       <Card className="border border-gray-200 p-6 bg-white rounded-md max-w-3xl mx-auto">
         <h2 className="text-xl font-normal text-gray-900 text-center mb-4">
@@ -409,7 +435,7 @@ const SearchInterface: React.FC = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyPress={(e) => e.key === "Enter" && handleSearch()}
               placeholder="Rechercher dans les documents..."
-              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md bg-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-base"
+              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md bg-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 text-base"
             />
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <Search className="h-5 w-5 text-gray-400" />
@@ -419,7 +445,7 @@ const SearchInterface: React.FC = () => {
             variant="primary"
             onClick={handleSearch}
             loading={loading}
-            className="text-base px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md"
+            className="text-base px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md"
           >
             Rechercher
           </Button>
@@ -432,7 +458,7 @@ const SearchInterface: React.FC = () => {
                 word.length > 0 && (
                   <span
                     key={index}
-                    className="inline-flex items-center px-2 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800"
+                    className="inline-flex items-center px-2 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800"
                   >
                     {word}
                   </span>
@@ -454,21 +480,18 @@ const SearchInterface: React.FC = () => {
         )}
 
         {highlightedResults.length > 0 && (
-          <div className="mt-6 max-w-3xl mx-auto">
-            <div className="text-sm text-gray-500 mb-2">
-              Environ {highlightedResults.length} résultats
+            <div className="mt-6 max-w-3xl mx-auto">
+              <div className="text-sm text-gray-500 mb-2">
+                Environ {highlightedResults.length} résultats
+              </div>
+              <div className="w-full">
+                {highlightedResults.map((_, idx) => (
+                  <div key={idx}>
+                    {Row({ index: idx, style: {} })}
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="fixed-size-list-container">
-              <List
-                height={600}
-                itemCount={highlightedResults.length}
-                itemSize={160} // Augmenté pour éviter le chevauchement
-                width="100%"
-              >
-                {Row}
-              </List>
-            </div>
-          </div>
         )}
 
         {searchQuery.trim() && !loading && highlightedResults.length === 0 && (
@@ -508,7 +531,7 @@ const SearchInterface: React.FC = () => {
               onChange={(e) => setComment(e.target.value)}
               placeholder="Ajouter un commentaire..."
               rows={4}
-              className="w-full border p-2 mt-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full border p-2 mt-2 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
             />
           </div>
 
@@ -520,7 +543,7 @@ const SearchInterface: React.FC = () => {
               type="file"
               multiple
               onChange={handleFileChange}
-              className="mt-2 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              className="mt-2 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
             />
             {attachments.length > 0 && (
               <div className="mt-3 space-y-2">

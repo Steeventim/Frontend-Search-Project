@@ -138,8 +138,8 @@ const AuthForm = () => {
   );
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row bg-gradient-to-br from-blue-50 to-white">
-      <div className="lg:w-1/2 bg-gradient-to-r from-blue-700 to-indigo-600 p-8 hidden lg:flex flex-col justify-center relative overflow-hidden">
+    <div className="min-h-screen flex flex-col lg:flex-row bg-gradient-to-br from-green-50 to-white">
+      <div className="lg:w-1/2 bg-gradient-to-r from-green-700 to-emerald-600 p-8 hidden lg:flex flex-col justify-center relative overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <div
             className="absolute w-96 h-96 rounded-full bg-white/20 -top-20 -left-20 animate-pulse"
@@ -163,7 +163,7 @@ const AuthForm = () => {
           <h2 className="text-4xl font-bold mb-4">
             Bienvenue sur notre plateforme
           </h2>
-          <p className="text-lg mb-8 text-blue-100">
+          <p className="text-lg mb-8 text-green-100">
             Sécurisée et intuitive, notre solution vous permet de gérer
             efficacement vos processus métiers.
           </p>
@@ -172,13 +172,13 @@ const AuthForm = () => {
               <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center mr-4">
                 <Key className="w-5 h-5 text-white" />
               </div>
-              <p className="text-blue-100">Authentification sécurisée</p>
+              <p className="text-green-100">Authentification sécurisée</p>
             </div>
             <div className="flex items-center">
               <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center mr-4">
                 <User className="w-5 h-5 text-white" />
               </div>
-              <p className="text-blue-100">Gestion des rôles et permissions</p>
+              <p className="text-green-100">Gestion des rôles et permissions</p>
             </div>
           </div>
         </div>
@@ -239,13 +239,13 @@ const AuthForm = () => {
                           onChange={handleChange}
                           required
                           placeholder="votre@email.com"
-                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                         />
                       </div>
                     </div>
                     <button
                       type="submit"
-                      className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 flex items-center justify-center"
+                      className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-3 rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all duration-300 flex items-center justify-center"
                     >
                       Continuer
                     </button>
@@ -276,7 +276,7 @@ const AuthForm = () => {
                           onChange={handleChange}
                           required
                           placeholder="••••••••"
-                          className="w-full pl-10 pr-14 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full pl-10 pr-14 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                         />
                         <button
                           type="button"
@@ -298,7 +298,7 @@ const AuthForm = () => {
                         name="rememberMe"
                         checked={formState.rememberMe}
                         onChange={handleChange}
-                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
                       />
                       <label
                         htmlFor="rememberMe"
@@ -308,7 +308,7 @@ const AuthForm = () => {
                       </label>
                       <a
                         href="#"
-                        className="ml-auto text-sm text-blue-600 hover:text-blue-800"
+                        className="ml-auto text-sm text-green-600 hover:text-green-800"
                       >
                         Mot de passe oublié ?
                       </a>
@@ -324,7 +324,7 @@ const AuthForm = () => {
                     <button
                       type="submit"
                       disabled={loading}
-                      className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 flex items-center justify-center"
+                      className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-3 rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all duration-300 flex items-center justify-center"
                     >
                       {loading ? (
                         <svg

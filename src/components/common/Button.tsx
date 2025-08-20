@@ -2,7 +2,7 @@ import React from "react";
 import clsx from "clsx";
 
 interface ButtonProps {
-  variant: "primary" | "secondary";
+  variant: "primary" | "secondary" | "danger";
   size?: "sm" | "md" | "lg";
   icon?: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   className?: string;

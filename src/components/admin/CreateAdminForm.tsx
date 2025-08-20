@@ -205,7 +205,7 @@ const CreateAdminForm = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100 p-4 md:p-8 flex items-center justify-center">
+  <div className="min-h-screen bg-gradient-to-br from-green-50 to-gray-100 p-4 md:p-8 flex items-center justify-center">
       <div className="max-w-md w-full bg-white p-8 rounded-lg shadow-lg">
         {/* Header avec Logo */}
         <div className="text-center mb-6">

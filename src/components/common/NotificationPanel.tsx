@@ -1,14 +1,14 @@
 import React, { useState } from "react";
-import { Bell, X, Check, CheckCheck, Filter, Search } from "lucide-react";
+import { Bell, X, CheckCheck, Filter, Search } from "lucide-react";
 import { useNotificationSystem } from "../../hooks/useNotificationSystem";
 import { NotificationItem } from "./NotificationItem";
-import type { NotificationFilter } from "../../types/notification";
+import type { NotificationFilter, Notification } from "../../types/notification";
 import { NOTIFICATION_TYPES } from "../../types/notification";
 
 interface NotificationPanelProps {
   isOpen: boolean;
   onClose: () => void;
-  onNotificationClick?: (notification: any) => void;
+  onNotificationClick?: (notification: Notification) => void;
 }
 
 export const NotificationPanel: React.FC<NotificationPanelProps> = ({
@@ -45,7 +45,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
     }
   };
 
-  const handleNotificationClick = (notification: any) => {
+  const handleNotificationClick = (notification: Notification) => {
     onNotificationClick?.(notification);
     onClose();
   };
@@ -98,7 +98,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
             <button
               onClick={handleMarkAllAsRead}
               disabled={unreadCount === 0}
-              className="flex items-center space-x-2 px-3 py-1 text-sm text-blue-600 hover:text-blue-700 disabled:text-gray-400 transition-colors"
+              className="flex items-center space-x-2 px-3 py-1 text-sm text-green-600 hover:text-green-700 disabled:text-gray-400 transition-colors"
             >
               <CheckCheck className="h-4 w-4" />
               <span>Tout marquer comme lu</span>
@@ -121,7 +121,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
               placeholder="Rechercher des notifications..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
             />
           </div>
 
@@ -131,7 +131,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
               onClick={() => handleFilterChange({})}
               className={`px-3 py-1 text-xs rounded-full transition-colors ${
                 !currentFilter.type
-                  ? "bg-blue-100 text-blue-700"
+                  ? "bg-green-100 text-green-700"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >
@@ -141,7 +141,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
               onClick={() => handleFilterChange({ isRead: false })}
               className={`px-3 py-1 text-xs rounded-full transition-colors ${
                 currentFilter.isRead === false
-                  ? "bg-blue-100 text-blue-700"
+                  ? "bg-green-100 text-green-700"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >
@@ -153,7 +153,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
                 onClick={() => handleFilterChange({ type })}
                 className={`px-3 py-1 text-xs rounded-full transition-colors ${
                   currentFilter.type === type
-                    ? "bg-blue-100 text-blue-700"
+                    ? "bg-green-100 text-green-700"
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
               >
@@ -167,7 +167,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
         <div className="flex-1 overflow-y-auto">
           {loading ? (
             <div className="flex items-center justify-center h-32">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
             </div>
           ) : error ? (
             <div className="p-4 text-center text-red-600">

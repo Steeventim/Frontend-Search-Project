@@ -45,7 +45,7 @@ const Modal: React.FC<ModalProps> = ({
           <Button
             variant="primary"
             onClick={onConfirm}
-            className="bg-blue-600 text-white hover:bg-blue-700"
+            className="bg-green-600 text-white hover:bg-green-700"
             aria-label="Confirmer"
           >
             Confirmer

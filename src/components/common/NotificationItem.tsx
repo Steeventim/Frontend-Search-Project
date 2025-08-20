@@ -41,7 +41,7 @@ const getNotificationIcon = (type: string) => {
 
 const getNotificationColor = (type: string) => {
   const colorMap = {
-    blue: "text-blue-600 bg-blue-50",
+  blue: "text-green-600 bg-green-50",
     yellow: "text-yellow-600 bg-yellow-50",
     green: "text-green-600 bg-green-50",
     red: "text-red-600 bg-red-50",
@@ -79,7 +79,7 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
   return (
     <div
       className={`p-4 border-l-4 border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer ${
-        !notification.isRead ? "bg-blue-50 border-l-blue-500" : "bg-white"
+  !notification.isRead ? "bg-green-50 border-l-green-500" : "bg-white"
       }`}
       onClick={handleClick}
     >
@@ -100,7 +100,7 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
                   notification.type}
               </span>
               {!notification.isRead && (
-                <span className="h-2 w-2 bg-blue-600 rounded-full"></span>
+                <span className="h-2 w-2 bg-green-600 rounded-full"></span>
               )}
             </div>
 
@@ -133,7 +133,7 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
                 e.stopPropagation();
                 onMarkAsRead(notification.id);
               }}
-              className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
+              className="p-1 text-gray-400 hover:text-green-600 transition-colors"
               title="Marquer comme lu"
             >
               <Eye className="h-4 w-4" />

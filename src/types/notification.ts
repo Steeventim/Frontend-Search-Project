@@ -2,8 +2,17 @@ export interface Notification {
   id: string;
   message: string;
   type: NotificationType;
+  // legacy/alternate fields used in some components
   isRead: boolean;
+  // alias for some components expecting 'read'
+  read?: boolean;
   createdAt: string;
+  // alias for some components expecting 'timestamp'
+  timestamp?: string;
+  // optional title (some notifications carry a title)
+  title?: string;
+  // optional process id used by certain flows
+  processId?: string;
   userId: string;
   documentId?: string;
   etapeId?: string;
@@ -55,11 +64,15 @@ export type NotificationType =
   | "document_approved"
   | "document_rejected"
   | "etape_assigned"
-  | "system";
+  | "system"
+  | "process_assigned"
+  | "process_approved"
+  | "process_rejected"
+  | "comment_added"
+  | "deadline_approaching";
 
-export const NOTIFICATION_TYPES: Record<
-  NotificationType,
-  { label: string; color: string; icon: string }
+export const NOTIFICATION_TYPES: Partial<
+  Record<NotificationType, { label: string; color: string; icon: string }>
 > = {
   document_received: {
     label: "Document reçu",

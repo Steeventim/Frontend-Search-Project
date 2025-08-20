@@ -1138,7 +1138,7 @@ const SetupWizard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100 p-4 md:p-8">
+  <div className="min-h-screen bg-gradient-to-br from-green-50 to-gray-100 p-4 md:p-8">
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Header avec Logo */}
         <div className="text-center space-y-4">

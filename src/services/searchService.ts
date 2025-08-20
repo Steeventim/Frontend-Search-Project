@@ -5,87 +5,95 @@ export const searchService = {
   // Méthode pour effectuer une recherche avec un terme
   search: async (searchTerm: string): Promise<SearchResponse> => {
     try {
+      // Use the enhanced-search endpoint which accepts a query param `q`
       const { data } = await api.get(
-        `/search1Highligth/${encodeURIComponent(searchTerm)}`
+        `/enhanced-search?q=${encodeURIComponent(searchTerm)}`
       );
       console.log("Raw API response:", JSON.stringify(data, null, 2));
 
       if (data.success) {
-        // Extraire les hits de la structure Elasticsearch
-        const elasticsearchHits = data.data?.hits?.hits || [];
-        console.log(
-          "Elasticsearch hits:",
-          JSON.stringify(elasticsearchHits, null, 2)
-        );
+        // Support both backend shapes:
+        // 1) New enhanced endpoint: { success, query, total, hits: [...] }
+        // 2) Legacy Elasticsearch shape: { data: { hits: { total: { value }, hits: [ ... ] } } }
+        const rawHits = Array.isArray(data.hits)
+          ? data.hits
+          : Array.isArray(data.data?.hits?.hits)
+          ? data.data.hits.hits
+          : [];
 
-        // Transformer la structure Elasticsearch vers notre format
-        const transformedHits = elasticsearchHits.map(
-          (hit: {
-            _id: string;
-            _score: number;
-            _source?: {
-              content?: string;
-              file?: {
-                filename?: string;
-                extension?: string;
-                content_type?: string;
-                created?: string;
-                last_modified?: string;
-                filesize?: number;
-                url?: string;
-                path?: object;
-              };
-              meta?: object;
+        console.log("Normalized raw hits:", JSON.stringify(rawHits, null, 2));
+
+        type RawHit = {
+          id?: string;
+          score?: number;
+          filename?: string;
+          path?: unknown;
+          highlights?: unknown;
+          source?: unknown;
+          highlight?: unknown;
+          _id?: string;
+          _score?: number;
+          _source?: Record<string, unknown>;
+        };
+
+        const transformedHits = rawHits.map((hit: unknown) => {
+          const raw = hit as RawHit;
+          // Backend enhanced-search returns { id, score, filename, path, highlights, source }
+          if (raw.id || raw.source) {
+            const src = (raw.source as Record<string, unknown>) || (raw._source as Record<string, unknown>) || {};
+            const content = typeof src['content'] === 'string' ? (src['content'] as string) : '';
+            return {
+              id: raw.id || raw._id || "",
+              score: raw.score || raw._score || 0,
+              source: { content, ...(src || {}) },
+              highlight: raw.highlights || raw.highlight || undefined,
             };
-            highlight?: {
-              content?: string[];
-            };
-          }) => ({
-            id: hit._id,
-            score: hit._score,
+          }
+
+          // Fallback for raw Elasticsearch hit shape
+          const src = raw._source as Record<string, unknown> | undefined;
+          const content = typeof src?.['content'] === 'string' ? (src!['content'] as string) : '';
+          const file = (src && typeof src['file'] === 'object' ? (src['file'] as Record<string, unknown>) : {}) || {};
+          const meta = (src && typeof src['meta'] === 'object' ? (src['meta'] as Record<string, unknown>) : {}) || {};
+          return {
+            id: raw._id || "",
+            score: raw._score || 0,
             source: {
-              content: hit._source?.content || "",
-              file: {
-                filename: hit._source?.file?.filename || "Nom inconnu",
-                extension: hit._source?.file?.extension || "Inconnu",
-                content_type: hit._source?.file?.content_type || "",
-                created: hit._source?.file?.created || "",
-                last_modified: hit._source?.file?.last_modified || "",
-                filesize: hit._source?.file?.filesize || 0,
-                url: hit._source?.file?.url || "",
-                path: hit._source?.file?.path || {},
-              },
-              meta: hit._source?.meta || {},
+              content,
+              file,
+              meta,
             },
-            highlight: hit.highlight || undefined,
-          })
-        );
+            highlight: raw.highlight || undefined,
+          };
+        });
 
-        console.log(
-          "Transformed hits:",
-          JSON.stringify(transformedHits, null, 2)
-        );
+        console.log("Transformed hits:", JSON.stringify(transformedHits, null, 2));
+
+        const totalCount =
+          typeof data.total === "number"
+            ? data.total
+            : data.data?.hits?.total?.value || transformedHits.length;
 
         return {
           success: true,
           searchTerm,
-          query: data.query,
+          query: data.query || data.data?.query || searchTerm,
           data: {
-            total: data.data?.hits?.total?.value || transformedHits.length,
+            total: totalCount,
             hits: transformedHits,
           },
         };
-      } else {
-        console.log("API response unsuccessful:", data);
-        return {
-          success: false,
-          searchTerm,
-          data: {
-            total: 0,
-            hits: [],
-          },
-        };
       }
+
+      console.log("API response unsuccessful:", data);
+      return {
+        success: false,
+        searchTerm,
+        data: {
+          total: 0,
+          hits: [],
+        },
+      };
     } catch (error) {
       console.error("Search error:", error);
       throw new Error("Failed to perform search");

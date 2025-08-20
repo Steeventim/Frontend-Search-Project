@@ -35,12 +35,12 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  const unreadCount = notifications.filter((n) => !(n.read ?? n.isRead)).length;
 
   const getNotificationIcon = (type: NotificationType) => {
     switch (type) {
       case "process_assigned":
-        return <Clock className="h-5 w-5 text-blue-500" />;
+  return <Clock className="h-5 w-5 text-green-500" />;
       case "process_approved":
         return <Check className="h-5 w-5 text-green-500" />;
       case "process_rejected":
@@ -62,7 +62,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
   };
 
   const handleNotificationClick = async (notification: Notification) => {
-    if (!notification.read) {
+    if (!(notification.read ?? notification.isRead)) {
       await onMarkAsRead(notification.id);
     }
 
@@ -93,7 +93,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+  className="relative p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
       >
         <span className="sr-only">Voir les notifications</span>
         <Bell className="h-6 w-6" />
@@ -125,7 +125,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
                   {notifications.length > 0 && (
                     <button
                       onClick={onMarkAllAsRead}
-                      className="text-xs text-blue-600 hover:text-blue-800"
+                      className="text-xs text-green-600 hover:text-green-800"
                     >
                       Tout marquer comme lu
                     </button>
@@ -135,7 +135,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
               <div className="mt-2 divide-y divide-gray-100 max-h-[400px] overflow-y-auto">
                 {loading && notifications.length === 0 ? (
                   <div className="py-4 text-center">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mx-auto"></div>
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-500 mx-auto"></div>
                     <p className="text-sm text-gray-500 mt-2">
                       Chargement des notifications...
                     </p>
@@ -150,21 +150,21 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
                       key={notification.id}
                       onClick={() => handleNotificationClick(notification)}
                       className={`py-3 px-2 flex items-start cursor-pointer hover:bg-gray-50 rounded-md ${
-                        !notification.read ? "bg-blue-50" : ""
-                      }`}
+                          !(notification.read ?? notification.isRead) ? "bg-green-50" : ""
+                        }`}
                     >
                       <div className="flex-shrink-0 pt-0.5">
                         {getNotificationIcon(notification.type)}
                       </div>
                       <div className="ml-3 w-0 flex-1">
                         <p className="text-sm font-medium text-gray-900">
-                          {notification.title}
+                          {notification.title ?? notification.metadata?.documentTitle ?? ""}
                         </p>
                         <p className="mt-1 text-sm text-gray-500">
                           {notification.message}
                         </p>
                         <p className="mt-1 text-xs text-gray-400">
-                          {formatNotificationTime(notification.timestamp)}
+                          {formatNotificationTime(notification.timestamp || notification.createdAt)}
                         </p>
                       </div>
                       <button

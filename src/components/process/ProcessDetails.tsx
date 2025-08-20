@@ -121,36 +121,7 @@ const ProcessDetails: React.FC = () => {
     setAttachments((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleApproveClick = async () => {
-    try {
-      const base64Files = await Promise.all(
-        attachments.map(async (file) => ({
-          name: file.name,
-          content: await toBase64(file),
-        }))
-      );
-      const response = await api.post("/approve-document", {
-        documentId: idDocument,
-        userId: state.initiatorId,
-        etapeId: process?.typeProjets[0]?.EtapeTypeProjet?.etapeId,
-        comments: [{ content: comment }],
-        files: base64Files,
-      });
-
-      if (response.data.success) {
-        console.log("Document approuvé avec succès", response.data);
-        setComment("");
-        setAttachments([]);
-      } else {
-        console.error(
-          "Erreur lors de l'approbation du document",
-          response.data
-        );
-      }
-    } catch (error) {
-      console.error("Erreur lors de l'approbation du document", error);
-    }
-  };
+  // Approve handler removed from UI
 
   const handleTransferClick = async () => {
     try {
@@ -229,7 +200,7 @@ const ProcessDetails: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
       </div>
     );
   }
@@ -302,7 +273,7 @@ const ProcessDetails: React.FC = () => {
                     key={typeProjet.idType}
                     className={`flex flex-col items-center ${
                       index === 0
-                        ? "text-blue-600"
+                        ? "text-green-600"
                         : process.Validation === "approved"
                         ? "text-green-600"
                         : process.Validation === "rejected"
@@ -313,7 +284,7 @@ const ProcessDetails: React.FC = () => {
                     <div
                       className={`relative flex h-12 w-12 items-center justify-center rounded-full border-2 bg-white ${
                         index === 0
-                          ? "border-blue-600"
+                          ? "border-green-600"
                           : process.Validation === "approved"
                           ? "border-green-600"
                           : process.Validation === "rejected"
@@ -361,7 +332,7 @@ const ProcessDetails: React.FC = () => {
                 onChange={(e) => setComment(e.target.value)}
                 placeholder="Ajouter un commentaire..."
                 rows={4}
-                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-sm"
               />
 
               <div>
@@ -410,15 +381,9 @@ const ProcessDetails: React.FC = () => {
               </div>
 
               <div className="flex space-x-3">
+                {/* Approve button removed as per requirement */}
                 <Button
-                  variant="primary"
-                  icon={CheckCircle2}
-                  onClick={handleApproveClick}
-                >
-                  Approuver
-                </Button>
-                <Button
-                  variant="danger"
+                  variant="secondary"
                   icon={XCircle}
                   onClick={handleRejectClick}
                 >
@@ -474,7 +439,7 @@ const ProcessDetails: React.FC = () => {
                           rel="noopener noreferrer"
                           className={`text-lg font-medium ${
                             doc.url
-                              ? "text-blue-600 hover:underline"
+                              ? "text-green-600 hover:underline"
                               : "text-gray-500"
                           }`}
                         >
@@ -506,7 +471,7 @@ const ProcessDetails: React.FC = () => {
                                   href={file.filePath}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="text-blue-600 hover:underline text-sm"
+                                  className="text-green-600 hover:underline text-sm"
                                 >
                                   Visualiser
                                 </a>
@@ -542,8 +507,8 @@ const ProcessDetails: React.FC = () => {
                   className="flex space-x-3 p-4 bg-gray-50 rounded-lg"
                 >
                   <div className="flex-shrink-0">
-                    <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                      <MessageSquare className="h-5 w-5 text-blue-600" />
+                    <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
+                      <MessageSquare className="h-5 w-5 text-green-600" />
                     </div>
                   </div>
                   <div className="flex-1 min-w-0">
