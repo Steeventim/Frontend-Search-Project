@@ -10,6 +10,7 @@ interface ButtonProps {
   disabled?: boolean;
   loading?: boolean; // Propriété loading ajoutée
   children: React.ReactNode;
+  type?: "button" | "submit" | "reset";
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -21,9 +22,11 @@ export const Button: React.FC<ButtonProps> = ({
   disabled,
   loading, // Utilisation de la propriété loading
   children,
+  type,
 }) => {
   return (
     <button
+      type={type || "button"}
       className={clsx(
         "btn",
         `btn-${variant}`,

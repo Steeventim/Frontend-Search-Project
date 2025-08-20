@@ -45,6 +45,9 @@ export interface Etape {
   updatedAt: string;
   typeProjets?: { Libelle: string }[];
   hasTransfer?: boolean; // Optionnel, ajouté pour compatibilité
+  // Optional aliases to handle different payload shapes used across the app
+  id?: string;
+  name?: string;
 }
 
 export interface NextEtape {

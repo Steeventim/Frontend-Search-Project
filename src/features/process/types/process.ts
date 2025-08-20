@@ -7,6 +7,7 @@ export interface Process {
   title: string;
   description: string;
   currentStep: number;
+  totalSteps?: number;
   status: ProcessStatus;
   createdAt: Date;
   updatedAt: Date;

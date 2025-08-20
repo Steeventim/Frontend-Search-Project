@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, memo } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   Clock,
   CheckCircle2,
@@ -60,6 +60,7 @@ const ProcessDetails: React.FC = () => {
   const [attachments, setAttachments] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const idDocument = localStorage.getItem("idDocument");
+  const navigate = useNavigate();
 
   useEffect(() => {
     console.log("ProcessDetails mounted");
@@ -194,6 +195,50 @@ const ProcessDetails: React.FC = () => {
       }
     } catch (error) {
       console.error("Erreur lors du rejet du document", error);
+    }
+  };
+
+  type ApprovePayload = {
+    documentId: string | null;
+    userId: string;
+    etapeId?: string | null;
+    comments: { content: string }[];
+    files?: { name: string; content: string }[];
+  };
+
+  const handleApproveClick = async () => {
+    try {
+      // prepare files if any
+      const base64Files = await Promise.all(
+        attachments.map(async (file) => ({
+          name: file.name,
+          content: await toBase64(file),
+        }))
+      );
+
+      const payload: ApprovePayload = {
+        documentId: idDocument,
+        userId: state.initiatorId,
+        etapeId: etapeTypeProjet?.etapeId ?? undefined,
+        comments: [{ content: comment }],
+      };
+
+      if (base64Files.length > 0) {
+        payload.files = base64Files;
+      }
+
+      const response = await api.post(`/approve-document`, payload);
+
+      if (response?.data?.success) {
+        setComment("");
+        setAttachments([]);
+        // navigate to the nice approval success page
+        navigate("/approval/success");
+      } else {
+        console.error("Erreur lors de l'approbation du document", response?.data);
+      }
+    } catch (error) {
+      console.error("Erreur lors de l'approbation du document", error);
     }
   };
 
@@ -381,7 +426,6 @@ const ProcessDetails: React.FC = () => {
               </div>
 
               <div className="flex space-x-3">
-                {/* Approve button removed as per requirement */}
                 <Button
                   variant="secondary"
                   icon={XCircle}
@@ -389,13 +433,23 @@ const ProcessDetails: React.FC = () => {
                 >
                   Rejeter
                 </Button>
-                {(process?.nextEtape?.users ?? []).length > 0 && (
+
+                {/* If there are next users, show transfer; otherwise show Approve for final-step users */}
+                {(process?.nextEtape?.users ?? []).length > 0 ? (
                   <Button
                     variant="secondary"
                     icon={Navigation}
                     onClick={handleTransferClick}
                   >
                     Transférer
+                  </Button>
+                ) : (
+                  <Button
+                    variant="primary"
+                    icon={CheckCircle2}
+                    onClick={handleApproveClick}
+                  >
+                    Approuver
                   </Button>
                 )}
               </div>

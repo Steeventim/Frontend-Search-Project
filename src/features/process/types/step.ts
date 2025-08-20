@@ -9,4 +9,10 @@ export interface ProcessStep {
   status: ProcessStatus;
   comments: Comment[];
   requiredLevel: number;
+  // Optional fields used by dashboard views and services
+  processName?: string;
+  stepName?: string;
+  priority?: "low" | "normal" | "high" | "urgent";
+  currentStep?: number;
+  totalSteps?: number;
 }

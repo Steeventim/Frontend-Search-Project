@@ -23,24 +23,24 @@ import api from "../../services/api";
 
 // Hook personnalisé pour gérer les formulaires
 const useForm = <T extends Record<string, unknown>>(initialValues: T) => {
+  type K = keyof T;
   const [values, setValues] = useState<T>(initialValues);
-  const [errors, setErrors] = useState<Partial<Record<keyof T, string>>>({});
+  const [errors, setErrors] = useState<Partial<Record<K, string>>>({});
 
-  const handleChange = (field: keyof T, value: unknown) => {
-    console.log(
-      `handleChange called for ${String(field)} with value: ${value}`
-    );
-    setValues((prev) => ({ ...prev, [field]: value }));
+  // Strongly typed change handler: the value must match the field's type
+  const handleChange = <P extends K>(field: P, value: T[P]) => {
+    setValues((prev) => ({ ...prev, [field]: value } as T));
     setErrors((prev) => ({ ...prev, [field]: "" }));
   };
 
-  const validate = (
-    validators: Partial<Record<keyof T, (value: unknown) => string>>
-  ) => {
-    const newErrors: Partial<Record<keyof T, string>> = {};
-    Object.entries(validators).forEach(([field, validator]) => {
-      const error = validator ? validator(values[field as keyof T]) : "";
-      if (error) newErrors[field as keyof T] = error;
+  // Validators map: each validator receives the typed value for its field
+  const validate = (validators: Partial<{ [P in K]: (value: T[P]) => string }>) => {
+    const newErrors: Partial<Record<K, string>> = {};
+    (Object.keys(validators) as K[]).forEach((field) => {
+      const validator = validators[field];
+      if (!validator) return;
+      const error = validator(values[field]);
+      if (error) newErrors[field] = error;
     });
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;

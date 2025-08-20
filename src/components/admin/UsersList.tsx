@@ -81,9 +81,9 @@ export const UsersList: React.FC = () => {
   const handleCreateUser = async () => {
     try {
       await userService.createUser({
-        Email: newUser.email,
-        Password: newUser.password || "",
-        NomUser: newUser.nomUser,
+        email: newUser.email,
+        password: newUser.password || "",
+        nomUser: newUser.nomUser,
         prenomUser: newUser.prenomUser,
         roles: newUser.roles,
         IsActive: newUser.IsActive,
@@ -317,30 +317,28 @@ export const UsersList: React.FC = () => {
                   placeholder="Entrez l'email"
                 />
               </label>
-              <InputField
-                type="password"
-                value={newUser.password}
-                onChange={(e) =>
-                  setNewUser({ ...newUser, password: e.target.value })
-                }
-                placeholder="Entrez le mot de passe"
-              />
               <label className="block text-sm font-medium text-gray-700">
                 Mot de passe
-              </label>
-              /
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Téléphone
-                </label>
                 <InputField
-                  value={newUser.Telephone}
+                  type="password"
+                  value={newUser.password || ""}
+                  onChange={(e) =>
+                    setNewUser({ ...newUser, password: e.target.value })
+                  }
+                  placeholder="Entrez le mot de passe"
+                />
+              </label>
+
+              <label className="block text-sm font-medium text-gray-700">
+                Téléphone
+                <InputField
+                  value={newUser.Telephone || ""}
                   onChange={(e) =>
                     setNewUser({ ...newUser, Telephone: e.target.value })
                   }
                   placeholder="Entrez le téléphone"
                 />
-              </div>
+              </label>
               <label className="block text-sm font-medium text-gray-700">
                 Rôles
                 <Select
@@ -417,15 +415,19 @@ export const UsersList: React.FC = () => {
                   placeholder="Entrez l'email"
                 />
               </label>
-              <InputField
-                label="Mot de passe (laisser vide pour ne pas modifier)"
-                type="password"
-                value={newUser.password}
-                onChange={(e) =>
-                  setNewUser({ ...newUser, password: e.target.value })
-                }
-                placeholder="Entrez un nouveau mot de passe"
-              />
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Mot de passe (laisser vide pour ne pas modifier)
+                </label>
+                <InputField
+                  type="password"
+                  value={newUser.password || ""}
+                  onChange={(e) =>
+                    setNewUser({ ...newUser, password: e.target.value })
+                  }
+                  placeholder="Entrez un nouveau mot de passe"
+                />
+              </div>
               <label className="block text-sm font-medium text-gray-700">
                 Téléphone
                 <InputField
@@ -436,20 +438,22 @@ export const UsersList: React.FC = () => {
                   placeholder="Entrez le téléphone"
                 />
               </label>
-              <Select
-                label="Rôles"
-                value={newUser.roles[0] || ""}
-                onChange={(e) =>
-                  setNewUser({ ...newUser, roles: [e.target.value] })
-                }
-              >
+              <label className="block text-sm font-medium text-gray-700">
+                Rôles
+                <Select
+                  value={newUser.roles[0] || ""}
+                  onChange={(e) =>
+                    setNewUser({ ...newUser, roles: [e.target.value] })
+                  }
+                >
                 <option value="">Sélectionnez un rôle</option>
                 {roles.map((role) => (
                   <option key={role} value={role}>
                     {role}
                   </option>
                 ))}
-              </Select>
+                </Select>
+              </label>
             </div>
             <div className="mt-6 flex justify-end space-x-2">
               <Button

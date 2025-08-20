@@ -3,7 +3,7 @@ import React, { forwardRef } from "react";
 export interface InputFieldProps {
   id?: string;
   placeholder?: string;
-  value: string;
+  value?: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   type?: string;
   required?: boolean;
@@ -22,11 +22,11 @@ const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
         id={id}
         type={type}
         placeholder={placeholder}
-        value={value}
+        value={value ?? ""}
         onChange={onChange}
         required={required}
         ref={ref}
-  className={`block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm ${
+        className={`block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm ${
           props.className || ""
         }`}
         {...props}

@@ -29,6 +29,7 @@ import {
   LazyRolesManagement,
   LazyUsersList,
   LazySearchInterface,
+  LazyApprovalSuccess,
   LazyNotFound,
 } from "./components/lazy/LazyComponents";
 
@@ -205,6 +206,14 @@ const App = () => {
                   element={
                     <SuspenseWrapper>
                       <LazyUserProfile />
+                    </SuspenseWrapper>
+                  }
+                />
+                <Route
+                  path="/approval/success"
+                  element={
+                    <SuspenseWrapper>
+                      <LazyApprovalSuccess />
                     </SuspenseWrapper>
                   }
                 />

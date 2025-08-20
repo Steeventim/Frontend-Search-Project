@@ -7,6 +7,8 @@ export interface SelectProps {
   placeholder?: string;
   required?: boolean;
   className?: string;
+  // Optional label prop used by some callsites; rendered by parent so keep as passthrough
+  label?: string;
 }
 
 const Select: React.FC<SelectProps> = ({

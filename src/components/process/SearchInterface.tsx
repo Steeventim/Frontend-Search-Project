@@ -18,21 +18,15 @@ const SearchInterface: React.FC = () => {
   const [results, setResults] = useState<Hit[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [latestDocument, setLatestDocument] = useState<LatestDocument | null>(
-    null
-  );
+  const [latestDocument, setLatestDocument] = useState<LatestDocument | null>(null);
   const [comment, setComment] = useState("");
   const [showDialog, setShowDialog] = useState(false);
-  const [confirmationMessage, setConfirmationMessage] = useState<string | null>(
-    null
-  );
+  const [confirmationMessage, setConfirmationMessage] = useState<string | null>(null);
   const [assignLoading, setAssignLoading] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
   const { process }: ProcessData = useProcessData();
-  const [userDestinatorName, setUserDestinatorName] = useState<string | null>(
-    null
-  );
+  const [userDestinatorName, setUserDestinatorName] = useState<string | null>(null);
   const [nextEtape, setNextEtape] = useState<{
     id: string;
     name: string;
@@ -41,36 +35,58 @@ const SearchInterface: React.FC = () => {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [currentEtape, setCurrentEtape] = useState<Etape | null>(null);
 
-  // Consolidation des fetchs initiaux
+  // Consolidation des fetchs initiaux (tolerant to partial failures)
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        const [userResponse, etapesResponse, latestDocumentResponse] =
-          await Promise.all([
-            userService.getUserById("me"),
-            api.get<{ success: boolean; count: number; data: Etape[] }>(
-              "/etapes/all"
-            ),
-            api.get<{ success: boolean; data: LatestDocument }>(
-              "/latest-document"
-            ),
-          ]);
-        setUserId(userResponse.id);
-        if (etapesResponse.data.success) {
-          setEtapes(etapesResponse.data.data);
+        const results = await Promise.allSettled([
+          userService.getUserById("me"),
+          api.get<{ success: boolean; count: number; data: Etape[] }>("/etapes/all"),
+          api.get<{ success: boolean; data: LatestDocument }>("/latest-document"),
+        ]);
+
+        const [userResult, etapesResult, latestDocResult] = results as [
+          PromiseSettledResult<import("../../types/auth").User>,
+          PromiseSettledResult<import("axios").AxiosResponse<{ success: boolean; count: number; data: Etape[] }>>,
+          PromiseSettledResult<import("axios").AxiosResponse<{ success: boolean; data: LatestDocument }>>
+        ];
+
+        if (userResult.status === "fulfilled") {
+          setUserId(userResult.value.id);
         } else {
-          setError("Erreur lors de la récupération des étapes");
+          console.warn("Failed to fetch user info:", userResult.reason);
         }
-        if (latestDocumentResponse.data.success) {
-          setLatestDocument(latestDocumentResponse.data.data);
+
+        if (etapesResult.status === "fulfilled") {
+          const etResp = etapesResult.value;
+          if (etResp.data?.success) {
+            setEtapes(etResp.data.data || []);
+          } else {
+            console.warn("/etapes/all returned success=false", etResp.data);
+            setEtapes([]);
+            setError("Erreur lors de la récupération des étapes");
+          }
         } else {
-          setError("Erreur lors de la récupération du dernier document");
+          console.error("Erreur lors de la récupération des étapes:", etapesResult.reason);
+          setEtapes([]);
+          setError(etapesResult.reason instanceof Error ? etapesResult.reason.message : "Erreur lors de la récupération des étapes");
+        }
+
+        if (latestDocResult.status === "fulfilled") {
+          const ld = latestDocResult.value;
+          if (ld.data?.success) {
+            setLatestDocument(ld.data.data || null);
+          } else {
+            console.warn("/latest-document returned success=false", ld.data);
+            setLatestDocument(null);
+          }
+        } else {
+          // If latest document is missing (404) we don't want to block the page
+          console.warn("/latest-document fetch failed (non-fatal):", latestDocResult.reason);
+          setLatestDocument(null);
         }
       } catch (err) {
-        console.error(
-          "Erreur lors de la récupération des données initiales",
-          err
-        );
+        console.error("Erreur lors de la récupération des données initiales unexpected:", err);
         setError(err instanceof Error ? err.message : "Erreur inconnue");
       }
     };
@@ -95,31 +111,42 @@ const SearchInterface: React.FC = () => {
     }
   }, [latestDocument, process]);
 
-  // Déterminer l'étape suivante
+  // Déterminer l'étape suivante (robust to id shape differences and missing sequence numbers)
   useEffect(() => {
     if (process?.nextEtape) {
-      setNextEtape({
-        id: process.nextEtape.id,
-        name: process.nextEtape.name,
-      });
+      setNextEtape({ id: process.nextEtape.id, name: process.nextEtape.name });
       if (process.nextEtape.users && process.nextEtape.users.length > 0) {
         setUserDestinatorName(process.nextEtape.users[0].name);
       }
-    } else if (currentEtape && etapes.length > 0) {
-      const sortedEtapes = [...etapes].sort(
-        (a, b) => a.sequenceNumber - b.sequenceNumber
-      );
-      const nextEtapeIndex = sortedEtapes.findIndex(
-        (etape) => etape.idEtape === currentEtape.idEtape
-      );
-      const nextEtapeCandidate = sortedEtapes[nextEtapeIndex + 1];
+      return;
+    }
+
+    if (currentEtape && etapes.length > 0) {
+      // Sort defensively: if sequenceNumber missing, treat as 0
+      const sortedEtapes = [...etapes].sort((a, b) => {
+        const aSeq = typeof a.sequenceNumber === 'number' ? a.sequenceNumber : 0;
+        const bSeq = typeof b.sequenceNumber === 'number' ? b.sequenceNumber : 0;
+        return aSeq - bSeq;
+      });
+
+      const nextIndex = sortedEtapes.findIndex((etape) => {
+        // Try to match by both possible id property names
+        return (
+          (etape.idEtape && currentEtape.idEtape && etape.idEtape === currentEtape.idEtape) ||
+          (etape.id && currentEtape.id && etape.id === currentEtape.id)
+        );
+      });
+
+      if (nextIndex === -1) {
+        console.warn('Current etape not found in etapes list. Falling back to trying to match by name.', { currentEtape, etapes });
+      }
+
+      const nextEtapeCandidate = sortedEtapes[nextIndex + 1];
       if (nextEtapeCandidate) {
-        setNextEtape({
-          id: nextEtapeCandidate.idEtape,
-          name: nextEtapeCandidate.LibelleEtape,
-        });
-        setUserDestinatorName(null); // À ajuster si une logique existe
+        setNextEtape({ id: String(nextEtapeCandidate.idEtape || nextEtapeCandidate.id || ""), name: String(nextEtapeCandidate.LibelleEtape || nextEtapeCandidate.name || "") });
+        setUserDestinatorName(null);
       } else {
+        console.info('No next etape candidate found (may be last etape)');
         setNextEtape(null);
         setUserDestinatorName(null);
       }

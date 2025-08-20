@@ -75,6 +75,9 @@ export const LazySearchInterface = lazy(
   () => import("../process/SearchInterface")
 );
 
+// Approval success page
+export const LazyApprovalSuccess = lazy(() => import("../process/ApprovalSuccess"));
+
 // Composants utilisateur
 export const LazyUserProfile = lazy(() =>
   import("../user/UserProfile").then((module) => ({
