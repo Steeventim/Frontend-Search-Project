@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Clock, AlertCircle, ChevronRight, Calendar } from "lucide-react";
 import { formatDate } from "../../utils/date";
 
@@ -17,6 +17,8 @@ interface ProcessListProps {
 }
 
 export const ProcessList: React.FC<ProcessListProps> = ({ processes }) => {
+  const [ordreTri, setOrdreTri] = useState<"recent" | "ancien">("recent");
+
   if (!processes.length)
     return (
       <div className="text-center p-8 bg-gray-50 rounded-lg">
@@ -26,7 +28,7 @@ export const ProcessList: React.FC<ProcessListProps> = ({ processes }) => {
     );
 
   const trierProcessus = () => {
-    return [...processusExemple].sort((a, b) =>
+    return [...processes].sort((a, b) =>
       ordreTri === "recent"
         ? new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         : new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
@@ -41,9 +43,9 @@ export const ProcessList: React.FC<ProcessListProps> = ({ processes }) => {
             Suivi des processus
           </h2>
           <select
-            className="rounded-md border border-gray-300 p-2 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            className="rounded-md border border-gray-300 p-2 bg-white shadow-sm focus:border-green-500 focus:ring-green-500"
             value={ordreTri}
-            onChange={(e) => setOrdreTri(e.target.value)}
+            onChange={(e) => setOrdreTri(e.target.value as "recent" | "ancien")}
           >
             <option value="recent">Plus récents</option>
             <option value="ancien">Plus anciens</option>

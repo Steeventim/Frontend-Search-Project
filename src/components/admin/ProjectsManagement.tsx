@@ -124,7 +124,7 @@ export const ProjectsManagement: React.FC = () => {
 
       {isLoading ? (
         <div className="flex justify-center py-8">
-          <Loader2 className="animate-spin w-8 h-8 text-blue-500" />
+          <Loader2 className="animate-spin w-8 h-8 text-green-500" />
         </div>
       ) : error ? (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
@@ -159,7 +159,7 @@ export const ProjectsManagement: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => handleUpdateClick(project)}
-                      className="text-blue-600 hover:text-blue-700 mr-4"
+                      className="text-green-600 hover:text-green-700 mr-4"
                     >
                       <Edit className="h-5 w-5" />
                     </button>

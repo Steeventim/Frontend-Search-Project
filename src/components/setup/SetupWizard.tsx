@@ -28,13 +28,13 @@ const useForm = <T extends Record<string, unknown>>(initialValues: T) => {
   const [errors, setErrors] = useState<Partial<Record<K, string>>>({});
 
   // Strongly typed change handler: the value must match the field's type
-  const handleChange = <P extends K>(field: P, value: T[P]) => {
+  const handleChange = React.useCallback(<P extends K>(field: P, value: T[P]) => {
     setValues((prev) => ({ ...prev, [field]: value } as T));
     setErrors((prev) => ({ ...prev, [field]: "" }));
-  };
+  }, []);
 
   // Validators map: each validator receives the typed value for its field
-  const validate = (validators: Partial<{ [P in K]: (value: T[P]) => string }>) => {
+  const validate = React.useCallback((validators: Partial<{ [P in K]: (value: T[P]) => string }>) => {
     const newErrors: Partial<Record<K, string>> = {};
     (Object.keys(validators) as K[]).forEach((field) => {
       const validator = validators[field];
@@ -44,9 +44,24 @@ const useForm = <T extends Record<string, unknown>>(initialValues: T) => {
     });
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };
+  }, [values]);
 
-  return { values, errors, handleChange, validate, setValues, setErrors };
+  const setFormValues = React.useCallback((newValues: T) => {
+    setValues(newValues);
+  }, []);
+
+  const setFormErrors = React.useCallback((newErrors: Partial<Record<K, string>>) => {
+    setErrors(newErrors);
+  }, []);
+
+  return {
+    values,
+    errors,
+    handleChange,
+    validate,
+    setValues: setFormValues,
+    setErrors: setFormErrors,
+  };
 };
 
 // Validateurs utilitaires
@@ -105,6 +120,7 @@ const SetupWizard: React.FC = () => {
   const companyForm = useForm({
     companyName: "",
     companyDescription: "",
+    structureId: "", // Add structureId to store the ID returned from the API
   });
   const [projects, setProjects] = useState<
     { id: string; Libelle: string; Description: string }[]
@@ -142,30 +158,38 @@ const SetupWizard: React.FC = () => {
   >([]);
 
   // Charger les progrès sauvegardés depuis localStorage au montage
+  const initialized = React.useRef(false);
+  const { setValues } = companyForm; // Destructure setValues to use in dependency array
+
   useEffect(() => {
+    if (initialized.current) return;
+    initialized.current = true;
+
     const savedProgress = localStorage.getItem("setupWizardProgress");
-    if (savedProgress) {
-      try {
-        const parsed = JSON.parse(savedProgress);
-        if (validateSavedProgress(parsed)) {
-          const { currentStep, company, projects, processSteps, roles, users } =
-            parsed;
-          setCurrentStep(currentStep);
-          companyForm.setValues(company);
-          setProjects(projects);
-          setProcessSteps(processSteps);
-          setRoles(roles);
-          setUsers(users);
-        } else {
-          console.warn("Données sauvegardées invalides, ignorées.");
-          localStorage.removeItem("setupWizardProgress");
-        }
-      } catch (error) {
-        console.error("Erreur lors du chargement des progrès:", error);
+    if (!savedProgress) return;
+
+    try {
+      const parsed = JSON.parse(savedProgress);
+      if (!validateSavedProgress(parsed)) {
+        console.warn("Données sauvegardées invalides, ignorées.");
         localStorage.removeItem("setupWizardProgress");
+        return;
       }
+
+      const { currentStep, company, projects: savedProjects, processSteps: savedSteps, roles: savedRoles, users: savedUsers } = parsed;
+
+      // Update all states in a batch to prevent unnecessary re-renders
+      setCurrentStep(currentStep);
+      setProjects(savedProjects);
+      setProcessSteps(savedSteps);
+      setRoles(savedRoles);
+      setUsers(savedUsers);
+      setValues(company);
+    } catch (error) {
+      console.error("Erreur lors du chargement des progrès:", error);
+      localStorage.removeItem("setupWizardProgress");
     }
-  }, [companyForm]);
+  }, [setValues]); // Only depend on the memoized setValues function
 
   // Nettoyer localStorage après la fin du processus (facultatif)
   const clearProgress = () => {
@@ -224,7 +248,7 @@ const SetupWizard: React.FC = () => {
           <p className="text-sm text-gray-600">
             Entrez le nom légal et une brève description de votre entreprise.{" "}
             <button
-              className="text-blue-600 hover:underline"
+              className="text-green-600 hover:underline"
               onClick={() =>
                 alert("Aide : Utilisez le nom officiel de l'entreprise.")
               }
@@ -282,10 +306,13 @@ const SetupWizard: React.FC = () => {
           companyName: (value: string) =>
             value.trim() ? "" : "Le nom de l'entreprise est requis",
         }),
-      formatData: () => ({
-        NomStructure: companyForm.values.companyName,
-        DescriptionStructure: companyForm.values.companyDescription,
-      }),
+      formatData: () => {
+        const data: { NomStructure: string; DescriptionStructure: string } = {
+          NomStructure: companyForm.values.companyName,
+          DescriptionStructure: companyForm.values.companyDescription,
+        };
+        return data;
+      },
     },
     {
       title: "Projets",
@@ -310,7 +337,7 @@ const SetupWizard: React.FC = () => {
                 setTimeout(() => firstInputRef.current?.focus(), 0);
               }}
               aria-label="Ajouter un projet"
-              className="bg-blue-100 text-blue-700 hover:bg-blue-200"
+              className="bg-green-100 text-green-700 hover:bg-green-200"
             >
               <Plus className="w-4 h-4 mr-2" />
               Ajouter un projet
@@ -404,12 +431,35 @@ const SetupWizard: React.FC = () => {
       apiEndpoint: "/projets",
       validate: () => {
         if (projects.length === 0) return false;
-        return projects.every((p) => p.Libelle.trim());
+        // Ensure we have the structureId from the created structure
+        if (!companyForm.values.structureId) {
+          // Log for debugging what we have in the form
+          console.error('Projects validation failed: missing structureId', {
+            companyValues: companyForm.values,
+            projects,
+          });
+          setGeneralError("L'ID de la structure n'est pas disponible. Veuillez revenir à la première étape et créer la structure avant d'ajouter des projets.");
+          return false;
+        }
+
+        const missing = projects.find((p) => !p.Libelle || !p.Libelle.trim());
+        if (missing) {
+          setGeneralError("Chaque projet doit avoir un nom (Libellé). Veuillez compléter tous les noms de projet.");
+          return false;
+        }
+
+        return true;
       },
-      formatData: () => ({
-        Libelle: projects[0].Libelle,
-        Description: projects[0].Description,
-      }),
+      formatData: () => {
+        // Send an array of projects, each with the structureId
+        const data: Array<{ Libelle: string; Description: string; structureId: string }> = 
+          projects.map((project) => ({
+            Libelle: project.Libelle,
+            Description: project.Description,
+            structureId: companyForm.values.structureId,
+          }));
+        return data;
+      },
     },
     {
       title: "Configuration des étapes de processus",
@@ -425,9 +475,15 @@ const SetupWizard: React.FC = () => {
               variant="secondary"
               size="sm"
               onClick={() => {
+                // Do not allow creating a step without an associated project.
+                if (!projects || projects.length === 0) {
+                  setGeneralError("Ajoutez d'abord au moins un projet avant d'ajouter des étapes.");
+                  return;
+                }
+                const defaultProjectLibelle = projects[0].Libelle || "";
                 const newStep = {
                   id: uuidv4(),
-                  projectId: "",
+                  projectId: defaultProjectLibelle,
                   stepName: "",
                   stepDescription: "",
                   validation: "Validation par le chef de projet",
@@ -465,16 +521,22 @@ const SetupWizard: React.FC = () => {
                             id={`step-name-${step.id}`}
                             value={step.stepName}
                             onChange={(e) => {
+                              const newValue = e.target.value;
                               console.log(
-                                `Updating step ${step.id} stepName to: ${e.target.value}`
+                                `Updating step ${step.id} stepName to: ${newValue}`
                               );
-                              setProcessSteps(
-                                processSteps.map((s) =>
-                                  s.id === step.id
-                                    ? { ...s, stepName: e.target.value }
-                                    : s
-                                )
-                              );
+                              // Remove empty steps when user clears the name
+                              if (!newValue.trim()) {
+                                setProcessSteps(processSteps.filter(s => s.id !== step.id));
+                              } else {
+                                setProcessSteps(
+                                  processSteps.map((s) =>
+                                    s.id === step.id
+                                      ? { ...s, stepName: newValue }
+                                      : s
+                                  )
+                                );
+                              }
                             }}
                             placeholder="Nom de l'étape"
                             required
@@ -588,16 +650,41 @@ const SetupWizard: React.FC = () => {
       ),
       apiEndpoint: "/etapes",
       validate: () => {
-        if (processSteps.length === 0) return false;
-        return processSteps.every((s) => s.stepName.trim() && s.projectId);
+        // First, filter out any empty steps to avoid validation errors
+        const filledSteps = processSteps.filter((s) => {
+          const hasName = !!s.stepName && !!s.stepName.toString().trim();
+          const hasProject = !!s.projectId && projects.some((p) => p.Libelle === s.projectId);
+          return hasName && hasProject;
+        });
+
+        // Update the steps list to remove empty ones
+        if (filledSteps.length !== processSteps.length) {
+          setProcessSteps(filledSteps);
+        }
+
+        if (filledSteps.length === 0) {
+          setGeneralError("Ajoutez au moins une étape avec un nom et un projet associé pour continuer.");
+          return false;
+        }
+        return true;
       },
-      formatData: () =>
-        processSteps.map((step) => ({
-          LibelleEtape: step.stepName,
-          Description: step.stepDescription,
+      formatData: () => {
+        // Filter out any invalid steps before sending to API
+        const validSteps = processSteps.filter(step => 
+          step.stepName && 
+          step.stepName.trim() && 
+          step.projectId && 
+          step.projectId.trim() &&
+          projects.some(p => p.Libelle === step.projectId)
+        );
+        
+        return validSteps.map((step) => ({
+          LibelleEtape: step.stepName.trim(),
+          Description: step.stepDescription || "",
           Validation: step.validation,
           typeProjetLibelle: step.projectId,
-        })),
+        }));
+      },
     },
     {
       title: "Rôles et permissions",
@@ -802,14 +889,24 @@ const SetupWizard: React.FC = () => {
           (r) => r.name.trim() && r.etapeName && r.permissions.length > 0 // Vérifie que des permissions sont sélectionnées
         );
       },
-      formatData: () =>
-        roles.map((role) => ({
+      formatData: () => {
+        const data: Array<{
+          name: string;
+          description: string;
+          isSystemRole: boolean;
+          etapeName: string;
+          permissions: string[];
+          structureId: string;
+        }> = roles.map((role) => ({
           name: role.name,
           description: role.description,
           isSystemRole: role.isSystemRole,
           etapeName: role.etapeName,
           permissions: role.permissions,
-        })),
+          structureId: companyForm.values.structureId,
+        }));
+        return data;
+      },
     },
     {
       title: "Utilisateurs",
@@ -1058,43 +1155,143 @@ const SetupWizard: React.FC = () => {
       ),
       apiEndpoint: "/users/register",
       validate: () => {
-        if (users.length === 0) return false;
-        return users.every(
-          (u) =>
-            u.NomUser.trim() &&
-            u.PrenomUser.trim() &&
-            validateEmail(u.Email) === "" &&
-            validatePassword(u.tempPassword || "") === "" &&
-            validatePhone(u.Telephone) === "" &&
-            u.roleNames.trim()
-        );
+        if (users.length === 0) {
+          setGeneralError("Veuillez ajouter au moins un utilisateur.");
+          return false;
+        }
+
+        for (const user of users) {
+          if (!user.NomUser?.trim()) {
+            setGeneralError("Le nom de l'utilisateur est requis.");
+            return false;
+          }
+          if (!user.PrenomUser?.trim()) {
+            setGeneralError("Le prénom de l'utilisateur est requis.");
+            return false;
+          }
+          if (validateEmail(user.Email) !== "") {
+            setGeneralError("L'adresse email n'est pas valide.");
+            return false;
+          }
+          if (!user.tempPassword || validatePassword(user.tempPassword) !== "") {
+            setGeneralError("Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial.");
+            return false;
+          }
+          if (user.Telephone && validatePhone(user.Telephone) !== "") {
+            setGeneralError("Le numéro de téléphone n'est pas valide.");
+            return false;
+          }
+          if (!user.roleNames?.trim()) {
+            setGeneralError("Veuillez sélectionner un rôle pour l'utilisateur.");
+            return false;
+          }
+        }
+
+        return true;
       },
-      formatData: () =>
-        users.map((user) => ({
-          NomUser: user.NomUser,
-          PrenomUser: user.PrenomUser,
-          Email: user.Email,
-          Password: user.tempPassword,
-          Telephone: user.Telephone,
-          IsActive: user.IsActive,
-          roleNames: user.roleNames,
-        })),
+      formatData: () => {
+        // Log the data being sent for debugging
+        console.log('Formatting user data for API:', users);
+        
+        const data = users.map((user) => {
+          const formattedUser = {
+            NomUser: user.NomUser.trim(),
+            PrenomUser: user.PrenomUser.trim(), // Fixed: PrenomUser is the correct field name
+            Email: user.Email.trim(),
+            Password: user.tempPassword || '',
+            Telephone: user.Telephone || '',
+            IsActive: true,
+            roleNames: [user.roleNames.trim()], // Send as array of role names
+          };
+          console.log('Formatted user data to send:', {
+            ...formattedUser,
+            Password: formattedUser.Password ? '****' : '<empty>',
+            roleNames: formattedUser.roleNames
+          });
+          return formattedUser;
+        });
+
+        // Debug log entire payload
+        console.log('Complete user registration payload:', 
+          data.map(u => ({...u, Password: '****'}))
+        );
+
+        return data;
+      },
     },
   ];
 
   const handleNext = async () => {
     setLoading(true);
     setGeneralError("");
+  // Debug: log current wizard state when attempting to go to next step
+  // This helps diagnose why validation reports empty fields
+  console.log('handleNext: currentStep=', currentStep, 'title=', steps[currentStep]?.title, {
+      companyValues: companyForm.values,
+      projects,
+      processSteps,
+      roles,
+      users,
+    });
     try {
       const step = steps[currentStep];
       if (!step.validate()) {
-        setGeneralError(
-          "Veuillez remplir tous les champs requis correctement."
+        // If the step validator already set a specific error message, keep it.
+        // Otherwise fall back to a generic message.
+        setGeneralError((prev) =>
+          prev && prev.length > 0
+            ? prev
+            : "Veuillez remplir tous les champs requis correctement."
         );
+        setLoading(false);
         return;
       }
+
+      const handleApiCall = async (endpoint: string, data: unknown) => {
+        if (Array.isArray(data)) {
+          // Handle array of items (like projects, roles, users)
+          for (const item of data) {
+            await api.post(endpoint, item);
+          }
+          return null;
+        } else {
+          // Handle single object (like structure)
+          return await api.post(endpoint, data);
+        }
+      };
+
       const dataToSave = step.formatData();
-      await api.post(step.apiEndpoint, dataToSave);
+
+      // Special handling for structure creation
+      if (step.apiEndpoint === "/structures") {
+        const response = await handleApiCall(step.apiEndpoint, dataToSave);
+        if (response?.data) {
+          const structureId = response.data.idStructure; // Changed from id to idStructure
+          console.log("API Response:", response.data);
+          if (structureId) {
+            companyForm.handleChange("structureId", structureId);
+            console.log("Structure ID saved:", structureId);
+          } else {
+            console.error("Response data:", response.data);
+            throw new Error("ID de structure non trouvé dans la réponse");
+          }
+        } else {
+          console.error("Response:", response);
+          throw new Error("Réponse API invalide lors de la création de la structure");
+        }
+      } 
+      // Special handling for projects
+      else if (step.apiEndpoint === "/projets") {
+        if (!companyForm.values.structureId) {
+          throw new Error("ID de structure manquant pour la création des projets");
+        }
+        await handleApiCall(step.apiEndpoint, dataToSave);
+      }
+      // Default handling for other steps
+      else {
+        await handleApiCall(step.apiEndpoint, dataToSave);
+      }
+      
       if (currentStep < steps.length - 1) {
         setCurrentStep(currentStep + 1);
         setTimeout(() => firstInputRef.current?.focus(), 0);
@@ -1103,13 +1300,23 @@ const SetupWizard: React.FC = () => {
         navigate("/admin/dashboard");
       }
     } catch (error) {
-      setGeneralError(
-        error instanceof Error && "response" in error
-          ? (error as { response?: { data?: { message?: string } } }).response
-              ?.data?.message ||
-              "Une erreur est survenue lors de la sauvegarde."
-          : "Une erreur est survenue lors de la sauvegarde."
-      );
+      console.error('Error details:', error);
+      let errorMessage = "Une erreur est survenue lors de la sauvegarde.";
+      
+      if (error instanceof Error) {
+        if ("response" in error && error.response) {
+          const axiosError = error as { response?: { data?: { message?: string; error?: string } } };
+          errorMessage = axiosError.response?.data?.message || 
+                        axiosError.response?.data?.error ||
+                        error.message ||
+                        errorMessage;
+        } else {
+          errorMessage = error.message;
+        }
+      }
+
+      setGeneralError(errorMessage);
+      console.error('Formatted error message:', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -1124,16 +1331,21 @@ const SetupWizard: React.FC = () => {
 
   const handlePermissionChange = (roleId: string, permission: string) => {
     setRoles((prevRoles) =>
-      prevRoles.map((role) =>
-        role.id === roleId
-          ? {
-              ...role,
-              permissions: role.permissions.includes(permission)
-                ? role.permissions.filter((perm) => perm !== permission)
-                : [...role.permissions, permission],
-            }
-          : role
-      )
+      prevRoles.map((role) => {
+        if (role.id !== roleId) return role;
+        const has = role.permissions.includes(permission);
+        const newPermissions = has
+          ? role.permissions.filter((perm) => perm !== permission)
+          : [...role.permissions, permission];
+  // Debug logging to trace checkbox events and resulting permissions
+  // This helps confirm the handler is called and state is updated
+  // (remove or lower verbosity in production)
+  console.log(`Toggling permission '${permission}' for role '${roleId}'. before:`, role.permissions, 'after:', newPermissions);
+        return {
+          ...role,
+          permissions: newPermissions,
+        };
+      })
     );
   };
 
@@ -1148,6 +1360,12 @@ const SetupWizard: React.FC = () => {
             customText="SearchEngine - Configuration"
             noLink={true}
           />
+          {/* Visible debug: show structureId if present to confirm creation */}
+          {companyForm.values.structureId ? (
+            <p className="text-sm text-green-700">ID structure: {companyForm.values.structureId.substring(0, 8)}...</p>
+          ) : (
+            <p className="text-sm text-gray-500">ID structure: (non créé)</p>
+          )}
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
             Assistant de Configuration
           </h1>
@@ -1167,7 +1385,7 @@ const SetupWizard: React.FC = () => {
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
                     index <= currentStep
-                      ? "bg-blue-600 text-white"
+                      ? "bg-green-600 text-white"
                       : "bg-gray-200 text-gray-500"
                   }`}
                   aria-current={index === currentStep ? "step" : undefined}
@@ -1187,7 +1405,7 @@ const SetupWizard: React.FC = () => {
           <div className="text-center">
             <h2 className="text-2xl md:text-3xl font-bold text-gray-900 flex items-center justify-center">
               {React.createElement(steps[currentStep].icon, {
-                className: "w-6 h-6 text-blue-600 mr-2",
+                className: "w-6 h-6 text-green-600 mr-2",
               })}
               {steps[currentStep].title}
             </h2>
@@ -1243,7 +1461,7 @@ const SetupWizard: React.FC = () => {
                       ? "Terminer"
                       : "Étape suivante"
                   }
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-6"
+                  className="bg-green-600 hover:bg-green-700 text-white px-6"
                 >
                   {loading ? (
                     <span className="flex items-center">

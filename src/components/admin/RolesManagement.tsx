@@ -126,7 +126,7 @@ export const RolesManagement: React.FC = () => {
 
       {isLoading ? (
         <div className="flex justify-center py-8">
-          <Loader2 className="animate-spin w-8 h-8 text-blue-500" />
+          <Loader2 className="animate-spin w-8 h-8 text-green-500" />
         </div>
       ) : error ? (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
@@ -217,7 +217,7 @@ export const RolesManagement: React.FC = () => {
                   onChange={(e) =>
                     setNewRole({ ...newRole, name: e.target.value })
                   }
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm"
                   required
                 />
               </div>
@@ -231,7 +231,7 @@ export const RolesManagement: React.FC = () => {
                     setNewRole({ ...newRole, description: e.target.value })
                   }
                   rows={2}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm"
                   required
                 />
               </div>
@@ -264,7 +264,7 @@ export const RolesManagement: React.FC = () => {
                               permissions: newPermissions,
                             });
                           }}
-                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                          className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
                         />
                       </div>
                       <div className="ml-3 text-sm">

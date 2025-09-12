@@ -252,7 +252,7 @@ export const UsersList: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <button
                         onClick={() => openEditModal(user)}
-                        className="text-blue-600 hover:text-blue-900 mr-4"
+                        className="text-green-600 hover:text-green-900 mr-4"
                       >
                         <Edit className="h-5 w-5" />
                       </button>

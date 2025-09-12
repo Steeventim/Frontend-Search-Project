@@ -43,7 +43,7 @@ export const NewProcess: React.FC = () => {
               onChange={(e) =>
                 setFormData({ ...formData, templateId: e.target.value })
               }
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm"
               required
             >
               <option value="">Sélectionnez un modèle</option>
@@ -65,7 +65,7 @@ export const NewProcess: React.FC = () => {
               onChange={(e) =>
                 setFormData({ ...formData, title: e.target.value })
               }
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm"
               required
             />
           </div>
@@ -88,7 +88,7 @@ export const NewProcess: React.FC = () => {
               onChange={(e) =>
                 setFormData({ ...formData, priority: e.target.value })
               }
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm"
             >
               <option value="low">Basse</option>
               <option value="normal">Normale</option>
